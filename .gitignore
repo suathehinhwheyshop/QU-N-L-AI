@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.orbit/
+.env
+.env.*
+!.env.example
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+playwright-report/
+test-results/

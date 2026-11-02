@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "mode": "MOCK",
+  "at": "2026-11-02T16:00:06.303Z",
+  "checks": [
+    "file attachment stored from UI",
+    "natural goal → backend template plan and zero mock cost",
+    "worker-backed task board, dependencies, acceptance and attempts",
+    "hash-bound approval from UI → verified delivery",
+    "mock health persisted; four real providers remain unavailable",
+    "provider configuration form persists owner model/availability in backend",
+    "settings form saves backend policy",
+    "real uploaded/generated artifacts visible",
+    "eight views fit 390px mobile viewport",
+    "no browser runtime exceptions"
+  ]
+}

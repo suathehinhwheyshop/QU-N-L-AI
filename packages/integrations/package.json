@@ -1,0 +1,14 @@
+{
+  "name": "@orbit/integrations",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@orbit/shared": "*",
+    "@orbit/core": "*",
+    "zod": "^4.6.7"
+  }
+}

@@ -1,0 +1,22 @@
+# ORBIT — checklist sau audit
+
+- [x] Audit code thực tế, tách phần hoạt động/MOCK/legacy tại docs/CODEBASE_AUDIT.md.
+- [x] Giữ backend và visual hữu ích; HTML cũ chỉ ở legacy.
+- [x] Tách frontend/backend và 7 shared npm packages.
+- [x] PostgreSQL/Drizzle, 13 bảng, migrations 0000/0001 và seed giữ cấu hình.
+- [x] Goal Interpreter theo contract, user acceptance criteria, template planner và DAG validation.
+- [x] Router capability/policy/cost/latency, đọc enabled/model theo owner từ database.
+- [x] Executor, shared state, schemas/checksum, checkpoint và audit.
+- [x] Timeout, bounded retry/backoff, lease/fencing, pause/resume/cancel và budget reservation.
+- [x] Bốn module vendor MOCK độc lập; API thật luôn chưa kết nối.
+- [x] Bốn workspace modules SEO/Video/Research/Development, fixture và template riêng.
+- [x] Approval theo manifest hash và artifact generation/download có authorization.
+- [x] UI gọi backend, model config có hiệu lực; không có nút giả.
+- [x] Unit 14/14; PostgreSQL integration 10/10; E2E goal → report với restart app/worker và controls/retry.
+- [x] Browser checks (10 nhóm) và mobile 390 px; ảnh chụp thật.
+- [x] Typecheck, production build và evidence command logs.
+- [x] Ma trận 10 điều kiện ở docs/PHASE1_ACCEPTANCE.md.
+- Branch bàn giao: `orbit/phase1-foundation-audit`. Commit/push xác nhận bằng lịch sử Git và báo cáo cuối; không merge main.
+- [ ] Phase 2: adapter SDK/network thật, server secrets, probes/model entitlement, pricing/usage và structured live workflow.
+- [ ] Phase 3: GSC thật read-only sau Phase 2; không dùng thông tin này để chặn Phase 1.
+- [ ] Phase 4: production auth/security/monitoring/deployment/backup/restore.

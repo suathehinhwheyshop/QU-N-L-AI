@@ -1,0 +1,74 @@
+{
+  "result": "PASS",
+  "mode": "MOCK",
+  "at": "2026-11-02T16:02:48.529Z",
+  "run_id": "a69b23ea-6dba-419e-b59d-6556310fbe29",
+  "task_count": 6,
+  "artifact_count": 6,
+  "evidence": {
+    "persisted_run_id": "a69b23ea-6dba-419e-b59d-6556310fbe29",
+    "dependency_count": 7,
+    "task_ids": [
+      "4a4dcd40-2429-473c-be83-75ef246e551f",
+      "7612bdd5-822d-42fe-8274-c7befae90d3d",
+      "4678a89e-ffaa-4d3e-8e88-f55bc9b0c838",
+      "3a410e5a-2775-4582-8671-4e07dd6f6eb8",
+      "f0e2c465-3f5c-4abf-8858-e7858412e431",
+      "04c92361-e987-4941-b4fe-be8fdbeabd5e"
+    ],
+    "attempt_count": 6,
+    "provider_ids": [
+      "mock-openai",
+      "mock-google"
+    ],
+    "approval": {
+      "id": "e24c8a4d-e992-46c3-a4c9-6a3a551f7adc",
+      "output_hash": "44cfaea40cec25ebccd546c54a0fc6ac8d5ac8a656815d779111b3fdb1c2b1e0",
+      "status": "APPROVED"
+    },
+    "artifact_checksums": [
+      {
+        "id": "74b44bb6-cce7-4aa6-b7cd-c5785acc25e8",
+        "sha256": "8de168a691fd3ee404c793a4b3b6ab27531c1c7771f62eb47ea7effb076c129b"
+      },
+      {
+        "id": "8cdd5293-a7ff-4661-a36d-f12828f30dd6",
+        "sha256": "c8667632779da74d050bc0d05ec0eda6b548527cb3b2d32b794a8ecfac61ef0a"
+      },
+      {
+        "id": "6d0ea9ef-2526-4156-9e68-80de784af796",
+        "sha256": "ecf3bdfb9f040b77b675f98699266dfbc0b5c8a5706253915fcdf705d80eff64"
+      },
+      {
+        "id": "d9da36aa-3149-4356-a7fc-3cbacd3b8adc",
+        "sha256": "44cfaea40cec25ebccd546c54a0fc6ac8d5ac8a656815d779111b3fdb1c2b1e0"
+      },
+      {
+        "id": "5757b9a6-003a-467c-b594-44a88dd09718",
+        "sha256": "18cb8c87249445ac6f97bb63dfd00617200352dd93b68af4ae4e2d5791a36ab0"
+      },
+      {
+        "id": "f61859e4-1092-4b47-87d6-0553bfb34522",
+        "sha256": "b1e3c9b1d9445637a38a1d8e0d0d77e94825ea6b485b9d7dd6e772c4e18edc1e"
+      }
+    ],
+    "application_restart": "PASS",
+    "worker_restart": "PASS",
+    "controls_retry_probe": {
+      "run_id": "9d7423ae-9531-49ae-8fc4-75ade75bb834",
+      "status": "CANCELED",
+      "attempts": 7
+    }
+  },
+  "checks": [
+    "unauthenticated API and cross-origin mutation blocked",
+    "application server restart preserves run, outputs, approval and authentication",
+    "goal → source → two different mock providers → board → WAITING_APPROVAL",
+    "persisted model configuration controls actual routing; unsupported models rejected",
+    "worker process restart continues from durable checkpoint; approval and real file checksum verified",
+    "mock health stays MOCK; LIVE and writes remain blocked; settings persist",
+    "authenticated upload and download store real bytes",
+    "backend pause/resume/cancel and bounded retry validated over HTTP with worker",
+    "owner authorization enforced for run and artifact"
+  ]
+}

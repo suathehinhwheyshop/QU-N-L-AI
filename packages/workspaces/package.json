@@ -1,0 +1,15 @@
+{
+  "name": "@orbit/workspaces",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@orbit/shared": "*",
+    "@orbit/core": "*",
+    "@orbit/storage": "*",
+    "zod": "^4.6.7"
+  }
+}

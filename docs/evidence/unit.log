@@ -1,0 +1,26 @@
+
+> orbit-platform@1.0.0-phase1 test
+> node --import tsx --test test/unit/*.test.ts
+
+✔ planner produces a bounded read-only DAG with independent review and approval (7.030251ms)
+✔ graph rejects cycles, missing/duplicate dependencies and external writes (0.914886ms)
+✔ live planning is blocked without real adapters; workspace core is reusable (0.763598ms)
+✔ router filters capability, data policy, availability and budget; review avoids analyst (0.384117ms)
+✔ mock output validates structured handoff, reports zero cost and never Connected (85.726215ms)
+✔ canonical checksums survive jsonb object key order; artifact bytes verified (16.577708ms)
+✔ integration contract exposes only fixture read scope and validates connector input/output (3.53114ms)
+✔ concurrent artifact publication never exposes partial bytes (13.405527ms)
+✔ approval requires exactly one canonical manifest dependency (1.45627ms)
+✔ Goal Interpreter preserves objective, user acceptance and read-only constraints (5.257716ms)
+✔ four workspace modules produce distinct plans and domain-specific mock fixtures (4.503963ms)
+✔ four independent vendor mock adapters have explicit capabilities/models and never Connected (0.996789ms)
+✔ core package has no imports of concrete providers, integrations or workspace business logic (18.624145ms)
+✔ frontend does not import database or credential code at runtime (1.407216ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 385.803032

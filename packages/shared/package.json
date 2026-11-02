@@ -1,0 +1,13 @@
+{
+  "name": "@orbit/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "zod": "^4.6.7",
+    "@orbit/database": "*"
+  }
+}

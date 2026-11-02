@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#236447">
+  <meta name="description" content="Orbit — Bản mẫu điều phối quy trình Google Search Console đến tối ưu website cho cá nhân.">
+  <title>Orbit · Quy trình SEO</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a href="#main" class="skip">Đến nội dung</a>
+  <aside class="sidebar">
+    <a class="brand" href="#workflow" aria-label="Orbit, trang điều phối"><span class="brand-mark">◉</span>orbit<span class="beta">LAB</span></a>
+    <div class="workspace-select"><span class="workspace-icon">W</span><div><strong>WheyShop</strong><small>Không gian cá nhân</small></div><span>⌄</span></div>
+    <div class="nav-caption">KHÔNG GIAN LÀM VIỆC</div>
+    <nav id="navigation" aria-label="Điều hướng chính"></nav>
+    <div class="sidebar-bottom"><div class="local-card"><span class="local-dot"></span><strong>Bản thử trên trình duyệt</strong><p>Chưa kết nối AI hoặc website.<br>Dữ liệu chưa đồng bộ hai máy.</p></div><div class="account"><span class="avatar">DN</span><div><strong>Dũng Nguyễn</strong><small>Không gian riêng của anh</small></div></div></div>
+  </aside>
+  <div class="app-shell">
+    <header class="topbar"><div class="breadcrumb"><span>Không gian cá nhân</span><span class="slash">/</span><strong id="breadcrumb">Quy trình SEO</strong></div><div class="top-actions"><span class="demo-label"><span></span> Bản mẫu tương tác</span><span class="avatar small">DN</span></div></header>
+    <main id="main" tabindex="-1">
+      <div class="page-heading"><div><div class="eyebrow">ORBIT / SEO WORKSPACE</div><h1 id="page-title">Một mục tiêu. Trọn quy trình SEO.</h1><p id="page-description">Từ dữ liệu tìm kiếm đến từng thay đổi trên website.</p></div><button class="button primary" id="create-run"><span>＋</span> Giao mục tiêu mới</button></div>
+      <div class="demo-notice"><span class="notice-symbol">◈</span><p><strong>Đang ở chế độ mô phỏng.</strong> Không gửi lệnh tới AI, không đọc GSC và không thay đổi website. Kết quả và số liệu đều là mẫu.</p><a href="#connections">Xem kết nối <span>↗</span></a></div>
+      <section id="screen" aria-label="Nội dung chính"></section>
+      <footer>Orbit dành cho công việc của anh <span>·</span> Bản đầu: GSC → Phân tích → Tối ưu SEO</footer>
+    </main>
+  </div>
+  <dialog id="run-dialog" aria-labelledby="run-dialog-title">
+    <form id="run-form"><div class="dialog-heading"><div><div class="eyebrow">GIAO MỘT LỆNH · THEO DÕI TOÀN BỘ</div><h2 id="run-dialog-title">Anh muốn tối ưu điều gì?</h2></div><button type="button" class="icon-button" data-close="run-dialog" aria-label="Đóng">×</button></div>
+      <div class="form-note">Tạo một lượt mô phỏng mới. Cấu hình này chưa cấp quyền truy cập hoặc sửa website thật.</div>
+      <label for="goal">Mục tiêu</label><textarea id="goal" name="goal" required maxlength="3000">Phân tích dữ liệu Google Search Console, lập kế hoạch và thực hiện tối ưu SEO trong phạm vi cho phép. Báo cáo kết quả từng thay đổi.</textarea>
+      <label for="site">Website cần tối ưu</label><input id="site" name="site" type="url" required value="https://wheyshop.vn" placeholder="https://website.vn">
+      <div class="field-grid"><div><label for="start">Dữ liệu từ ngày</label><input id="start" name="start" type="date" required></div><div><label for="end">Đến ngày</label><input id="end" name="end" type="date" required></div></div>
+      <p class="field-hint">Dùng tháng hoàn chỉnh gần nhất để thử. Kỳ so sánh là số ngày tương đương liền trước. GSC thật có độ trễ; bước kết nối sẽ kiểm tra ngày dữ liệu sẵn có.</p>
+      <div class="field-grid"><div><label for="profile">Hồ sơ phân tích Claude</label><input id="profile" name="profile" value="SEO chuyên sâu" maxlength="120"></div><div><label for="model">Model mong muốn</label><input id="model" name="model" placeholder="Anh điền model đang dùng" maxlength="120"></div></div>
+      <p class="field-hint">Đây là yêu cầu cấu hình, chưa xác minh khả năng truy cập model/project trên tài khoản Claude.</p>
+      <fieldset><legend>Phạm vi cho phép xử lý trong mô phỏng</legend><div class="scope-options"><label><input type="checkbox" name="scope" value="metadata" checked><span>Title & meta description</span></label><label><input type="checkbox" name="scope" value="links" checked><span>Internal link</span></label><label><input type="checkbox" name="scope" value="content"><span>Nội dung trang</span></label><label><input type="checkbox" name="scope" value="technical"><span>Cấu hình kỹ thuật</span></label></div></fieldset>
+      <label for="scenario">Tình huống thử</label><select id="scenario" name="scenario"><option value="normal">Luồng bình thường</option><option value="export-error">Lỗi lấy GSC lần đầu → chạy lại đúng bước</option></select>
+      <p id="form-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="button secondary" data-close="run-dialog">Để sau</button><button class="button primary" type="submit">Tạo lượt mô phỏng →</button></div>
+    </form>
+  </dialog>
+  <dialog id="detail-dialog" aria-labelledby="detail-title"><div id="detail-content"></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.mjs"></script>
+</body>
+</html>

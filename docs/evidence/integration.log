@@ -1,0 +1,22 @@
+
+> orbit-platform@1.0.0-phase1 test:integration
+> node --import tsx --test --test-concurrency=1 test/integration/*.test.ts
+
+✔ PostgreSQL workflow: idempotency, two providers, hash-bound approval and verified artifacts (732.42749ms)
+✔ paused and canceled runs never start downstream tasks; inflight result discarded (39.768437ms)
+✔ expired lease recovers checkpoint and fences late completion (56.905712ms)
+✔ parallel runnable tasks respect owner concurrency; competing claim cannot duplicate attempt (117.430909ms)
+✔ timeout aborts adapter and exhausts bounded retry with backoff (618.400123ms)
+✔ invalid structured output never reaches review or report (232.517341ms)
+✔ budget reservations are atomic across parallel tasks (131.652432ms)
+✔ rejected approval prevents delivery; tampered source blocks validation (518.904894ms)
+✔ each non-SEO workspace runs on the same durable engine without SEO fixtures (1351.865794ms)
+✔ owner-specific provider configuration changes actual routing and can block all unavailable adapters (493.608669ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5090.771597
