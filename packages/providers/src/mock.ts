@@ -74,23 +74,35 @@ export function createMockAdapter(
         source_sha256: data.source_sha256,
       };
       const output =
-        capability === "review"
-          ? {
-              ...(data.analysis as object),
-              reviewed: true,
-              review_notes: [
-                "[MOCK] Adapter độc lập đã nhận và phản biện fixture; không xác nhận sự thật bên ngoài.",
-              ],
-            }
-          : structuredClone(data.fixture ?? fallback);
+        capability === "planning"
+          ? structuredClone(data.planning_fixture)
+          : capability === "review"
+            ? {
+                ...(data.analysis as object),
+                reviewed: true,
+                review_notes: [
+                  "[MOCK] Adapter độc lập đã nhận và phản biện fixture; không xác nhận sự thật bên ngoài.",
+                ],
+              }
+            : structuredClone(data.fixture ?? fallback);
       return {
         output,
         costCents: 0,
+        evidence: {
+          kind: "MOCK",
+          provider: definition.id,
+          model: definition.model,
+        },
         usage: {
           mock: true,
           vendor: definition.id,
           unit: "fixture_call",
           calls: 1,
+          evidence: {
+            kind: "MOCK",
+            provider: definition.id,
+            model: definition.model,
+          },
         },
       };
     },

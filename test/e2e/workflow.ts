@@ -14,6 +14,10 @@ const env = {
   ORBIT_ADMIN_PASSWORD: randomBytes(24).toString("hex"),
   ORBIT_SESSION_SECRET: randomBytes(32).toString("hex"),
   ORBIT_COOKIE_SECURE: "false",
+  ORBIT_OPENAI_API_KEY: "",
+  ORBIT_ANTHROPIC_API_KEY: "",
+  ORBIT_GOOGLE_API_KEY: "",
+  ORBIT_XAI_API_KEY: "",
 };
 let server: ChildProcess | undefined, worker: ChildProcess | undefined;
 let output = "";
@@ -374,6 +378,105 @@ try {
     404,
   );
   checks.push("owner authorization enforced for run and artifact");
+  // Phase 2 offline regression: the AI planning stage also crosses the real
+  // HTTP/backend/worker/database boundary; model inference remains MOCK.
+  const aiGoal = {
+    ...goal,
+    workspace_id: boot.workspaces.find(
+      (w: { kind: string }) => w.kind === "research",
+    ).id,
+    request_key: randomUUID(),
+    planning_strategy: "AI_WITH_FALLBACK",
+  };
+  const aiCreated = await request("runs", "POST", aiGoal);
+  assert.equal(aiCreated.status, 201);
+  const aiRun = await aiCreated.json();
+  await waitFor(
+    async () =>
+      (await (await request("runs/" + aiRun.id)).json()).run.status ===
+      "WAITING_APPROVAL",
+  );
+  let aiDetail = await (await request("runs/" + aiRun.id)).json();
+  assert.equal(aiDetail.tasks.length, 7);
+  assert.equal(
+    aiDetail.tasks.find((t: { key: string }) => t.key === "interpret").output
+      .strategy,
+    "AI",
+  );
+  assert.ok(
+    aiDetail.attempts.every(
+      (a: Record<string, unknown>) => !("provider_snapshot" in a),
+    ),
+  );
+  const aiApproval = aiDetail.approvals[0];
+  assert.equal(
+    (
+      await request("approvals/" + aiApproval.id, "POST", {
+        decision: "approve",
+        output_hash: aiApproval.output_hash,
+      })
+    ).status,
+    200,
+  );
+  await waitFor(
+    async () =>
+      (await (await request("runs/" + aiRun.id)).json()).run.status ===
+      "COMPLETED",
+  );
+  aiDetail = await (await request("runs/" + aiRun.id)).json();
+  assert.equal(aiDetail.artifacts.length, 7);
+  assert.equal(aiDetail.run.mode, "MOCK");
+  const configurationOnly = await request(
+    "connections/openai/config",
+    "PATCH",
+    {
+      enabled: true,
+      model: "fixture-not-a-real-model",
+      model_config: {
+        input_usd_per_million: 1,
+        output_usd_per_million: 2,
+        max_input_tokens: 32000,
+        max_output_tokens: 2048,
+        price_source: "OFFLINE E2E fixture; not official prices",
+        price_date: "2026-11-02",
+      },
+    },
+  );
+  assert.equal(configurationOnly.status, 200);
+  assert.equal(
+    (await request("connections/openai/test", "POST", { consent: true }))
+      .status,
+    409,
+  );
+  const disconnected = (await (await request("connections")).json()).find(
+    (c: { id: string }) => c.id === "openai",
+  );
+  assert.equal(disconnected.status, "DISCONNECTED");
+  assert.equal(disconnected.metadata.credential_present, false);
+  checks.push(
+    "AI schema planning → two MOCK providers → approval → 7 stored artifacts; LIVE stays disconnected without a real API probe",
+  );
+  await mkdir("docs/evidence", { recursive: true });
+  await writeFile(
+    "docs/evidence/phase2-offline-e2e.json",
+    JSON.stringify(
+      {
+        at: new Date().toISOString(),
+        status: "PASS",
+        mode: "MOCK",
+        run_id: aiRun.id,
+        task_count: aiDetail.tasks.length,
+        artifact_count: aiDetail.artifacts.length,
+        planning_strategy: "AI",
+        transport: "NO_EXTERNAL_API",
+        live_api_verified: false,
+        notice:
+          "Real HTTP backend + separate worker + PostgreSQL; inference uses mock adapters.",
+      },
+      null,
+      2,
+    ) + "\n",
+  );
   await mkdir("docs/evidence", { recursive: true });
   await writeFile(
     "docs/evidence/phase1-e2e.json",

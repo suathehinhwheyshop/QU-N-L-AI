@@ -10,6 +10,10 @@ export const GoalInput = z
       .default([]),
     budget_cents: z.number().int().min(0).max(100000).default(0),
     mode: Mode.default("MOCK"),
+    live_data_consent: z.boolean().default(false),
+    planning_strategy: z
+      .enum(["TEMPLATE", "AI_WITH_FALLBACK"])
+      .default("TEMPLATE"),
     site: z
       .url()
       .refine((value) => {
@@ -91,7 +95,7 @@ export const GscData = z
   .strict();
 export const ContextData = z
   .object({
-    source: z.literal("MOCK"),
+    source: z.enum(["MOCK", "USER_INPUT"]),
     goal: z.string(),
     workspace: z.string(),
     attachments: z.array(z.string()),
@@ -140,7 +144,7 @@ export type Node = z.infer<typeof NodeSchema>;
 export const GoalContract = z
   .object({
     version: z.literal(1),
-    strategy: z.literal("TEMPLATE"),
+    strategy: z.enum(["TEMPLATE", "AI"]),
     objective: z.string().min(10),
     workspace: z.string(),
     deliverables: z.array(z.string()).min(1),
@@ -148,7 +152,7 @@ export const GoalContract = z
     constraints: z.object({
       mode: Mode,
       read_only: z.literal(true),
-      external_calls: z.literal(false),
+      external_calls: z.boolean(),
       budget_cents: z.number().int().nonnegative(),
     }),
     notice: z.string(),
@@ -161,12 +165,13 @@ export type Plan = {
   template: string;
   workspace: string;
   nodes: Node[];
-  estimate: { mode: "MOCK"; cost_cents: 0; notice: string };
+  estimate: { mode: "MOCK" | "LIVE"; cost_cents: number; notice: string };
 };
 export class OrbitError extends Error {
   constructor(
     public code: string,
     public retryable = false,
+    public billingUncertain = false,
   ) {
     super(code);
   }
@@ -187,3 +192,78 @@ export const safeMessage: Record<string, string> = {
   UNAUTHORIZED: "Anh cần đăng nhập.",
   BAD_REQUEST: "Yêu cầu không hợp lệ.",
 };
+
+export const ModelProfile = z
+  .object({
+    input_usd_per_million: z.number().finite().nonnegative().max(10000),
+    output_usd_per_million: z.number().finite().nonnegative().max(10000),
+    max_input_tokens: z.number().int().min(1024).max(200000),
+    max_output_tokens: z.number().int().min(128).max(8192),
+    price_source: z.string().min(5).max(300),
+    price_date: z.iso.date(),
+  })
+  .strict();
+export type PricingProfile = z.infer<typeof ModelProfile>;
+export const ProposedPlan = z
+  .object({
+    objective: z.string().min(10).max(5000),
+    acceptance_criteria: z.array(z.string().min(1).max(500)).min(1).max(32),
+    steps: z
+      .array(
+        z
+          .object({
+            key: z.enum(["analyze", "review", "board", "approve", "deliver"]),
+            depends_on: z
+              .array(
+                z.enum([
+                  "source",
+                  "interpret",
+                  "analyze",
+                  "review",
+                  "board",
+                  "approve",
+                ]),
+              )
+              .max(6),
+            instruction: z.string().min(5).max(1500),
+            effect: z.literal("read"),
+          })
+          .strict(),
+      )
+      .length(5),
+  })
+  .strict();
+export const InterpretedPlan = z
+  .object({
+    strategy: z.enum(["AI", "TEMPLATE_FALLBACK"]),
+    plan: ProposedPlan,
+    fallback_reason: z.string().nullable(),
+  })
+  .strict();
+export const ProbeOutput = z.object({ ok: z.literal(true) }).strict();
+export type Evidence = {
+  kind: "MOCK" | "HTTP_STUB" | "LIVE_API";
+  provider: string;
+  model: string;
+  request_id?: string;
+  actual_model?: string;
+};
+export const phase2Messages: Record<string, string> = {
+  MISSING_CREDENTIAL: "Thiếu API key phía server.",
+  LIVE_NOT_READY:
+    "Cần ít nhất hai provider/model đã probe API thật và cho phép xử lý dữ liệu bên ngoài.",
+  EXTERNAL_POLICY: "Chưa cấp phép gửi dữ liệu đến AI bên ngoài.",
+  PRICING_REQUIRED: "Thiếu cấu hình giá/token limits hợp lệ.",
+  UNVERIFIED_MODEL: "Model chưa có probe API thật còn hiệu lực.",
+  AUTH_FAILED: "API từ chối credential.",
+  RATE_LIMIT: "Nhà cung cấp giới hạn tốc độ.",
+  API_RESPONSE_INVALID: "Phản hồi API không hợp lệ.",
+  CONTEXT_LIMIT: "Input vượt giới hạn token đã cấu hình.",
+  LIVE_SOURCE_UNAVAILABLE:
+    "GSC thật thuộc Phase 3; Phase 2 LIVE dùng Research/Video/Development với yêu cầu người dùng.",
+  UNTRUSTED_EXECUTION: "Không có bằng chứng thực thi API thật.",
+};
+Object.assign(safeMessage, phase2Messages);
+
+safeMessage.PROBE_BUSY =
+  "Đang có probe hoặc vừa kiểm tra kết nối. Vui lòng thử lại sau.";

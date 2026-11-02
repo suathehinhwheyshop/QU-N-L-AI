@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { OrbitError } from "@orbit/shared/contracts";
+import type { PricingProfile, Evidence } from "@orbit/shared/contracts";
 import type { Candidate } from "./router";
 export type InvokeInput = {
   capability: string;
@@ -7,14 +8,21 @@ export type InvokeInput = {
   attempt: number;
   scenario: string;
   signal: AbortSignal;
+  model?: string;
+  profile?: PricingProfile;
 };
 export interface ProviderAdapter {
   descriptor: Candidate;
-  health(): Promise<{ status: "MOCK" | "CONNECTED"; code: string }>;
+  credentialTag?: () => string | null;
+  health(): Promise<{
+    status: "MOCK" | "CONNECTED" | "DISCONNECTED";
+    code: string;
+  }>;
   invoke(input: InvokeInput): Promise<{
     output: unknown;
     costCents: number;
     usage: Record<string, unknown>;
+    evidence?: Evidence;
   }>;
 }
 export type HandlerContext = {
@@ -26,12 +34,15 @@ export type HandlerContext = {
     output: unknown;
     costCents: number;
     usage: Record<string, unknown>;
+    evidence?: Evidence;
   }>;
 };
 export type Handler = {
   input: z.ZodType;
   output: z.ZodType;
   execute: (ctx: HandlerContext) => Promise<unknown>;
+  safeFallback?: boolean;
+  invokeTimeoutMs?: number;
 };
 export interface IntegrationAdapter {
   id: string;
@@ -40,7 +51,10 @@ export interface IntegrationAdapter {
   scopes: string[];
   input: z.ZodType;
   output: z.ZodType;
-  health(): Promise<{ status: "MOCK" | "CONNECTED"; code: string }>;
+  health(): Promise<{
+    status: "MOCK" | "CONNECTED" | "DISCONNECTED";
+    code: string;
+  }>;
   execute(input: unknown, signal: AbortSignal): Promise<unknown>;
 }
 let registry: {

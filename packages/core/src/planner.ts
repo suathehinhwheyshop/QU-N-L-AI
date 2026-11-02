@@ -43,7 +43,6 @@ export function registerTemplate(kind: string, factory: Template) {
   templates.set(kind, factory);
 }
 export function planGoal(goal: Goal, kind: string): Plan {
-  if (goal.mode !== "MOCK") throw new OrbitError("LIVE_UNAVAILABLE");
   const factory = templates.get(kind);
   if (!factory) throw new OrbitError("BAD_REQUEST");
   const interpretation = interpretGoal(goal, kind);
@@ -61,7 +60,7 @@ export function planGoal(goal: Goal, kind: string): Plan {
     workspace: kind,
     nodes,
     estimate: {
-      mode: "MOCK",
+      mode: goal.mode,
       cost_cents: 0,
       notice: "Mock không phát sinh phí API. Chưa có ước tính cho AI thật.",
     },

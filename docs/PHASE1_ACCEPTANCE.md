@@ -1,5 +1,7 @@
 # Phase 1 — Ma trận nghiệm thu sau audit
 
+> Bằng chứng lịch sử của Phase 1 (`9f07558`). Baseline chạy lại được giữ tại `docs/evidence/phase1-baseline/`; regression của branch Phase 2 ở [PHASE2_VALIDATION.md](PHASE2_VALIDATION.md).
+
 Phạm vi: Universal Multi-AI Foundation. SEO chỉ là workflow E2E đầu tiên. Không gọi API ngoài, không sửa website. Kết quả thực thi engine/backend là thật; nội dung AI/GSC là MOCK.
 
 | #   | Điều kiện                         | Bằng chứng đã thực thi                                                                                   | Kết quả     |

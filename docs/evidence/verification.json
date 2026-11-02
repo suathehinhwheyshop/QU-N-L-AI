@@ -1,20 +1,21 @@
 {
   "status": "PASS",
-  "mode": "MOCK",
-  "at": "2026-11-02T16:02:49.081Z",
+  "mode": "MOCK_AND_HTTP_STUB",
+  "live_api_verified": false,
+  "at": "2026-11-02T17:17:26.679Z",
   "results": [
     {
       "name": "unit",
       "command": "npm run test",
       "status": "PASS",
-      "tests": 14,
+      "tests": 19,
       "log": "unit.log"
     },
     {
       "name": "integration",
       "command": "npm run test:integration",
       "status": "PASS",
-      "tests": 10,
+      "tests": 19,
       "log": "integration.log"
     },
     {
@@ -36,6 +37,7 @@
       "log": "e2e.log"
     }
   ],
-  "e2e_run_id": "a69b23ea-6dba-419e-b59d-6556310fbe29",
-  "notice": "Only Foundation verification; no real AI/GSC or website modification."
+  "e2e_run_id": "eec8dbc4-b6a9-4fe5-a076-4fafac4309b5",
+  "phase2_e2e_run_id": "545635af-2a05-46ee-8ccf-893427e6a571",
+  "notice": "Offline Phase 2 implementation and Phase 1 regressions only. Official API proof is separate: phase2-live.json. No website writes."
 }

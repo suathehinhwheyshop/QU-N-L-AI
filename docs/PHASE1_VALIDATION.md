@@ -1,5 +1,7 @@
 # Kết quả kiểm chứng Foundation sau audit
 
+> Bằng chứng lịch sử của Phase 1 (`9f07558`). Baseline chạy lại được giữ tại `docs/evidence/phase1-baseline/`; regression của branch Phase 2 ở [PHASE2_VALIDATION.md](PHASE2_VALIDATION.md).
+
 Lượt nghiệm thu mới theo yêu cầu điều chỉnh; supersedes báo cáo trước. Code hoạt động, mock và giao diện cũ được phân loại tại CODEBASE_AUDIT.md.
 
 - Unit: **14 passed**, 0 skipped.

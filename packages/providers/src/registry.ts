@@ -26,10 +26,10 @@ export function describeLiveProvider(id: string) {
     id: d.id,
     name: d.name,
     status: "DISCONNECTED" as const,
-    implementation: "NOT_IMPLEMENTED" as const,
+    implementation: "CODE_READY_UNVERIFIED" as const,
     capabilities_verified: false,
     model_configuration: { selected_model: null, verified: false },
     notice:
-      "Phase 1 không gọi API ngoài. Adapter MOCK cùng hãng không phải kết nối API thật.",
+      "API adapter đã có code, chưa xác minh khi thiếu credential/model probe. MOCK không phải kết nối thật.",
   };
 }

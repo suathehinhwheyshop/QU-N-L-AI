@@ -1,0 +1,13 @@
+{
+  "at": "2026-11-02T17:18:46.122Z",
+  "kind": "LIVE_API",
+  "status": "BLOCKED",
+  "real_api_verified": false,
+  "reason": "AT_LEAST_TWO_SERVER_CREDENTIALS_REQUIRED",
+  "missing_credentials": [
+    "ORBIT_OPENAI_API_KEY",
+    "ORBIT_ANTHROPIC_API_KEY",
+    "ORBIT_GOOGLE_API_KEY",
+    "ORBIT_XAI_API_KEY"
+  ]
+}

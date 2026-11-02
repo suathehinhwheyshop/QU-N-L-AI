@@ -1,0 +1,12 @@
+{
+  "at": "2026-11-02T17:17:26.221Z",
+  "status": "PASS",
+  "mode": "MOCK",
+  "run_id": "545635af-2a05-46ee-8ccf-893427e6a571",
+  "task_count": 7,
+  "artifact_count": 7,
+  "planning_strategy": "AI",
+  "transport": "NO_EXTERNAL_API",
+  "live_api_verified": false,
+  "notice": "Real HTTP backend + separate worker + PostgreSQL; inference uses mock adapters."
+}

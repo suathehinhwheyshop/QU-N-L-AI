@@ -1,6 +1,7 @@
 import { reportFixture, type WorkspaceModule } from "./definition";
 export const videoWorkspace: WorkspaceModule = {
   kind: "video",
+  liveInput: true,
   name: "Video Studio",
   template: "video-brief-v1",
   sourceHandler: "video.source",

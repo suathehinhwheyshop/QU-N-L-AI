@@ -1,4 +1,4 @@
-# ORBIT — kiến trúc nền tảng V1
+# ORBIT — kiến trúc nền tảng V1 / mở rộng Phase 2
 
 ## Quyết định trước khi triển khai
 
@@ -6,7 +6,7 @@
 - PostgreSQL 17 + Drizzle: giao dịch, ràng buộc và `FOR UPDATE SKIP LOCKED` cho durable queue. Không thêm Redis/Temporal ở Phase 1: quy mô cá nhân chưa cần thêm dịch vụ, dễ kiểm tra checkpoint và khôi phục. Worker độc lập với vòng đời request/browser.
 - ArtifactStore interface: content-addressed filesystem cho development, checksum + version + lineage trong PostgreSQL. Object storage GCS/S3 là adapter Phase 4, chưa tuyên bố đã triển khai.
 - Auth Phase 1: một tài khoản development, password phía server, cookie HttpOnly ký HMAC, hạn dùng, kiểm tra Origin cho request thay đổi. Server mặc định loopback. OIDC, multi-user provisioning, rate-limit phân tán và review bảo mật thuộc Phase 4; chưa cho phép public production.
-- Không cần API key để kiểm thử core. LIVE chưa được bật; bốn vendor mock adapters có metadata MOCK rõ ràng, không giả Connected.
+- Không cần API key để kiểm thử core. MOCK vẫn dùng cho automated tests. Adapter LIVE đã có code nhưng chỉ được dùng sau server credential, model/pricing, probe và data policy hợp lệ; môi trường hiện chưa xác minh API thật.
 
 ## Các lớp
 
@@ -14,7 +14,7 @@
 
 Core chỉ biết contract task, schema, capability, dependency, effect và policy. Nó không import nghiệp vụ SEO. Workspace registry cung cấp template/handlers. Bốn workspace là module độc lập: SEO, Video, Research, Development. Mỗi module có template, source handler, deliverables, acceptance criteria và fixture riêng. Dùng chung engine; chưa render video hoặc thực thi code bên ngoài.
 
-Goal Interpreter tạo contract chứa objective, deliverables, acceptance criteria của người dùng và constraints read-only/MOCK. Planner Phase 1 là deterministic template planner: chọn workspace/template, gắn goal/acceptance criteria, dựng DAG đã kiểm tra cycle và node budget. Chưa phải AI tự suy luận kế hoạch tùy ý. Input/output của từng handler được Zod kiểm tra. Task Router lọc capability, data policy, availability rồi chấm theo cost/latency/reliability. Bước review tránh provider vừa phân tích; không gán cố định vai trò cho hãng AI.
+Goal Interpreter tạo contract chứa objective, deliverables, acceptance criteria của người dùng và constraints read-only và phạm vi truyền dữ liệu theo mode. Planner Phase 1 là deterministic template planner: chọn workspace/template, gắn goal/acceptance criteria, dựng DAG đã kiểm tra cycle và node budget. Chưa phải AI tự suy luận kế hoạch tùy ý. Input/output của từng handler được Zod kiểm tra. Task Router lọc capability, data policy, availability rồi chấm theo cost/latency/reliability. Bước review tránh provider vừa phân tích; không gán cố định vai trò cho hãng AI.
 
 ## Durable execution
 
@@ -32,7 +32,7 @@ SEO: mock GSC → analysis → review bởi provider khác → task board → ap
 
 Server lấy credential từ môi trường/secret manager tương lai; không trả giá trị qua API hoặc log. Input không được dùng làm URL provider tùy ý. API truy cập dữ liệu theo owner/workspace, download cũng kiểm tra owner. Uploaded file giới hạn size/type; blob key do server tạo, không dùng tên file làm đường dẫn.
 
-Run có budget, reservation, cost thực tế; mỗi attempt có ledger. Claim atomically kiểm tra budget. Giá/cost của mock = 0; chi phí LIVE chưa ước tính được khi chưa có pricing/model/cap thật. Lỗi API public chỉ trả mã/thông báo đã chuẩn hóa, không dump provider error hoặc environment. Logs không chứa secret/session.
+Run có budget, reservation, cost thực tế; mỗi attempt có ledger. Claim atomically kiểm tra budget. Giá/cost của mock = 0; chi phí LIVE ước tính theo pricing/model/token caps do operator cung cấp; thiếu cấu hình sẽ chặn admission. Lỗi API public chỉ trả mã/thông báo đã chuẩn hóa, không dump provider error hoặc environment. Logs không chứa secret/session.
 
 ## Môi trường và giới hạn
 
@@ -48,20 +48,36 @@ Tool layer dùng IntegrationAdapter độc lập với ProviderAdapter, có inpu
 
 ## Cấu trúc package sau audit
 
-| Layer                                                                                   | Nơi triển khai                                                      |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Frontend                                                                                | src/app, src/components (Next.js + React)                           |
-| Backend / composition                                                                   | src/app/api, src/server/runtime.ts, src/worker.ts                   |
-| Shared contracts / DTO                                                                  | @orbit/shared — packages/shared                                     |
-| Goal Interpreter / Planner / DAG / Router / Executor / State / Retry / Approval / Audit | @orbit/core — packages/core                                         |
-| Database / schema                                                                       | @orbit/database — packages/database                                 |
-| ArtifactStore                                                                           | @orbit/storage — packages/storage                                   |
-| Provider adapters                                                                       | @orbit/providers — bốn module anthropic/openai/google/xai, chỉ MOCK |
-| Tool connector                                                                          | @orbit/integrations — GSC fixture MOCK                              |
-| Workspace modules                                                                       | @orbit/workspaces — seo/video/research/development                  |
+| Layer                                                                                   | Nơi triển khai                                                                           |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Frontend                                                                                | src/app, src/components (Next.js + React)                                                |
+| Backend / composition                                                                   | src/app/api, src/server/runtime.ts, src/worker.ts                                        |
+| Shared contracts / DTO                                                                  | @orbit/shared — packages/shared                                                          |
+| Goal Interpreter / Planner / DAG / Router / Executor / State / Retry / Approval / Audit | @orbit/core — packages/core                                                              |
+| Database / schema                                                                       | @orbit/database — packages/database                                                      |
+| ArtifactStore                                                                           | @orbit/storage — packages/storage                                                        |
+| Provider adapters                                                                       | @orbit/providers — bốn module anthropic/openai/google/xai, mock và REST network adapters |
+| Tool connector                                                                          | @orbit/integrations — GSC fixture MOCK                                                   |
+| Workspace modules                                                                       | @orbit/workspaces — seo/video/research/development                                       |
 
 Các file src/core, src/db, src/providers… chỉ re-export để giữ tương thích đường import; implementation chuẩn nằm trong packages. Npm workspaces liên kết package, Next transpile các package TS. Core không import concrete provider, integration hoặc workspace; composition root lắp implementation. Có boundary tests để kiểm tra ràng buộc này.
 
-Mỗi vendor có adapter instance, mock model ID, capabilities, health và metadata riêng. Provider mock không chứa fixture SEO; fixture thuộc workspace. Cấu hình model/enabled lưu trong provider_configs theo owner. Worker đọc cấu hình tại claim; model ngoài allowlist bị từ chối; adapter disabled không được chọn. Seed không ghi đè cấu hình người dùng. Hai adapter cũ được giữ metadata archived để không xóa history. Metadata các API thật vẫn DISCONNECTED; chưa có SDK/network adapter LIVE.
+Mỗi vendor có adapter instance, mock model ID, capabilities, health và metadata riêng. Provider mock không chứa fixture SEO; fixture thuộc workspace. Cấu hình model/enabled lưu trong provider_configs theo owner. Worker đọc cấu hình tại claim; model ngoài allowlist bị từ chối; adapter disabled không được chọn. Seed không ghi đè cấu hình người dùng. Hai adapter cũ được giữ metadata archived để không xóa history. Metadata API thật được dẫn xuất theo owner từ receipts. Không lấy cột trạng thái tĩnh làm bằng chứng; network adapters được mô tả bên dưới.
 
-Goal Interpreter là contract-based, không tự nhận hiểu ngữ nghĩa tự do. Validation hiện xác minh schema, nguồn/checksum, dependency, phạm vi và approval; không chứng minh tính đúng đắn nghiệp vụ của fixture. Không dùng chữ COMPLETED MOCK để khẳng định AI/GSC thật đã chạy.
+Template Goal Interpreter là contract-based; AI planning bổ sung có giới hạn, không sinh DAG/quyền tự do. Validation hiện xác minh schema, nguồn/checksum, dependency, phạm vi và approval; không chứng minh tính đúng đắn nghiệp vụ của fixture. Không dùng chữ COMPLETED MOCK để khẳng định AI/GSC thật đã chạy.
+
+## Phase 2 — adapter, planning và admission
+
+Giữ nguyên bảy packages và coordinator/DAG/lease/checkpoint/approval. Adapter độc lập thực hiện một HTTP request theo giao thức của hãng, không SDK retries và không phụ thuộc Claude Code. `@orbit/providers` sở hữu wire/build/parse, proxy-aware transport, schema JSON, normalized usage và provenance. Core chỉ nhận ProviderAdapter contract.
+
+`MOCK`, `HTTP_STUB`, `LIVE_API` là loại bằng chứng, độc lập với trạng thái COMPLETED. Stub adapters có mode MOCK và ID `stub-*`. Transport chính thức cố định HTTPS endpoint trong code; client không cấp endpoint hoặc key. Provider health không tự trả CONNECTED. Probe server thực hiện inference JSON, ghi config hash + credential HMAC tag, selected/returned model, request ID khi hãng cung cấp, latency, usage/cost và kết quả. Không lưu credential gốc. HMAC tag và attempt snapshot không trả về UI.
+
+Router đọc config theo owner: enabled, capability, probe còn hiệu lực 15 phút, cấu hình và credential trùng, không chỉ dựa vào tên hãng. Sau khi lọc mode/policy/availability và budget, ưu tiên điểm cost/latency/reliability; latency lấy từ probe, reliability hiện là hằng số, chưa đo tỷ lệ thành công lịch sử. Review tránh vendor của analyst qua ID provider chính thức. Các model phải hỗ trợ giao thức structured JSON/tools hiện triển khai; probe không chứng minh trước mọi kết quả nghiệp vụ, output mỗi task vẫn phải qua Zod và checksum.
+
+LIVE admission yêu cầu external policy + consent theo goal + ít nhất hai provider độc lập đã probe. Price và token caps bắt buộc. Claim lưu snapshot pricing/credential trước network call để thay config sau claim không đổi hóa đơn ước tính của attempt. Không giữ DB transaction lúc gọi HTTP. Thành công/invalid output/cancel đều giữ chi phí đã ghi nhận. Timeout/network error/HTTP 5xx hoặc expired LIVE lease có outcome không xác định: tiêu reservation bảo thủ, không hoàn ngân sách rồi retry vô hạn. Probe crashed được settle khi probe tiếp theo tới. Run reservation và ledger probe riêng được kiểm soát atomically. Đây là local spending guard theo giá khai báo, không thay provider spending limit.
+
+AI planning là task `interpret` bền vững giữa source và analysis, có reservation, timeout, usage, checkpoint và artifact. Preview vẫn deterministic, không gọi tính phí. AI phải trả ProposedPlan strict (objective, acceptance criteria, đúng năm bước, dependencies và effect read); validator giữ nguyên objective/criteria bắt buộc và topology/approval. Instructions hợp lệ được truyền sang analyst/reviewer; handler/tool/model quyền thực thi vẫn do template và router chọn. Đây là **bounded AI planning trong template đã duyệt**, chưa phải tự sinh workflow tùy ý. Sai schema/quyền hoặc không có planning provider trả TEMPLATE_FALLBACK cùng lý do, không báo AI thành công. Deadline invoke 30 giây nằm trong deadline task LIVE 60 giây để còn thời gian lưu fallback.
+
+Research/Video/Development LIVE nhận ContextData nguồn USER_INPUT. Không trộn GSC fixture vào run LIVE; workspace SEO từ chối LIVE khi chưa có source connector thật. Upload hiện chỉ lưu bytes/metadata; chưa đưa nội dung vào prompt. Phase 3 mới đọc GSC thật.
+
+Probes chỉ ra đường gọi API đã trả JSON hợp lệ; bằng chứng thực tế từ multi-step worker vẫn cần run/attempt/usage/artifact thực. Môi trường hiện thiếu keys, `verify:live` ghi BLOCKED. Bản draft môi trường thêm đúng bốn API hosts và secret requirements; chưa được publish/apply, không coi là runtime access đã có.

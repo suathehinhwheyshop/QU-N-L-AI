@@ -1,7 +1,9 @@
+import type { PricingProfile } from "@orbit/shared/contracts";
 import { OrbitError } from "@orbit/shared/contracts";
 export interface Candidate {
   vendor?: string;
   models?: string[];
+  profile?: PricingProfile;
   id: string;
   mode: "MOCK" | "LIVE";
   available: boolean;

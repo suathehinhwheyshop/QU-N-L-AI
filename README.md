@@ -1,12 +1,14 @@
 # ORBIT — Universal Multi-AI Orchestration Platform
 
-Phase 1 Foundation: Next.js 16 + TypeScript/React + Tailwind, PostgreSQL 17/Drizzle, durable worker, DAG, routing, schema validation, bounded retry/recovery, approval, artifacts và audit. UI tiếng Việt, desktop/mobile. Đây là backend và engine thực thi có lưu trữ thật; các AI và GSC hiện là **MOCK**, không phải kết nối API thật.
+Web điều phối đa AI: Next.js/TypeScript/React, PostgreSQL/Drizzle và worker độc lập. Giữ nguyên 7 shared packages, bốn workspace SEO/Video/Research/Development. Core không gán hãng AI vào vai trò nghiệp vụ, không phụ thuộc hoặc sao chép Claude Code.
 
-MVP SEO: nhận goal → đọc GSC fixture → phân tích → provider thứ hai phản biện → bảng việc → người dùng phê duyệt → kiểm chứng và xuất báo cáo. Không sửa website.
+Phase 1 đã chạy lại baseline từ `orbit/phase1-foundation-audit`, commit `9f07558`: 14 unit, 10 integration, typecheck/build và E2E qua backend/worker/database đều PASS. Bằng chứng được giữ tại [docs/evidence/phase1-baseline](docs/evidence/phase1-baseline).
 
-## Development
+Phase 2 bổ sung bốn adapter REST độc lập, cấu hình model/giá, probe, structured handoff, accounting và AI planning có validation/fallback. **Chưa nghiệm thu LIVE:** môi trường hiện thiếu cả bốn API credentials. HTTP_STUB/MOCK tests không chứng minh đã gọi AI thật. Xem [báo cáo kiểm thử Phase 2](docs/PHASE2_VALIDATION.md) và [live evidence](docs/evidence/phase2-live.json).
 
-Node.js 24, Docker daemon local (hoặc một PostgreSQL riêng đã cấu hình).
+## Chạy development
+
+Cần Node.js 24 và Docker local, hoặc PostgreSQL đã cấu hình.
 
 ```sh
 npm ci
@@ -16,59 +18,42 @@ npm run db:seed
 npm run dev -- --port 3200
 ```
 
-Ở terminal thứ hai:
+Chạy `npm run worker` trong terminal khác. Web/worker phải dùng cùng database và storage. `setup:local` giữ cấu hình có sẵn; lần đầu tạo credential ngẫu nhiên trong `.env.local` và `.orbit/postgres.env` (ignored, chmod 0600). PostgreSQL bind loopback `127.0.0.1:55432`, volume riêng. Đăng nhập bằng `ORBIT_ADMIN_PASSWORD` phía server; không gửi mật khẩu vào chat/log. `ORBIT_BASE_URL` phải khớp origin truy cập để kiểm tra CSRF. Chưa có URL production/public.
+
+## Bật API thật khi đã có quyền API
+
+1. Đặt ít nhất hai trong `ORBIT_OPENAI_API_KEY`, `ORBIT_ANTHROPIC_API_KEY`, `ORBIT_GOOGLE_API_KEY`, `ORBIT_XAI_API_KEY` trong secret/environment phía server. Khởi động lại web và worker. Không dùng biến `NEXT_PUBLIC_*`; không nhập key vào frontend. Gói thuê bao chat không bao gồm API credit/quyền API mặc định.
+2. Cho phép egress HTTPS đến endpoint tương ứng: `api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`, `api.x.ai`. Transport tôn trọng proxy/CA của môi trường; không tắt TLS verification.
+3. Trong **Cài đặt**, chọn External data policy, đặt ngân sách. Bản local vẫn bắt buộc read-only.
+4. Trong **Kết nối**, nhập model ID mà tài khoản thực sự có quyền, giá input/output USD/1M tokens, nguồn/ngày giá và giới hạn tokens. Không có giá hoặc model entitlement mặc định. Lưu cấu hình và đồng ý chạy probe có tính phí.
+5. Probe thực hiện structured generation trên API chính thức. Chỉ probe hợp lệ, khớp cấu hình/credential và chưa quá 15 phút mới được router coi là sẵn sàng. Thiếu key, thay model/giá/key, lỗi auth/model/response hoặc probe hết hạn sẽ chặn lựa chọn LIVE. HTTP stub không kích hoạt LIVE.
+6. Tạo goal ở Research/Video/Development, chọn LIVE, đồng ý gửi input đến AI. Chọn Template hoặc AI planning có fallback, đặt ngân sách đủ reservation. Preview không gọi AI tính phí; AI planning chạy trong worker như task có checkpoint.
+7. Theo dõi outputs/attempt usage/logs. Review dùng provider khác analyst. Duyệt bảng việc theo checksum trong UI trước khi xuất báo cáo.
+
+LIVE Phase 2 phân tích **yêu cầu người dùng**, không tự đọc website, GSC, video hay chạy code. SEO vẫn MOCK đến khi có GSC thật ở Phase 3. Upload lưu bytes thật nhưng chưa trích nội dung vào prompt; không dùng upload thay thế nguồn đã đọc.
+
+Probe có ledger riêng: tổng chi phí/reservation probe trong 24 giờ không vượt giới hạn ngân sách trong Settings; mỗi provider cách tối thiểu 10 giây, một probe chạy mỗi owner. Ngân sách workflow độc lập. Token usage do API báo; chi phí được ước tính từ giá operator cung cấp và làm tròn lên cents, không phải hóa đơn hãng. Lỗi/timeout/crash có khả năng đã tính tiền sẽ được ghi chi phí bảo thủ bằng reservation; retry inference có thể tạo phí mới. Không hứa exactly-once cho inference API.
+
+## Kiểm thử và bằng chứng
 
 ```sh
-npm run worker
+npm run verify:phase2
+npm run verify:live
 ```
 
-`setup:local` giữ nguyên cấu hình có sẵn; lần đầu tạo mật khẩu ngẫu nhiên trong `.env.local` và `.orbit/postgres.env` (đều ignored, chmod 0600). PostgreSQL chỉ bind `127.0.0.1:55432`, có volume riêng. Mật khẩu đăng nhập development là `ORBIT_ADMIN_PASSWORD` trong cấu hình local; xem riêng trên máy, không gửi vào chat/log/repository. Web và worker phải dùng cùng DATABASE_URL/storage. ORBIT_BASE_URL phải khớp origin đang truy cập để CSRF check hoạt động. Nếu đổi port, sửa cấu hình server tương ứng và restart.
+`verify:phase2`: unit/protocol tests, integration PostgreSQL, typecheck, production build, E2E với web/worker thực. Giữ mọi regression Foundation, thêm schema planning → hai mock providers → approval → 7 artifacts. Không gọi API bên ngoài. Evidence: `docs/evidence/phase2-offline-verification.json` và command logs.
 
-Cấu hình môi trường ngoài: dùng `.env.example`, tạo secret đủ mạnh qua cơ chế server. Không dùng credential development để deploy public. Web mặc định chỉ listen loopback; chưa có URL public.
+`verify:live`: mặc định không thực hiện paid calls. Thiếu credential hoặc cấu hình sẽ ghi BLOCKED và exit 2, không giả PASS. Sau khi kiểm tra cấu hình, `npm run verify:live -- --execute` xác nhận cho phép script probe hai provider, tạo run Research LIVE và chạy worker. Script dừng ở WAITING_APPROVAL, lưu receipts/usage và run ID; người dùng duyệt trong UI để hoàn tất delivery. PASS_TO_APPROVAL chưa phải nghiệm thu trọn Phase 2.
 
-## Kiểm thử
+Có thể chạy riêng `npm test`, `npm run test:integration`, `npm run typecheck`, `npm run build`, `npm run test:e2e`. Integration/E2E tạo database `orbit_test_<random>` riêng, migration và dọn sau kiểm thử; DB user cần quyền tạo database. E2E dùng cổng 3201, bỏ toàn bộ AI keys khỏi child environment, restart cả app và worker, kiểm tra controls/retry/ownership/checksum. `npm run verify:foundation` vẫn chạy regression tương thích.
 
-```sh
-npm test
-npm run test:integration
-npm run build
-npm run test:e2e
-npm run typecheck
-```
+Browser: chạy app/worker cổng 3200, Chromium test profile với CDP 9230 rồi `npm run test:browser`. Restart dev server sau production build để tránh chunks cũ. Script tạo run MOCK trong DB development, kiểm tra desktop/mobile 390 px và chụp evidence; không dùng browser profile cá nhân. Format: `npm run format:check`.
 
-Integration/E2E tạo database `orbit_test_<random>` riêng, chạy migration và xóa database đó sau test; tài khoản database development cần quyền tạo DB. Không xóa run trong database development. E2E tự mở Next production server cổng 3201 và worker riêng, dừng/restart cả web server và worker, kiểm tra approval, artifact checksum, ownership và chính sách read-only. Cần build trước E2E. Trong cloud sandbox, socket/child process có thể cần quyền thực thi bổ sung.
+## Tài liệu và phạm vi
 
-Browser test bổ sung: chạy app/worker cổng 3200; mở Chromium với profile test riêng và `--remote-debugging-port=9230`; chạy `npm run test:browser`. Sau npm ci hoặc production build, khởi động lại dev server trước khi chạy browser test để không dùng JS chunks cũ. Script đăng nhập bằng credential local, upload fixture, tạo một run MOCK trong database development và chụp ảnh vào docs/evidence. Không sử dụng profile trình duyệt cá nhân. Trong container dùng `--headless --no-sandbox --disable-dev-shm-usage`; đây không phải cấu hình browser automation production.
+- [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md), [ROADMAP.md](ROADMAP.md), [TASKS.md](TASKS.md).
+- [Audit và quyết định Phase 2](docs/phase2/PREFLIGHT.md), [thiết kế adapter](docs/phase2/PROVIDERS.md).
+- Packages: shared, core, database, storage, providers, integrations, workspaces; composition tại `src/server/runtime.ts`, worker tại `src/worker.ts`. Các re-export trong `src/core`… giữ compatibility.
+- `legacy/seo-demo` là tài liệu prototype, không phải app nghiệm thu.
 
-Format: `npm run format:check`. Các kết quả hiện tại ghi trong docs/PHASE1_VALIDATION.md. Ảnh chụp thật và E2E evidence nằm ở docs/evidence.
-
-## Kiến trúc và lộ trình
-
-- [ARCHITECTURE.md](ARCHITECTURE.md): lựa chọn stack, ranh giới core/provider/tool/workspace, policy và giới hạn.
-- [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md): schema; nguồn chuẩn packages/database/src/schema.ts và migrations/.
-- [ROADMAP.md](ROADMAP.md): bốn phase theo master prompt.
-- [TASKS.md](TASKS.md): checklist và blocker.
-- packages/core (@orbit/core): Goal Interpreter, generic engine và interfaces; không import nghiệp vụ cụ thể.
-- src/server/runtime.ts: composition root lắp provider/handler/template.
-- packages/workspaces: bốn module SEO, Video, Research, Development với templates/fixtures riêng.
-- packages/providers: bốn vendor mock adapters độc lập (Anthropic/OpenAI/Google/xAI), chưa có API LIVE.
-- packages/integrations: một GSC fixture connector có schema/scope/health; GSC thật chưa kết nối.
-- legacy/seo-demo: giữ prototype trước; không phải ứng dụng mặc định hiện tại.
-
-## Giới hạn rõ ràng
-
-Planner hiện dùng template có kiểm tra DAG, chưa AI planning tự do. Bốn vendor mock adapters không gọi mạng. LIVE bị chặn; chưa có API keys/quyền GSC được xác minh, chưa có CMS write/Gmail/Grokbot/browser connector. Upload lưu bytes thật nhưng mock không đọc nội dung upload để phân tích. Artifacts dùng filesystem bền vững tại development và metadata PostgreSQL; cloud object storage chưa triển khai. Auth local single-user là nền development, chưa production OIDC. Backup/restore, deployment, monitoring và security review đầy đủ thuộc Phase 4. Không báo có tối ưu website hoặc tăng trưởng SEO từ kết quả MOCK.
-
-## Nghiệm thu Foundation sau audit
-
-```sh
-npm run verify:foundation
-```
-
-Runner chạy unit/integration, typecheck, production build và E2E; dừng nếu bất kỳ bước lỗi hoặc không có test nào chạy. Log và summary nằm trong docs/evidence, dữ liệu E2E luôn gắn MOCK. Browser test chạy riêng sau khi restart dev server. Ma trận 10 điều kiện: [docs/PHASE1_ACCEPTANCE.md](docs/PHASE1_ACCEPTANCE.md); audit ban đầu: [docs/CODEBASE_AUDIT.md](docs/CODEBASE_AUDIT.md).
-
-Kết quả lượt nghiệm thu mới: 14 unit, 10 PostgreSQL integration, E2E với restart app/worker và kiểm tra controls/retry; không dùng kết quả HTML demo để thay bằng chứng.
-
-Model configuration: mở Kết nối, chọn model MOCK hợp lệ và bật/tắt adapter, lưu vào backend. Cấu hình theo owner có hiệu lực với task được claim tiếp theo, không đổi model của attempt đã chạy. LIVE model/API chưa triển khai, không có nút giả để đánh dấu Connected. GET bootstrap trả cấu hình owner; GET connections là catalog metadata.
-
-Npm workspaces: packages/shared, core, database, storage, providers, integrations, workspaces. Frontend/backend đặt tại src/app, src/components, src/server và src/worker.ts; các re-export trong src/core… chỉ phục vụ tương thích import. Không cần chuyển toàn bộ repo sang nhiều deployment để có ranh giới package.
+Chưa có GSC/CMS/Drive/Gmail/Grokbot/browser connectors thật, OIDC production, object storage cloud, backup/restore hoặc deployment Google Cloud đã xác minh. Không sửa website, xuất bản, gửi email, thanh toán, xóa dữ liệu. Auth local single-user chỉ cho development; production hardening thuộc Phase 4.

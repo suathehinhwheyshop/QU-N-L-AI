@@ -7,6 +7,7 @@ export type FixtureContext = {
 };
 export type WorkspaceModule = {
   kind: string;
+  liveInput: boolean;
   name: string;
   template: string;
   sourceHandler: string;

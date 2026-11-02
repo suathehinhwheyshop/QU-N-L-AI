@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@orbit/shared": "*",
-    "@orbit/core": "*"
+    "@orbit/core": "*",
+    "undici": "^8.12.3"
   }
 }

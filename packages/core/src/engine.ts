@@ -1,3 +1,4 @@
+import { configuredCandidates, admitLive, configHash } from "./live-policy";
 import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
 import { pool } from "@orbit/database/client";
@@ -11,7 +12,7 @@ import {
 } from "@orbit/shared/contracts";
 import { planGoal } from "./planner";
 import { routeModel } from "./router";
-import { candidates, getProvider, getHandler } from "./registry";
+import { getProvider, getHandler } from "./registry";
 import { LocalArtifactStore, digest, jsonBytes } from "@orbit/storage/store";
 export const blobs = new LocalArtifactStore();
 async function transaction<T>(fn: (c: PoolClient) => Promise<T>) {
@@ -56,9 +57,33 @@ export async function previewGoal(owner: string, goal: Goal) {
     [goal.workspace_id, owner],
   );
   if (!rows[0]) throw new OrbitError("NOT_FOUND");
-  return planGoal(goal, rows[0].kind);
+  const readiness = goal.mode === "LIVE" ? await admitLive(owner, goal) : null;
+  const plan = planGoal(goal, rows[0].kind);
+  if (readiness)
+    plan.estimate = {
+      mode: "LIVE",
+      cost_cents: readiness.estimate,
+      notice: readiness.notice,
+    };
+  return plan;
 }
 export async function createWorkflow(owner: string, goal: Goal) {
+  // Replays must keep returning the persisted run even after a LIVE probe
+  // expires or the operator revokes external execution permission.
+  const existing = (
+    await pool.query<Run>(
+      "SELECT * FROM runs WHERE owner_id=$1 AND request_key=$2",
+      [owner, goal.request_key],
+    )
+  ).rows[0];
+  if (existing) {
+    if (
+      digest(jsonBytes(GoalInput.parse(existing.config))) !==
+      digest(jsonBytes(goal))
+    )
+      throw new OrbitError("CONFLICT");
+    return existing;
+  }
   const plan = await previewGoal(owner, goal);
   return createFromPlan(owner, goal, plan);
 }
@@ -81,7 +106,7 @@ export async function createFromPlan(owner: string, goal: Goal, plan: Plan) {
       [goal.workspace_id, owner],
     );
     if (!ws.rows[0]) throw new OrbitError("NOT_FOUND");
-    if (goal.mode !== "MOCK") throw new OrbitError("LIVE_UNAVAILABLE");
+    if (goal.mode === "LIVE") await admitLive(owner, goal);
     const { validateGraph } = await import("./planner");
     validateGraph(plan.nodes);
     const setting = (
@@ -145,7 +170,7 @@ export async function createFromPlan(owner: string, goal: Goal, plan: Plan) {
       c,
       run.id,
       "CREATED",
-      "Đã lưu goal và DAG. Mode MOCK; chưa có thao tác lên website.",
+      `Đã lưu goal và DAG. Mode ${run.mode}; chỉ tạo báo cáo, không ghi lên website.`,
     );
     return run;
   });
@@ -175,7 +200,7 @@ async function finishState(c: PoolClient, runId: string) {
       c,
       runId,
       "COMPLETED",
-      "Đã kiểm chứng output và bàn giao artifact. Đây là kết quả MOCK.",
+      `Đã kiểm chứng output và bàn giao artifact. Mode ${r.mode}.`,
     );
 }
 export async function claimTask(): Promise<Claim | null> {
@@ -204,6 +229,7 @@ export async function claimTask(): Promise<Claim | null> {
     let providerId: string | null = null,
       model: string | null = null,
       reserve = 0;
+    let snapshot: Record<string, unknown> | null = null;
     if (task.kind === "model") {
       const avoidKey = task.input.avoid_provider_task;
       const avoid = avoidKey
@@ -215,28 +241,11 @@ export async function claimTask(): Promise<Claim | null> {
           ).rows[0]?.provider_id
         : undefined;
       try {
-        const configs = (
-          await c.query<{
-            provider_id: string;
-            enabled: boolean;
-            model: string;
-          }>("SELECT * FROM provider_configs WHERE owner_id=$1", [run.owner_id])
-        ).rows;
-        const configured = candidates().map((candidate) => {
-          const config = configs.find((x) => x.provider_id === candidate.id);
-          return {
-            ...candidate,
-            available:
-              candidate.available &&
-              !!config?.enabled &&
-              !!candidate.models?.includes(config.model),
-            model: config?.model ?? candidate.model,
-          };
-        });
+        const configured = await configuredCandidates(c, run.owner_id);
         const d = routeModel(
           configured,
           task.capability,
-          run.mode as "MOCK",
+          run.mode as "MOCK" | "LIVE",
           setting.data_policy,
           run.budget_cents - run.spent_cents - run.reserved_cents,
           avoid,
@@ -244,21 +253,38 @@ export async function claimTask(): Promise<Claim | null> {
         providerId = d.id;
         model = d.model;
         reserve = d.costCents;
+        snapshot = {
+          profile:
+            d.profile ??
+            (
+              await c.query(
+                "SELECT model_config FROM provider_configs WHERE owner_id=$1 AND provider_id=$2",
+                [run.owner_id, d.id],
+              )
+            ).rows[0]?.model_config,
+          credential_tag: getProvider(d.id).credentialTag?.() ?? null,
+        };
       } catch (e) {
-        await fatal(
-          c,
-          task,
-          run,
-          e instanceof OrbitError ? e.code : "NO_PROVIDER",
-        );
-        return null;
+        if (getHandler(task.handler).safeFallback) {
+          providerId = null;
+          model = null;
+          reserve = 0;
+        } else {
+          await fatal(
+            c,
+            task,
+            run,
+            e instanceof OrbitError ? e.code : "NO_PROVIDER",
+          );
+          return null;
+        }
       }
     }
     const id = randomUUID();
     const {
       rows: [attempt],
     } = await c.query<Attempt>(
-      "INSERT INTO attempts(id,task_id,number,status,provider_id,model,reserved_cents) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+      "INSERT INTO attempts(id,task_id,number,status,provider_id,model,reserved_cents,provider_snapshot) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
       [
         id,
         task.id,
@@ -267,6 +293,7 @@ export async function claimTask(): Promise<Claim | null> {
         providerId,
         model,
         reserve,
+        snapshot,
       ],
     );
     if (task.kind === "approval") {
@@ -369,7 +396,8 @@ export async function executeClaim(claim: Claim) {
   const controller = new AbortController();
   let timer: NodeJS.Timeout | undefined,
     cost = 0,
-    usage: Record<string, unknown> = { mock: true };
+    usage: Record<string, unknown> = { mock: run.mode === "MOCK" };
+  let successfulLiveCall = false;
   try {
     const work = async () => {
       const handler = getHandler(task.handler);
@@ -381,25 +409,91 @@ export async function executeClaim(claim: Claim) {
         ...deps,
         invoke: async (data) => {
           if (!task.provider_id) throw new OrbitError("NO_PROVIDER");
-          const result = await getProvider(task.provider_id).invoke({
-            capability: task.capability,
-            data: {
-              ...data,
-              goal: task.input.goal,
-              workspace: task.input.workspace,
-              goal_contract: task.input.goal_contract,
-            },
-            attempt: attempt.number,
-            scenario: String(task.input.scenario),
-            signal: controller.signal,
-          });
+          const adapter = getProvider(task.provider_id);
+          if (
+            run.mode === "LIVE" &&
+            adapter.credentialTag?.() !==
+              attempt.provider_snapshot?.credential_tag
+          )
+            throw new OrbitError("LIVE_NOT_READY");
+          let result;
+          try {
+            result = await adapter.invoke({
+              capability: task.capability,
+              model: task.model ?? undefined,
+              profile: attempt.provider_snapshot?.profile as Parameters<
+                typeof adapter.invoke
+              >[0]["profile"],
+              data: {
+                ...data,
+                goal: task.input.goal,
+                workspace: task.input.workspace,
+                goal_contract: task.input.goal_contract,
+              },
+              attempt: attempt.number,
+              scenario: String(task.input.scenario),
+              signal: handler.invokeTimeoutMs
+                ? AbortSignal.any([
+                    controller.signal,
+                    AbortSignal.timeout(handler.invokeTimeoutMs),
+                  ])
+                : controller.signal,
+            });
+          } catch (error) {
+            if (
+              run.mode === "LIVE" &&
+              error instanceof OrbitError &&
+              [
+                "AUTH_FAILED",
+                "UNVERIFIED_MODEL",
+                "API_RESPONSE_INVALID",
+              ].includes(error.code)
+            ) {
+              await pool.query(
+                "INSERT INTO provider_probes(owner_id,provider_id,model,kind,status,config_hash,credential_tag,capabilities,error_code,finished_at) VALUES($1,$2,$3,'INVOCATION_FAILURE','FAILED',$4,$5,'[]',$6,now())",
+                [
+                  run.owner_id,
+                  task.provider_id,
+                  task.model,
+                  configHash(task.model!, attempt.provider_snapshot?.profile),
+                  attempt.provider_snapshot?.credential_tag ?? "",
+                  error.code,
+                ],
+              );
+            }
+            if (error instanceof OrbitError && error.billingUncertain) {
+              cost = attempt.reserved_cents;
+              usage = { billing_state: "UNCERTAIN_RESERVED_CHARGED" };
+            }
+            throw error;
+          }
           cost = result.costCents;
           usage = result.usage;
+          if (
+            run.mode === "LIVE" &&
+            (result.evidence?.kind !== "LIVE_API" ||
+              result.evidence.provider !==
+                getProvider(task.provider_id).descriptor.vendor ||
+              result.evidence.model !== task.model)
+          )
+            throw new OrbitError("UNTRUSTED_EXECUTION");
+          successfulLiveCall = result.evidence?.kind === "LIVE_API";
           return result;
         },
       });
       const parsed = handler.output.safeParse(raw);
       if (!parsed.success) throw new OrbitError("INVALID_OUTPUT");
+      if (
+        run.mode === "LIVE" &&
+        task.kind === "model" &&
+        !successfulLiveCall &&
+        !(
+          handler.safeFallback &&
+          (parsed.data as { strategy?: string }).strategy ===
+            "TEMPLATE_FALLBACK"
+        )
+      )
+        throw new OrbitError("UNTRUSTED_EXECUTION");
       return parsed.data as Record<string, unknown>;
     };
     const output = await Promise.race([
@@ -420,10 +514,16 @@ export async function executeClaim(claim: Claim) {
         : error instanceof Error && error.name === "ZodError"
           ? "INVALID_OUTPUT"
           : "PROVIDER_FAILURE";
+    if (code === "TIMEOUT" && run.mode === "LIVE" && !successfulLiveCall) {
+      cost = attempt.reserved_cents;
+      usage = { billing_state: "UNCERTAIN_RESERVED_CHARGED" };
+    }
     await failAttempt(
       claim,
       code,
       error instanceof OrbitError ? error.retryable : false,
+      cost,
+      usage,
     );
   } finally {
     if (timer) clearTimeout(timer);
@@ -454,12 +554,12 @@ async function completeAttempt(
         [task.id],
       );
       await c.query(
-        "UPDATE attempts SET status='CANCELED',finished_at=now() WHERE id=$1",
-        [attempt.id],
+        "UPDATE attempts SET status='CANCELED',cost_cents=$2,usage=$3,finished_at=now() WHERE id=$1",
+        [attempt.id, cost, usage],
       );
       await c.query(
-        "UPDATE runs SET reserved_cents=reserved_cents-$2 WHERE id=$1",
-        [r.id, attempt.reserved_cents],
+        "UPDATE runs SET reserved_cents=reserved_cents-$2,spent_cents=spent_cents+$3 WHERE id=$1",
+        [r.id, attempt.reserved_cents, cost],
       );
       return;
     }
@@ -519,6 +619,8 @@ async function failAttempt(
   { task, attempt, run }: Claim,
   code: string,
   retryable: boolean,
+  charged = 0,
+  usage: Record<string, unknown> = {},
 ) {
   await transaction(async (c) => {
     const t = (
@@ -531,12 +633,18 @@ async function failAttempt(
     ).rows[0];
     if (t.active_attempt_id !== attempt.id || t.status !== "RUNNING") return;
     await c.query(
-      "UPDATE attempts SET status=$2,error_code=$3,finished_at=now() WHERE id=$1",
-      [attempt.id, code === "TIMEOUT" ? "TIMED_OUT" : "FAILED", code],
+      "UPDATE attempts SET status=$2,error_code=$3,cost_cents=$4,usage=$5,finished_at=now() WHERE id=$1",
+      [
+        attempt.id,
+        code === "TIMEOUT" ? "TIMED_OUT" : "FAILED",
+        code,
+        charged,
+        usage,
+      ],
     );
     await c.query(
-      "UPDATE runs SET reserved_cents=reserved_cents-$2,updated_at=now() WHERE id=$1",
-      [run.id, attempt.reserved_cents],
+      "UPDATE runs SET reserved_cents=reserved_cents-$2,spent_cents=spent_cents+$3,updated_at=now() WHERE id=$1",
+      [run.id, attempt.reserved_cents, charged],
     );
     if (r.status === "CANCELED") {
       await c.query(
@@ -577,7 +685,16 @@ export async function recoverExpired() {
       await pool.query<Run>("SELECT * FROM runs WHERE id=$1", [t.run_id])
     ).rows[0];
     if (a && r)
-      await failAttempt({ task: t, attempt: a, run: r }, "INTERRUPTED", true);
+      await failAttempt(
+        { task: t, attempt: a, run: r },
+        "INTERRUPTED",
+        true,
+        r.mode === "LIVE" ? a.reserved_cents : 0,
+        {
+          billing_state:
+            r.mode === "LIVE" ? "UNCERTAIN_RESERVED_CHARGED" : "MOCK",
+        },
+      );
   }
   return expired.length;
 }

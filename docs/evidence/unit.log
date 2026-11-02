@@ -1,26 +1,31 @@
 
-> orbit-platform@1.0.0-phase1 test
+> orbit-platform@1.1.0-phase2 test
 > node --import tsx --test test/unit/*.test.ts
 
-✔ planner produces a bounded read-only DAG with independent review and approval (7.030251ms)
-✔ graph rejects cycles, missing/duplicate dependencies and external writes (0.914886ms)
-✔ live planning is blocked without real adapters; workspace core is reusable (0.763598ms)
-✔ router filters capability, data policy, availability and budget; review avoids analyst (0.384117ms)
-✔ mock output validates structured handoff, reports zero cost and never Connected (85.726215ms)
-✔ canonical checksums survive jsonb object key order; artifact bytes verified (16.577708ms)
-✔ integration contract exposes only fixture read scope and validates connector input/output (3.53114ms)
-✔ concurrent artifact publication never exposes partial bytes (13.405527ms)
-✔ approval requires exactly one canonical manifest dependency (1.45627ms)
-✔ Goal Interpreter preserves objective, user acceptance and read-only constraints (5.257716ms)
-✔ four workspace modules produce distinct plans and domain-specific mock fixtures (4.503963ms)
-✔ four independent vendor mock adapters have explicit capabilities/models and never Connected (0.996789ms)
-✔ core package has no imports of concrete providers, integrations or workspace business logic (18.624145ms)
-✔ frontend does not import database or credential code at runtime (1.407216ms)
-ℹ tests 14
+✔ planner produces a bounded read-only DAG with independent review and approval (8.669355ms)
+✔ graph rejects cycles, missing/duplicate dependencies and external writes (0.967044ms)
+✔ live planning is blocked without real adapters; workspace core is reusable (0.910128ms)
+✔ router filters capability, data policy, availability and budget; review avoids analyst (0.408655ms)
+✔ mock output validates structured handoff, reports zero cost and never Connected (84.394236ms)
+✔ canonical checksums survive jsonb object key order; artifact bytes verified (13.585716ms)
+✔ integration contract exposes only fixture read scope and validates connector input/output (3.763028ms)
+✔ concurrent artifact publication never exposes partial bytes (16.038664ms)
+✔ approval requires exactly one canonical manifest dependency (1.114411ms)
+✔ Goal Interpreter preserves objective, user acceptance and read-only constraints (6.250277ms)
+✔ four workspace modules produce distinct plans and domain-specific mock fixtures (6.968317ms)
+✔ four independent vendor mock adapters have explicit capabilities/models and never Connected (1.147795ms)
+✔ core package has no imports of concrete providers, integrations or workspace business logic (14.500302ms)
+✔ frontend does not import database or credential code at runtime (1.244391ms)
+✔ four vendor protocols execute through HTTP_STUB without LIVE evidence or hidden retries (91.265141ms)
+✔ transport sanitizes errors, charges uncertainty and redacts response echoes (37.622137ms)
+✔ input cap is enforced before any network call and pricing quote is conservative (0.886072ms)
+✔ AI plan schema preserves goal, read-only steps, dependencies and human approval (4.171952ms)
+✔ router weighs price and measured latency after filtering unavailable capabilities (3.394444ms)
+ℹ tests 19
 ℹ suites 0
-ℹ pass 14
+ℹ pass 19
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 385.803032
+ℹ duration_ms 771.543601

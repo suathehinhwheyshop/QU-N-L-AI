@@ -1,6 +1,7 @@
 import { reportFixture, type WorkspaceModule } from "./definition";
 export const researchWorkspace: WorkspaceModule = {
   kind: "research",
+  liveInput: true,
   name: "Research Workspace",
   template: "research-report-v1",
   sourceHandler: "research.source",

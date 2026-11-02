@@ -171,6 +171,7 @@ export const attempts = pgTable(
     status: text().notNull(),
     provider_id: text(),
     model: text(),
+    provider_snapshot: jsonb().$type<Record<string, unknown>>(),
     reserved_cents: integer().default(0).notNull(),
     cost_cents: integer().default(0).notNull(),
     usage: jsonb().$type<Record<string, unknown>>(),
@@ -261,7 +262,35 @@ export const providerConfigs = pgTable(
       .references(() => connections.id, { onDelete: "cascade" }),
     enabled: boolean().default(true).notNull(),
     model: text().notNull(),
+    model_config: jsonb().$type<Record<string, unknown>>(),
     updated_at: time("updated_at").defaultNow().notNull(),
   },
   (t) => [primaryKey({ columns: [t.owner_id, t.provider_id] })],
+);
+
+export const providerProbes = pgTable(
+  "provider_probes",
+  {
+    id: id(),
+    owner_id: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider_id: text()
+      .notNull()
+      .references(() => connections.id),
+    model: text().notNull(),
+    kind: text().notNull(),
+    status: text().notNull(),
+    config_hash: text().notNull(),
+    credential_tag: text().notNull(),
+    latency_ms: integer(),
+    cost_cents: integer().default(0).notNull(),
+    reserved_cents: integer().default(0).notNull(),
+    usage: jsonb().$type<Record<string, unknown>>(),
+    capabilities: jsonb().$type<string[]>().notNull(),
+    error_code: text(),
+    created_at: time("created_at").defaultNow().notNull(),
+    finished_at: time("finished_at"),
+  },
+  (t) => [index().on(t.owner_id, t.provider_id, t.created_at)],
 );

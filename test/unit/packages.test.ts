@@ -67,7 +67,7 @@ test("four independent vendor mock adapters have explicit capabilities/models an
     assert.equal((await adapter.health()).status, "MOCK");
     const live = describeLiveProvider(adapter.descriptor.vendor!);
     assert.equal(live.status, "DISCONNECTED");
-    assert.equal(live.implementation, "NOT_IMPLEMENTED");
+    assert.equal(live.implementation, "CODE_READY_UNVERIFIED");
   }
 });
 test("core package has no imports of concrete providers, integrations or workspace business logic", async () => {

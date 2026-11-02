@@ -11,7 +11,10 @@ import type {
 } from "@orbit/database/schema";
 export type RunRow = typeof runs.$inferSelect;
 export type TaskRow = typeof tasks.$inferSelect;
-export type AttemptRow = typeof attempts.$inferSelect;
+export type AttemptRow = Omit<
+  typeof attempts.$inferSelect,
+  "provider_snapshot"
+>;
 export type ApprovalRow = typeof approvals.$inferSelect;
 export type ArtifactRow = typeof artifacts.$inferSelect;
 export type EventRow = typeof events.$inferSelect;

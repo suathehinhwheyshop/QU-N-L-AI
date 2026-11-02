@@ -1,22 +1,31 @@
 
-> orbit-platform@1.0.0-phase1 test:integration
+> orbit-platform@1.1.0-phase2 test:integration
 > node --import tsx --test --test-concurrency=1 test/integration/*.test.ts
 
-✔ PostgreSQL workflow: idempotency, two providers, hash-bound approval and verified artifacts (732.42749ms)
-✔ paused and canceled runs never start downstream tasks; inflight result discarded (39.768437ms)
-✔ expired lease recovers checkpoint and fences late completion (56.905712ms)
-✔ parallel runnable tasks respect owner concurrency; competing claim cannot duplicate attempt (117.430909ms)
-✔ timeout aborts adapter and exhausts bounded retry with backoff (618.400123ms)
-✔ invalid structured output never reaches review or report (232.517341ms)
-✔ budget reservations are atomic across parallel tasks (131.652432ms)
-✔ rejected approval prevents delivery; tampered source blocks validation (518.904894ms)
-✔ each non-SEO workspace runs on the same durable engine without SEO fixtures (1351.865794ms)
-✔ owner-specific provider configuration changes actual routing and can block all unavailable adapters (493.608669ms)
-ℹ tests 10
+✔ PostgreSQL workflow: idempotency, two providers, hash-bound approval and verified artifacts (924.437849ms)
+✔ paused and canceled runs never start downstream tasks; inflight result discarded (70.746396ms)
+✔ expired lease recovers checkpoint and fences late completion (95.120563ms)
+✔ parallel runnable tasks respect owner concurrency; competing claim cannot duplicate attempt (281.123301ms)
+✔ timeout aborts adapter and exhausts bounded retry with backoff (655.106102ms)
+✔ invalid structured output never reaches review or report (173.809716ms)
+✔ budget reservations are atomic across parallel tasks (145.985395ms)
+✔ rejected approval prevents delivery; tampered source blocks validation (522.739821ms)
+✔ each non-SEO workspace runs on the same durable engine without SEO fixtures (1268.812013ms)
+✔ owner-specific provider configuration changes actual routing and can block all unavailable adapters (678.748626ms)
+✔ two real protocol adapters hand structured data across durable worker tasks, always labeled HTTP_STUB/MOCK (854.930267ms)
+✔ unsafe AI planning falls back and cannot remove approval or enable writes (431.378658ms)
+✔ uncertain billable errors consume reservation and budget halts retries (961.591803ms)
+✔ LIVE admission rejects HTTP stub providers even after successful protocol tests (6.650765ms)
+✔ a changed operator price after claim cannot change an in-flight reservation snapshot (138.461083ms)
+✔ cancel discards in-flight output while preserving reported HTTP_STUB usage and cost (243.075281ms)
+✔ review with a wrong source checksum cannot create a task board or approval (210.707582ms)
+✔ HTTP 429 retries at engine boundary with backoff, without charging a rejected request (576.635939ms)
+✔ a synthetic HTTP_STUB probe receipt cannot activate a credential-present LIVE adapter (8.262663ms)
+ℹ tests 19
 ℹ suites 0
-ℹ pass 10
+ℹ pass 19
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 5090.771597
+ℹ duration_ms 10067.663944

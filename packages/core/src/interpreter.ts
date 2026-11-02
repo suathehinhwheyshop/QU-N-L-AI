@@ -23,7 +23,7 @@ export function interpretGoal(goal: Goal, kind: string) {
     constraints: {
       mode: goal.mode,
       read_only: true,
-      external_calls: false,
+      external_calls: goal.mode === "LIVE",
       budget_cents: goal.budget_cents,
     },
     notice:

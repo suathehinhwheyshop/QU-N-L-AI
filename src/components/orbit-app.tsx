@@ -115,7 +115,7 @@ function Status({ value }: { value: string }) {
     <span
       className={
         "pill " +
-        (["COMPLETED", "MOCK"].includes(value)
+        (["COMPLETED", "MOCK", "CONNECTED"].includes(value)
           ? "green"
           : value === "RUNNING"
             ? "blue"
@@ -312,7 +312,7 @@ export default function OrbitApp() {
         </nav>
         <div className="sidebar-bottom">
           <div className="foundation-note">
-            <span className="status-dot" /> Engine thật · Provider MOCK
+            <span className="status-dot" /> Engine bền vững · Read-only
             <p>
               PostgreSQL + worker độc lập.
               <br />
@@ -374,9 +374,9 @@ export default function OrbitApp() {
           <div className="mode-banner">
             <ShieldCheck size={18} />
             <p>
-              <strong>Chế độ MOCK.</strong> Worker, dữ liệu lưu và file bàn giao
-              hoạt động thật. AI/GSC dùng fixture; chưa có API thật hoặc thao
-              tác sửa website.
+              <strong>Phân biệt bằng chứng thực thi.</strong> MOCK và HTTP_STUB
+              không phải LIVE. Chỉ probe inference API thật mới xác nhận kết
+              nối. GSC vẫn là fixture; không sửa website.
             </p>
             <a href="#connections">
               Trạng thái kết nối <ArrowUpRight size={12} />
@@ -486,7 +486,8 @@ export default function OrbitApp() {
                           <span className="row-copy">
                             <strong>{r.goal}</strong>
                             <small>
-                              MOCK · {date(r.created_at)} · {r.id.slice(0, 8)}
+                              {r.mode} · {date(r.created_at)} ·{" "}
+                              {r.id.slice(0, 8)}
                             </small>
                           </span>
                           <Status value={r.status} />
@@ -538,7 +539,7 @@ export default function OrbitApp() {
                     <p>
                       {w.kind === "seo"
                         ? "GSC → phân tích → phản biện → phê duyệt → báo cáo"
-                        : "Template báo cáo tổng quát MOCK; chưa tích hợp công cụ chuyên ngành."}
+                        : "Template báo cáo dùng chung; chưa tích hợp công cụ chuyên ngành."}
                     </p>
                   </div>
                 ))}
@@ -906,7 +907,9 @@ export default function OrbitApp() {
                     <p>
                       {c.mode === "MOCK"
                         ? "Adapter fixture để kiểm thử orchestration. Không gửi dữ liệu ra ngoài."
-                        : "Kết nối thật chưa triển khai hoặc kiểm chứng; AI ở Phase 2, GSC ở Phase 3."}
+                        : c.metadata.kind === "provider"
+                          ? "Adapter API đã có code. Chưa xác minh LIVE nếu thiếu key/model/probe thật."
+                          : "GSC thật thuộc Phase 3, chưa kết nối."}
                     </p>
                     <div className="metadata-row">
                       <span>Capabilities</span>
@@ -956,6 +959,33 @@ export default function OrbitApp() {
                         }
                       />
                     )}
+                    {c.mode === "LIVE" && c.metadata.kind === "provider" && (
+                      <LiveProviderConfig
+                        connection={c}
+                        busy={busy}
+                        save={(config) =>
+                          mutate(
+                            () =>
+                              api("connections/" + c.id + "/config", {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(config),
+                              }),
+                            "Đã lưu cấu hình LIVE; cần probe API thật trước khi router sử dụng.",
+                          )
+                        }
+                        probe={() =>
+                          mutate(
+                            () =>
+                              api(
+                                "connections/" + c.id + "/test",
+                                post({ consent: true }),
+                              ),
+                            "Đã nhận phản hồi probe. Chỉ LIVE_API hợp lệ mới được xác nhận kết nối.",
+                          )
+                        }
+                      />
+                    )}
                     {c.mode === "MOCK" ? (
                       <button
                         className="button secondary"
@@ -972,7 +1002,11 @@ export default function OrbitApp() {
                       </button>
                     ) : (
                       <div className="not-available">
-                        API chưa tích hợp · không có nút kết nối giả
+                        {c.metadata.kind === "provider"
+                          ? c.metadata.credential_present
+                            ? "API code sẵn sàng; cần model/pricing và probe thật."
+                            : "Thiếu API key phía server. Không nhập key vào giao diện."
+                          : "GSC Phase 3 chưa triển khai."}
                       </div>
                     )}
                   </section>
@@ -1110,7 +1144,9 @@ function NewGoal({
       workspace_id: f.get("workspace_id"),
       budget_cents: Number(f.get("budget_cents")),
       site: f.get("site"),
-      mode: "MOCK",
+      mode: f.get("mode"),
+      planning_strategy: f.get("planning_strategy"),
+      live_data_consent: f.get("live_data_consent") === "on",
       scenario: f.get("scenario"),
       attachment_ids: uploads.map((f) => f.id),
       request_key: key,
@@ -1147,6 +1183,34 @@ function NewGoal({
           <span className="pill green">MVP READ-ONLY</span>
         </div>
         <div className="panel-body">
+          <div className="field-grid">
+            <div>
+              <label htmlFor="execution-mode">Chế độ thực thi</label>
+              <select id="execution-mode" name="mode">
+                <option value="MOCK">MOCK · kiểm thử offline</option>
+                <option value="LIVE">LIVE · cần 2 API đã probe thật</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="planning-strategy">Lập kế hoạch</label>
+              <select id="planning-strategy" name="planning_strategy">
+                <option value="TEMPLATE">Template an toàn</option>
+                <option value="AI_WITH_FALLBACK">
+                  AI theo schema + fallback template
+                </option>
+              </select>
+            </div>
+          </div>
+          <label className="checkbox-label">
+            <input type="checkbox" name="live_data_consent" />
+            Cho phép gửi mục tiêu và output của lượt này tới các AI API đã xác
+            minh (bắt buộc với LIVE).
+          </label>
+          <small>
+            AI planning chạy thành task có budget/checkpoint sau khi khởi chạy,
+            preview không gọi API tính phí. Phase 2 LIVE dùng
+            Research/Video/Development; GSC thật thuộc Phase 3.
+          </small>
           <label htmlFor="goal">Mục tiêu của anh</label>
           <textarea
             id="goal"
@@ -1314,8 +1378,8 @@ function NewGoal({
               ))}
             </ol>
             <div className="estimate">
-              <span>Chi phí adapter MOCK</span>
-              <strong>$0.00</strong>
+              <span>Ước tính bảo thủ · {plan.estimate.mode}</span>
+              <strong>${(plan.estimate.cost_cents / 100).toFixed(2)}</strong>
             </div>
             <p className="field-hint">
               {plan.estimate.notice} Cần anh duyệt trước khi delivery. Website
@@ -1345,7 +1409,7 @@ function NewGoal({
                 }
               }}
             >
-              <Play size={15} /> Khởi chạy workflow MOCK
+              <Play size={15} /> Khởi chạy workflow {plan.estimate.mode}
             </button>
           </div>
         ) : (
@@ -1479,7 +1543,7 @@ function SettingsPanel({
         void save({
           max_budget_cents: Number(f.get("budget")),
           concurrency: Number(f.get("concurrency")),
-          data_policy: "local-only",
+          data_policy: String(f.get("data_policy")),
         });
       }}
     >
@@ -1530,8 +1594,22 @@ function SettingsPanel({
         <div className="policy-row">
           <Database size={18} />
           <div>
-            <strong>Local-only data policy</strong>
-            <p>Phase 1 chỉ cho phép mock adapter xử lý dữ liệu cục bộ.</p>
+            <strong>Chính sách dữ liệu AI</strong>
+            <p>
+              LIVE chỉ nhận việc sau explicit consent theo goal và hai model/API
+              có probe thật còn hiệu lực.
+            </p>
+            <label htmlFor="data-policy">Phạm vi truyền dữ liệu</label>
+            <select
+              id="data-policy"
+              name="data_policy"
+              defaultValue={initial.data_policy}
+            >
+              <option value="local-only">Local-only · chỉ MOCK</option>
+              <option value="external">
+                External · cho phép API sau consent
+              </option>
+            </select>
           </div>
         </div>
         <div className="policy-row">
@@ -1570,7 +1648,9 @@ function InspectTask({
     <dialog className="task-dialog" ref={ref} onCancel={onClose}>
       <div className="dialog-heading">
         <div>
-          <div className="eyebrow">TASK {task.id.slice(0, 8)} · MOCK</div>
+          <div className="eyebrow">
+            TASK {task.id.slice(0, 8)} · {String(task.input.mode ?? "MOCK")}
+          </div>
           <h2>{task.title}</h2>
         </div>
         <button
@@ -1661,6 +1741,153 @@ function ProviderConfig({
       </label>
       <button className="button secondary" disabled={busy}>
         Lưu cấu hình model
+      </button>
+    </form>
+  );
+}
+
+function LiveProviderConfig({
+  connection,
+  busy,
+  save,
+  probe,
+}: {
+  connection: ConnectionRow;
+  busy: boolean;
+  save: (config: unknown) => Promise<void>;
+  probe: () => Promise<void>;
+}) {
+  const profile = connection.metadata.model_config as
+    Record<string, unknown> | undefined;
+  return (
+    <form
+      className="provider-config"
+      data-live-provider={connection.id}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget);
+        void save({
+          enabled: f.get("enabled") === "on",
+          model: String(f.get("model")),
+          model_config: {
+            input_usd_per_million: Number(f.get("input_price")),
+            output_usd_per_million: Number(f.get("output_price")),
+            max_input_tokens: Number(f.get("max_input")),
+            max_output_tokens: Number(f.get("max_output")),
+            price_source: String(f.get("price_source")),
+            price_date: String(f.get("price_date")),
+          },
+        });
+      }}
+    >
+      <label>
+        Model ID API
+        <input
+          name="model"
+          required
+          maxLength={150}
+          defaultValue={String(connection.metadata.selected_model ?? "")}
+          placeholder="Model ID chính xác của tài khoản anh"
+        />
+      </label>
+      <div className="field-grid">
+        <label>
+          USD / 1M input tokens
+          <input
+            type="number"
+            name="input_price"
+            min={0}
+            max={10000}
+            step="any"
+            required
+            defaultValue={String(profile?.input_usd_per_million ?? "")}
+          />
+        </label>
+        <label>
+          USD / 1M output tokens
+          <input
+            type="number"
+            name="output_price"
+            min={0}
+            max={10000}
+            step="any"
+            required
+            defaultValue={String(profile?.output_usd_per_million ?? "")}
+          />
+        </label>
+      </div>
+      <div className="field-grid">
+        <label>
+          Input token cap
+          <input
+            type="number"
+            name="max_input"
+            min={1024}
+            max={200000}
+            required
+            defaultValue={String(profile?.max_input_tokens ?? 32000)}
+          />
+        </label>
+        <label>
+          Output token cap
+          <input
+            type="number"
+            name="max_output"
+            min={128}
+            max={8192}
+            required
+            defaultValue={String(profile?.max_output_tokens ?? 2048)}
+          />
+        </label>
+      </div>
+      <label>
+        Nguồn giá (operator xác nhận)
+        <input
+          name="price_source"
+          required
+          minLength={5}
+          maxLength={300}
+          defaultValue={String(profile?.price_source ?? "")}
+        />
+      </label>
+      <label>
+        Ngày tham chiếu giá
+        <input
+          type="date"
+          name="price_date"
+          required
+          defaultValue={String(profile?.price_date ?? "")}
+        />
+      </label>
+      <label className="checkbox-label">
+        <input
+          type="checkbox"
+          name="enabled"
+          defaultChecked={connection.metadata.enabled === true}
+        />
+        Cho router dùng sau khi probe thành công
+      </label>
+      <button className="button secondary" disabled={busy}>
+        Lưu model & giới hạn chi phí
+      </button>
+      <small>
+        Chưa tự xác minh giá. Chi phí từ reported usage và giá operator, làm
+        tròn lên cents để giới hạn ngân sách. Probe có thể tính phí riêng.
+      </small>
+      <button
+        type="button"
+        className="button primary"
+        disabled={busy || !connection.metadata.credential_present}
+        onClick={() => {
+          if (
+            confirm(
+              "Probe sẽ gọi API thật, có thể tính phí theo cấu hình và giới hạn hiện tại. Tiếp tục?",
+            )
+          )
+            void probe();
+        }}
+      >
+        Probe API thật (có thể tính phí)
       </button>
     </form>
   );

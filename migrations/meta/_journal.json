@@ -15,6 +15,20 @@
       "when": 1793634546214,
       "tag": "0001_regular_edwin_jarvis",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793637631548,
+      "tag": "0002_melodic_legion",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793638918604,
+      "tag": "0003_attempt_provider_snapshot",
+      "breakpoints": true
     }
   ]
 }

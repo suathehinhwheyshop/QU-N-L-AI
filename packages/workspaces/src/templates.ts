@@ -1,11 +1,18 @@
 import { getWorkspace } from "./registry";
-import { NodeSchema, type Goal, type Node } from "@orbit/shared/contracts";
+import {
+  NodeSchema,
+  OrbitError,
+  type Goal,
+  type Node,
+} from "@orbit/shared/contracts";
 export function reviewedTemplate(
   goal: Goal,
   kind: string,
 ): { template: string; nodes: Node[] } {
   const workspace = getWorkspace(kind);
-  const nodes = [
+  if (goal.mode === "LIVE" && !workspace.liveInput)
+    throw new OrbitError("LIVE_SOURCE_UNAVAILABLE");
+  const raw = [
     {
       key: "source",
       title: workspace.sourceTitle,
@@ -13,7 +20,10 @@ export function reviewedTemplate(
       kind: "tool",
       capability: "read",
       depends_on: [],
-      acceptance: "Nguồn có schema hợp lệ, nguồn gốc và nhãn MOCK.",
+      acceptance:
+        goal.mode === "LIVE"
+          ? "Nguồn USER_INPUT có schema và nguồn gốc hợp lệ."
+          : "Nguồn có schema hợp lệ, nguồn gốc và nhãn MOCK.",
     },
     {
       key: "analyze",
@@ -62,14 +72,34 @@ export function reviewedTemplate(
       acceptance:
         "Báo cáo đúng schema, artifact có checksum và approval hợp lệ.",
     },
-  ].map((n) =>
+  ];
+  if (goal.planning_strategy === "AI_WITH_FALLBACK") {
+    raw.splice(1, 0, {
+      key: "interpret",
+      title: "AI lập kế hoạch theo schema",
+      handler: "report.interpret",
+      kind: "model",
+      capability: "planning",
+      depends_on: ["source"],
+      acceptance:
+        "AI plan hợp lệ và giữ read-only/approval; không hợp lệ phải fallback template.",
+    });
+    for (const n of raw)
+      if (n.key === "analyze" || n.key === "review")
+        n.depends_on.push("interpret");
+  }
+  const nodes = raw.map((n) =>
     NodeSchema.parse({
       ...n,
+      ...(goal.mode === "LIVE" && n.kind === "model"
+        ? { timeout_ms: 60000 }
+        : {}),
       input: {
         goal: goal.goal,
         site: goal.site,
         scenario: goal.scenario,
         workspace: kind,
+        mode: goal.mode,
         attachment_ids: goal.attachment_ids,
         ...(n.key === "review" ? { avoid_provider_task: "analyze" } : {}),
       },

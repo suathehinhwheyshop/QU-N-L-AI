@@ -1975,7 +1975,8 @@ footer span {
   accent-color: var(--green);
 }
 @media (max-width: 650px) {
-  .provider-config select {
+  .provider-config select,
+  .provider-config input {
     font-size: 16px;
   }
   .goal-contract {

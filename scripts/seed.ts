@@ -48,7 +48,10 @@ export async function seed() {
           costCents: d.costCents,
         },
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: connections.id,
+        set: { capabilities: d.capabilities, models: [d.model] },
+      });
     await db
       .insert(providerConfigs)
       .values({
@@ -73,11 +76,20 @@ export async function seed() {
         models: [],
         metadata: {
           kind: "provider",
-          reason: "PHASE_2_NOT_IMPLEMENTED",
+          reason: "MODEL_PRICING_CREDENTIAL_AND_PROBE_REQUIRED",
           permission: "none",
         },
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: connections.id,
+        set: {
+          metadata: {
+            kind: "provider",
+            reason: "MODEL_PRICING_CREDENTIAL_AND_PROBE_REQUIRED",
+            permission: "none",
+          },
+        },
+      });
   for (const tool of integrations)
     await db
       .insert(connections)

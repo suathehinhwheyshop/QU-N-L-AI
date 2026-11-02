@@ -1,6 +1,7 @@
 import { reportFixture, type WorkspaceModule } from "./definition";
 export const seoWorkspace: WorkspaceModule = {
   kind: "seo",
+  liveInput: false,
   name: "SEO Workspace",
   template: "seo-readonly-v1",
   sourceHandler: "seo.source",

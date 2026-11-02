@@ -1,3 +1,4 @@
+import { connectionCatalog, probeLive } from "@/server/live";
 import "@/server/runtime";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -11,7 +12,12 @@ import {
   artifacts,
   providerConfigs,
 } from "@/db/schema";
-import { GoalInput, OrbitError, safeMessage } from "@/core/contracts";
+import {
+  GoalInput,
+  ModelProfile,
+  OrbitError,
+  safeMessage,
+} from "@/core/contracts";
 import {
   createWorkflow,
   previewGoal,
@@ -82,24 +88,7 @@ async function endpoint(
         .where(eq(runs.owner_id, owner))
         .orderBy(desc(runs.created_at))
         .limit(50);
-      const config = await db
-        .select()
-        .from(providerConfigs)
-        .where(eq(providerConfigs.owner_id, owner));
-      const con = (await db.select().from(connections))
-        .filter((c) => c.metadata.archived !== true)
-        .map((c) => {
-          const setting = config.find((p) => p.provider_id === c.id);
-          return {
-            ...c,
-            metadata: {
-              ...c.metadata,
-              ...(setting
-                ? { enabled: setting.enabled, selected_model: setting.model }
-                : {}),
-            },
-          };
-        });
+      const con = await connectionCatalog(owner);
       const [setting] = await db
         .select()
         .from(settings)
@@ -189,7 +178,10 @@ async function endpoint(
           run,
           tasks,
           dependencies,
-          attempts,
+          attempts: attempts.map(({ provider_snapshot, ...publicAttempt }) => {
+            void provider_snapshot;
+            return publicAttempt;
+          }),
           approvals,
           logs,
           artifacts: files,
@@ -220,11 +212,7 @@ async function endpoint(
       );
     }
     if (p === "connections" && req.method === "GET")
-      return json(
-        (await db.select().from(connections)).filter(
-          (c) => c.metadata.archived !== true,
-        ),
-      );
+      return json(await connectionCatalog(owner));
     if (
       path[0] === "connections" &&
       path.length === 3 &&
@@ -234,15 +222,14 @@ async function endpoint(
       const provider =
         providers.find((a) => a.descriptor.id === path[1]) ??
         integrations.find((a) => a.id === path[1]);
-      if (!provider)
-        return json(
-          {
-            code: "NOT_IMPLEMENTED",
-            message:
-              "Adapter API thật chưa được triển khai. Không thể đánh dấu Connected.",
-          },
-          409,
-        );
+      if (!provider) {
+        const input = z
+          .object({ consent: z.literal(true) })
+          .strict()
+          .parse(await body(req));
+        void input;
+        return json(await probeLive(owner, path[1]));
+      }
       const health = await provider.health();
       await db
         .update(connections)
@@ -261,18 +248,24 @@ async function endpoint(
       req.method === "PATCH"
     ) {
       const adapter = providers.find((p) => p.descriptor.id === path[1]);
-      if (!adapter) throw new OrbitError("LIVE_UNAVAILABLE");
+      const real = ["openai", "anthropic", "google", "xai"].includes(path[1]);
+      if (!adapter && !real) throw new OrbitError("NOT_FOUND");
       const data = z
-        .object({ enabled: z.boolean(), model: z.string().min(1).max(150) })
+        .object({
+          enabled: z.boolean(),
+          model: z.string().regex(/^[A-Za-z0-9._:/-]{1,150}$/),
+          model_config: ModelProfile.optional(),
+        })
         .strict()
         .parse(await body(req));
-      if (!adapter.descriptor.models?.includes(data.model))
+      if (adapter && !adapter.descriptor.models?.includes(data.model))
         throw new OrbitError("BAD_REQUEST");
+      if (real && !data.model_config) throw new OrbitError("PRICING_REQUIRED");
       const [saved] = await db
         .insert(providerConfigs)
         .values({
           owner_id: owner,
-          provider_id: adapter.descriptor.id,
+          provider_id: path[1],
           ...data,
         })
         .onConflictDoUpdate({
@@ -287,7 +280,7 @@ async function endpoint(
         .object({
           max_budget_cents: z.number().int().min(0).max(100000),
           concurrency: z.number().int().min(1).max(4),
-          data_policy: z.literal("local-only"),
+          data_policy: z.enum(["local-only", "external"]),
         })
         .strict()
         .parse(await body(req));
