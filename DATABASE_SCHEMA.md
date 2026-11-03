@@ -24,7 +24,7 @@ Tác vụ và attempts checkpoint trong PostgreSQL. Claim/reserve/attempt/event 
 
 Migrations có version và checksum bằng Drizzle; không dùng schema push phá dữ liệu. Test database riêng được tạo để integration tests không xóa dữ liệu development. Backup/restore thực nghiệm thuộc Phase 4, chưa coi volume local là backup.
 
-Có 14 bảng. Migration 0000 tạo nền tảng; 0001 bổ sung provider_configs mà không reset data cũ. Goal contract và acceptance criteria lưu trong runs.plan và input của tasks. Mock model config có allowlist; LIVE model/config cần probe trên server và được router sử dụng; không chỉ là giá trị hiển thị. Chạy lại migration/seed giữ nguyên run và cấu hình đã chỉnh.
+Có 18 bảng (14 bảng ở Phase 2 + 4 bảng Phase 3). Migration 0000 tạo nền tảng; 0001 bổ sung provider_configs mà không reset data cũ. Goal contract và acceptance criteria lưu trong runs.plan và input của tasks. Mock model config có allowlist; LIVE model/config cần probe trên server và được router sử dụng; không chỉ là giá trị hiển thị. Chạy lại migration/seed giữ nguyên run và cấu hình đã chỉnh.
 
 ## Migrations Phase 2
 
@@ -34,3 +34,18 @@ Có 14 bảng. Migration 0000 tạo nền tảng; 0001 bổ sung provider_config
 `provider_probes` là ledger append cho probes và invocation failure làm mất readiness. VERIFIED + LIVE_API không hết hạn + đúng model/config_hash/credential_tag mới đủ điều kiện cho router. HTTP_STUB, FAILED, RUNNING, expired hoặc giá thay đổi không kích hoạt kết nối. catalog CONNECTED dẫn xuất theo owner, không ghi trạng thái chung làm nguồn sự thật. INVOCATION_FAILURE không double-charge, chi phí task đã thuộc attempts/runs. Probe reservations được quyết toán khi success/failure; lần probe tiếp theo settle RUNNING đã quá một phút theo hướng conservative.
 
 API credentials chỉ ở environment; database lưu HMAC tag cho binding, không API keys. Usage/pricing là ước tính USD, làm tròn lên cents, gồm nhãn UNCERTAIN_RESERVED_CHARGED khi không biết hóa đơn thật. Retrying inference có thể bị tính tiền nhiều lần. Không coi ledger local là xác nhận invoice.
+
+## Migration 0004 — GSC/datasets
+
+| Bảng             | Nội dung                                                                                                                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| gsc_accounts     | Owner PK/FK, status/kind/scope, access/refresh ciphertext, expiry, property discovery receipt/error/time. Không plaintext tokens.                                                                                   |
+| gsc_oauth_states | State hash PK, owner FK, browser hash, encrypted PKCE verifier, expiry/consume time; single-use/TTL enforced in service.                                                                                            |
+| gsc_jobs         | Owner/request key unique, run_id unique/FK, SearchRequest spec, page/cursor checkpoint và dataset ID. Queue và attempts vẫn dùng runs/tasks/attempts hiện tại.                                                      |
+| seo_datasets     | Owner/request key unique, job_id unique/FK, request hash, property/period/filter spec, normalized blob checksum/key, optional imported raw source checksum/key, row counts/warnings/time. DTO bỏ private blob keys. |
+
+OAuth states/tokens không trả qua bootstrap/API; chỉ status/property/expiry/receipt. gsc_jobs.checkpoint giữ normalized page blobs, không bearer header. Final dataset một lần theo job/request key; retries có thể để orphan blob nhưng không tạo metadata duplicate. Dataset ID ở jobs được service ghi sau khi dataset tồn tại; không circular FK; mọi load kiểm tra owner/hash.
+
+Nguồn GSC_API/HTTP_STUB/IMPORT độc lập với run.mode MOCK/LIVE (AI mode). GSC ingestion run là tool-only và không gọi AI. Imported raw bytes tối đa 5 MB; normalized dataset tối đa 20 MB, 50.000 dòng/kỳ. So sánh cùng filters, equal nonoverlapping windows.
+
+Core artifact renderer persist 3 extra report rows (report_md/report_csv/report_json) cùng transaction delivery. Unique(task,kind,version) và attempt fence giữ integrity; source_ids bind board/approval, report payload bind dataset/facts/source hashes. Download check owner/checksum và media extension.

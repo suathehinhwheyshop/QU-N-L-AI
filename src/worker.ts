@@ -4,7 +4,9 @@ import { pool } from "./db/client";
 let stopped = false;
 process.on("SIGTERM", () => (stopped = true));
 process.on("SIGINT", () => (stopped = true));
-console.log("ORBIT worker started; durable queue, MOCK adapters only.");
+console.log(
+  "ORBIT worker started; durable queue, provider execution gated by verified configuration.",
+);
 while (!stopped) {
   try {
     await tick(2);

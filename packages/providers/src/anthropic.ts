@@ -4,7 +4,13 @@ export const anthropic: VendorDefinition = {
   name: "Claude / Anthropic",
   mockId: "mock-anthropic",
   model: "mock-anthropic/structured-v1",
-  capabilities: ["analysis", "review", "planning"],
+  capabilities: [
+    "analysis",
+    "review",
+    "planning",
+    "seo_analysis",
+    "seo_review",
+  ],
   latencyMs: 40,
 };
 export const createAnthropicMock = () => createMockAdapter(anthropic);

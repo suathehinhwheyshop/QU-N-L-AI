@@ -1,0 +1,29 @@
+{
+  "at": "2026-11-03T01:15:31.150Z",
+  "status": "PASS",
+  "gsc": "HTTP_STUB_TESTED",
+  "ai": "MOCK",
+  "live_gsc_verified": false,
+  "live_ai_verified": false,
+  "ingestion_run_id": "96ec1107-cebc-4eca-8ec8-06eb5d03ad82",
+  "seo_run_id": "b5d7a3ae-f012-4179-88d8-c0ccd01a3820",
+  "dataset_id": "c4a220f1-e287-4e83-a3ea-dd471704bee7",
+  "task_count": 7,
+  "artifact_count": 10,
+  "page_checkpoint_restart": "PASS",
+  "approval_hash": "5a16c826bf61080c4f9b85b122218f5bd6871be985ec98bb58cdf1cc1aea290e",
+  "report_checksums": [
+    {
+      "kind": "report_md",
+      "sha256": "e16ba3ae3a2e5437f64cd2500a787b86c9346ce24c1e76a2d1b4c48c558f7d37"
+    },
+    {
+      "kind": "report_csv",
+      "sha256": "2c511a6b232a73d4d9536895acde76452f1eb8e724f6a28a50211378163b03a3"
+    },
+    {
+      "kind": "report_json",
+      "sha256": "d65357b2d6e5f23cc58dc5f874e158a95a2c45ec8e54f64d572f2d948f5e5742"
+    }
+  ]
+}

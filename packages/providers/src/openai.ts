@@ -4,7 +4,13 @@ export const openai: VendorDefinition = {
   name: "GPT / OpenAI",
   mockId: "mock-openai",
   model: "mock-openai/structured-v1",
-  capabilities: ["analysis", "review", "planning"],
+  capabilities: [
+    "analysis",
+    "review",
+    "planning",
+    "seo_analysis",
+    "seo_review",
+  ],
   latencyMs: 60,
 };
 export const createOpenAIMock = () => createMockAdapter(openai);

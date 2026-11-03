@@ -1,5 +1,6 @@
+import { validateSeoGoal } from "@orbit/workspaces/seo-template";
 import { installRegistry } from "../core/registry";
-import { registerTemplate } from "@orbit/core/planner";
+import { registerTemplate, registerGoalPolicy } from "@orbit/core/planner";
 import { registerGoalProfile } from "@orbit/core/interpreter";
 import { workspaceModules } from "@orbit/workspaces/registry";
 import { providers } from "../providers/registry";
@@ -16,3 +17,5 @@ for (const module of workspaceModules) {
   registerGoalProfile(module);
   registerTemplate(module.kind, reviewedTemplate);
 }
+
+registerGoalPolicy("seo", validateSeoGoal);

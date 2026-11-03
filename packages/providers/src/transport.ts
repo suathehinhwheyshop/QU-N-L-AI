@@ -90,7 +90,8 @@ export function usageCost(
   );
 }
 export function buildPrompt(capability: string, data: Record<string, unknown>) {
-  const { fixture, ...input } = data;
+  const { fixture, structured_fixture, ...input } = data;
+  void structured_fixture;
   void fixture;
   return JSON.stringify({ capability, input });
 }

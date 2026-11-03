@@ -1,3 +1,4 @@
+import { seoDatasetHandlers } from "./seo-handlers";
 import {
   templateAIPlan,
   validateAIPlan,
@@ -200,3 +201,5 @@ for (const module of workspaceModules) {
     workspaceHandlers[module.sourceHandler] =
       workspaceHandlers["general.source"];
 }
+
+Object.assign(workspaceHandlers, seoDatasetHandlers);

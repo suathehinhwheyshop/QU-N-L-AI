@@ -1,7 +1,7 @@
 {
   "result": "PASS",
   "mode": "MOCK",
-  "at": "2026-11-02T17:12:53.455Z",
+  "at": "2026-11-03T01:15:55.754Z",
   "checks": [
     "file attachment stored from UI",
     "natural goal → backend template plan and zero mock cost",
@@ -10,8 +10,9 @@
     "mock health persisted; four real providers remain unavailable",
     "provider configuration form persists owner model/availability in backend",
     "settings form saves backend policy",
+    "SEO UI imports real CSV bytes, shows deterministic 55 clicks, previews seven-step plan, executes MOCK and approves three report files; OAuth disabled without server config",
     "real uploaded/generated artifacts visible",
-    "eight views fit 390px mobile viewport",
+    "nine views including SEO fit 390px mobile viewport",
     "no browser runtime exceptions"
   ]
 }

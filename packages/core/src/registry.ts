@@ -26,6 +26,12 @@ export interface ProviderAdapter {
   }>;
 }
 export type HandlerContext = {
+  execution: {
+    ownerId: string;
+    runId: string;
+    taskId: string;
+    attemptId: string;
+  };
   signal: AbortSignal;
   input: Record<string, unknown>;
   inputs: Record<string, Record<string, unknown>>;
@@ -43,6 +49,9 @@ export type Handler = {
   execute: (ctx: HandlerContext) => Promise<unknown>;
   safeFallback?: boolean;
   invokeTimeoutMs?: number;
+  renderArtifacts?: (
+    output: Record<string, unknown>,
+  ) => { name: string; kind: string; mediaType: string; bytes: Buffer }[];
 };
 export interface IntegrationAdapter {
   id: string;

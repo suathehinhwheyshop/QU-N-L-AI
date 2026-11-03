@@ -1,4 +1,11 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  appendFileSync,
+  chmodSync,
+} from "node:fs";
 import { randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
 mkdirSync(".orbit", { recursive: true });
@@ -18,6 +25,18 @@ if (!existsSync(".env.local")) {
     "Created ignored local development configuration. Secrets are not printed.",
   );
 } else console.log("Preserving .env.local.");
+// Dedicated local encryption key; never derive it from the session password.
+const localConfiguration = readFileSync(".env.local", "utf8");
+if (!/^ORBIT_TOKEN_ENCRYPTION_KEY=.+$/m.test(localConfiguration)) {
+  appendFileSync(
+    ".env.local",
+    `\nORBIT_TOKEN_ENCRYPTION_KEY=${randomBytes(32).toString("base64")}\n`,
+  );
+  chmodSync(".env.local", 0o600);
+  console.log(
+    "Created a dedicated local token encryption key; value is not printed.",
+  );
+}
 if (!existsSync(".orbit/postgres.env")) {
   console.log(
     "No local database env file: use the existing DATABASE_URL and start that database separately.",

@@ -1,4 +1,5 @@
 "use client";
+import SeoWorkspace from "./seo-workspace";
 import {
   useState,
   useEffect,
@@ -48,6 +49,7 @@ import type { Plan } from "@/core/contracts";
 import type { z } from "zod";
 import type { Board } from "@/core/contracts";
 type View =
+  | "seo"
   | "dashboard"
   | "new"
   | "workflows"
@@ -57,6 +59,7 @@ type View =
   | "artifacts"
   | "settings";
 const navigation = [
+  ["seo", "SEO", Database],
   ["dashboard", "Tổng quan", LayoutDashboard],
   ["workflows", "Workflow", Workflow],
   ["tasks", "Bảng việc", ListTodo],
@@ -65,6 +68,10 @@ const navigation = [
   ["settings", "Cài đặt", Settings],
 ] as const;
 const titles: Record<View, [string, string]> = {
+  seo: [
+    "SEO có dữ liệu. Kết quả có bằng chứng.",
+    "GSC / import → phân tích → kiểm chứng → duyệt → MD / CSV / JSON.",
+  ],
   dashboard: [
     "Mọi AI. Một không gian.",
     "Một mục tiêu, nhiều công cụ. Anh luôn nắm quyền điều phối.",
@@ -351,7 +358,7 @@ export default function OrbitApp() {
             </strong>
           </div>
           <div className="top-right">
-            <span className="version-label">ORBIT V1 · PHASE 1</span>
+            <span className="version-label">ORBIT · READ-ONLY</span>
             <span className="avatar">DN</span>
           </div>
         </header>
@@ -376,7 +383,7 @@ export default function OrbitApp() {
             <p>
               <strong>Phân biệt bằng chứng thực thi.</strong> MOCK và HTTP_STUB
               không phải LIVE. Chỉ probe inference API thật mới xác nhận kết
-              nối. GSC vẫn là fixture; không sửa website.
+              nối. GSC API cần OAuth được xác minh riêng; không sửa website.
             </p>
             <a href="#connections">
               Trạng thái kết nối <ArrowUpRight size={12} />
@@ -545,6 +552,12 @@ export default function OrbitApp() {
                 ))}
               </div>
             </>
+          )}
+          {view === "seo" && (
+            <SeoWorkspace
+              workspaceId={data.workspaces.find((w) => w.kind === "seo")!.id}
+              onRun={(id) => navigate("detail", id)}
+            />
           )}
           {view === "new" && (
             <NewGoal
@@ -909,7 +922,7 @@ export default function OrbitApp() {
                         ? "Adapter fixture để kiểm thử orchestration. Không gửi dữ liệu ra ngoài."
                         : c.metadata.kind === "provider"
                           ? "Adapter API đã có code. Chưa xác minh LIVE nếu thiếu key/model/probe thật."
-                          : "GSC thật thuộc Phase 3, chưa kết nối."}
+                          : "GSC OAuth read-only. Mở SEO Workspace để quản lý quyền, property và datasets."}
                     </p>
                     <div className="metadata-row">
                       <span>Capabilities</span>
@@ -1006,7 +1019,7 @@ export default function OrbitApp() {
                           ? c.metadata.credential_present
                             ? "API code sẵn sàng; cần model/pricing và probe thật."
                             : "Thiếu API key phía server. Không nhập key vào giao diện."
-                          : "GSC Phase 3 chưa triển khai."}
+                          : "Quản lý GSC tại SEO Workspace."}
                       </div>
                     )}
                   </section>
@@ -1066,7 +1079,7 @@ export default function OrbitApp() {
             />
           )}
           <footer>
-            ORBIT · Phase 1 Foundation <span>·</span> Run / Task / Attempt /
+            ORBIT · Multi-AI Workspace <span>·</span> Run / Task / Attempt /
             Approval / Artifact
           </footer>
         </main>

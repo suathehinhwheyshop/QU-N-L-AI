@@ -1,5 +1,5 @@
 
-> orbit-platform@1.1.0-phase2 test:e2e
+> orbit-platform@1.2.0-phase3 test:e2e
 > node --import tsx test/e2e/workflow.ts
 
 {
@@ -14,6 +14,7 @@
     "authenticated upload and download store real bytes",
     "backend pause/resume/cancel and bounded retry validated over HTTP with worker",
     "owner authorization enforced for run and artifact",
-    "AI schema planning → two MOCK providers → approval → 7 stored artifacts; LIVE stays disconnected without a real API probe"
+    "AI schema planning → two MOCK providers → approval → 7 stored artifacts; LIVE stays disconnected without a real API probe",
+    "GSC HTTP_STUB OAuth/discovery/pagination survives app+worker restart at page checkpoint; duplicate job, import, SEO validation, approval and MD/CSV/JSON checksums verified"
   ]
 }

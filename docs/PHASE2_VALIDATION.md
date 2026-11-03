@@ -1,5 +1,7 @@
 # Phase 2 — báo cáo kiểm chứng
 
+> Báo cáo lịch sử của Phase 2. Baseline chạy lại trước Phase 3 ở `docs/evidence/phase2-baseline/`; kết quả hiện tại ở [PHASE3_VALIDATION.md](PHASE3_VALIDATION.md).
+
 Branch triển khai: `orbit/phase2-real-multi-ai`, từ parent `9f07558652b1cf4be46c64d2ccaf23a55c311280`. Không merge main. Thời điểm kiểm chứng: 02/11/2026 UTC. Xem timestamps trong JSON/logs, không dùng báo cáo HTML prototype làm bằng chứng.
 
 ## Kết quả và giới hạn nghiệm thu

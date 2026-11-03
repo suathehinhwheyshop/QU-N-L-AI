@@ -1,3 +1,4 @@
+import { getGscClient } from "@orbit/integrations/gsc-runtime";
 import { pool } from "@orbit/database/client";
 import { ModelProfile, ProbeOutput, OrbitError } from "@orbit/shared/contracts";
 import { liveProviders } from "@orbit/providers/live-registry";
@@ -10,6 +11,7 @@ export async function connectionCatalog(owner: string) {
   const client = await pool.connect();
   try {
     const rows = (await client.query("SELECT * FROM connections")).rows;
+    const gsc = await getGscClient().oauth.status(owner);
     const configs = (
       await client.query("SELECT * FROM provider_configs WHERE owner_id=$1", [
         owner,
@@ -30,6 +32,14 @@ export async function connectionCatalog(owner: string) {
         const live = c.mode === "LIVE" && c.metadata.kind === "provider";
         return {
           ...c,
+          ...(c.id === "gsc"
+            ? {
+                status: gsc.status,
+                checked_at: gsc.verified_at ?? null,
+                health_code: gsc.error_code ?? null,
+                capabilities: gsc.status === "CONNECTED" ? ["gsc.read"] : [],
+              }
+            : {}),
           ...(live
             ? {
                 status: candidate?.available ? "CONNECTED" : "DISCONNECTED",
@@ -41,6 +51,15 @@ export async function connectionCatalog(owner: string) {
             : {}),
           metadata: {
             ...c.metadata,
+            ...(c.id === "gsc"
+              ? {
+                  implementation: "OAUTH_READONLY",
+                  reason: gsc.configured
+                    ? "OAUTH_AND_PROPERTY_VERIFICATION_REQUIRED"
+                    : "GSC_CONFIG_REQUIRED",
+                  source_kind: gsc.kind,
+                }
+              : {}),
             ...(cfg
               ? {
                   enabled: cfg.enabled,

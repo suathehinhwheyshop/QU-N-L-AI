@@ -10,7 +10,7 @@ import {
   type Goal,
   type Plan,
 } from "@orbit/shared/contracts";
-import { planGoal } from "./planner";
+import { planGoal, validateGoalAccess } from "./planner";
 import { routeModel } from "./router";
 import { getProvider, getHandler } from "./registry";
 import { LocalArtifactStore, digest, jsonBytes } from "@orbit/storage/store";
@@ -57,8 +57,16 @@ export async function previewGoal(owner: string, goal: Goal) {
     [goal.workspace_id, owner],
   );
   if (!rows[0]) throw new OrbitError("NOT_FOUND");
-  const readiness = goal.mode === "LIVE" ? await admitLive(owner, goal) : null;
+  await validateGoalAccess(owner, goal, rows[0].kind);
   const plan = planGoal(goal, rows[0].kind);
+  const readiness =
+    goal.mode === "LIVE"
+      ? await admitLive(
+          owner,
+          goal,
+          plan.nodes.filter((n) => n.kind === "model").map((n) => n.capability),
+        )
+      : null;
   if (readiness)
     plan.estimate = {
       mode: "LIVE",
@@ -106,7 +114,13 @@ export async function createFromPlan(owner: string, goal: Goal, plan: Plan) {
       [goal.workspace_id, owner],
     );
     if (!ws.rows[0]) throw new OrbitError("NOT_FOUND");
-    if (goal.mode === "LIVE") await admitLive(owner, goal);
+    await validateGoalAccess(owner, goal, ws.rows[0].kind);
+    if (goal.mode === "LIVE")
+      await admitLive(
+        owner,
+        goal,
+        plan.nodes.filter((n) => n.kind === "model").map((n) => n.capability),
+      );
     const { validateGraph } = await import("./planner");
     validateGraph(plan.nodes);
     const setting = (
@@ -404,6 +418,12 @@ export async function executeClaim(claim: Claim) {
       handler.input.parse(task.input);
       const deps = await dependenciesFor(task);
       const raw = await handler.execute({
+        execution: {
+          ownerId: run.owner_id,
+          runId: run.id,
+          taskId: task.id,
+          attemptId: attempt.id,
+        },
         input: task.input,
         signal: controller.signal,
         ...deps,
@@ -506,7 +526,18 @@ export async function executeClaim(claim: Claim) {
       }),
     ]);
     const stored = await blobs.put(jsonBytes(output));
-    await completeAttempt(claim, output, stored, cost, usage);
+    const rendered = getHandler(task.handler).renderArtifacts?.(output) ?? [];
+    if (
+      rendered.length > 5 ||
+      rendered.some(
+        (f) => !/^report_[a-z]+$/.test(f.kind) || f.bytes.length > 10000000,
+      )
+    )
+      throw new OrbitError("INVALID_OUTPUT");
+    const files = [];
+    for (const f of rendered)
+      files.push({ ...f, stored: await blobs.put(f.bytes) });
+    await completeAttempt(claim, output, stored, cost, usage, files);
   } catch (error) {
     const code =
       error instanceof OrbitError
@@ -524,6 +555,9 @@ export async function executeClaim(claim: Claim) {
       error instanceof OrbitError ? error.retryable : false,
       cost,
       usage,
+      typeof (error as { retryAfterMs?: unknown })?.retryAfterMs === "number"
+        ? (error as { retryAfterMs: number }).retryAfterMs
+        : 0,
     );
   } finally {
     if (timer) clearTimeout(timer);
@@ -536,6 +570,12 @@ async function completeAttempt(
   stored: { key: string; sha256: string; size: number },
   cost: number,
   usage: Record<string, unknown>,
+  files: {
+    name: string;
+    kind: string;
+    mediaType: string;
+    stored: { key: string; sha256: string; size: number };
+  }[] = [],
 ) {
   await transaction(async (c) => {
     const latest = (
@@ -586,6 +626,24 @@ async function completeAttempt(
         JSON.stringify(sources),
       ],
     );
+    for (const file of files)
+      await c.query(
+        "INSERT INTO artifacts(owner_id,run_id,task_id,attempt_id,name,kind,mode,media_type,size_bytes,sha256,blob_key,source_ids) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
+        [
+          r.owner_id,
+          r.id,
+          task.id,
+          attempt.id,
+          file.name,
+          file.kind,
+          r.mode,
+          file.mediaType,
+          file.stored.size,
+          file.stored.sha256,
+          file.stored.key,
+          JSON.stringify(sources),
+        ],
+      );
     await c.query(
       "UPDATE attempts SET status='COMPLETED',cost_cents=$2,usage=$3,finished_at=now() WHERE id=$1",
       [attempt.id, cost, usage],
@@ -621,6 +679,7 @@ async function failAttempt(
   retryable: boolean,
   charged = 0,
   usage: Record<string, unknown> = {},
+  retryAfterMs = 0,
 ) {
   await transaction(async (c) => {
     const t = (
@@ -656,7 +715,11 @@ async function failAttempt(
     if (retryable && t.attempt_count < t.max_attempts) {
       await c.query(
         "UPDATE tasks SET status='PENDING',lease_until=NULL,active_attempt_id=NULL,error_code=$2,next_attempt_at=now()+($3::integer*interval '1 millisecond') WHERE id=$1",
-        [task.id, code, backoff(t.attempt_count)],
+        [
+          task.id,
+          code,
+          Math.max(backoff(t.attempt_count), Math.min(30000, retryAfterMs)),
+        ],
       );
       await event(
         c,

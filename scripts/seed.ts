@@ -120,7 +120,7 @@ export async function seed() {
         kind: "tool",
         permission: "none",
         required_scopes: ["webmasters.readonly"],
-        reason: "PHASE_3_NOT_IMPLEMENTED",
+        reason: "OAUTH_AND_PROPERTY_VERIFICATION_REQUIRED",
       },
     })
     .onConflictDoNothing();

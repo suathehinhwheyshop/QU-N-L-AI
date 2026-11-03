@@ -1,3 +1,4 @@
+import { gscStub, testSpec, currentRows, previousRows } from "../gsc-support";
 import assert from "node:assert/strict";
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID, randomBytes, createHash } from "node:crypto";
@@ -5,6 +6,7 @@ import { once } from "node:events";
 import { writeFile, mkdir } from "node:fs/promises";
 import { testDatabase } from "../support";
 const environment = await testDatabase();
+const gsc = await gscStub();
 const { pool } = await import("../../src/db/client");
 await (await import("../../scripts/seed")).seed();
 const origin = "http://127.0.0.1:3201";
@@ -14,6 +16,10 @@ const env = {
   ORBIT_ADMIN_PASSWORD: randomBytes(24).toString("hex"),
   ORBIT_SESSION_SECRET: randomBytes(32).toString("hex"),
   ORBIT_COOKIE_SECURE: "false",
+  ORBIT_TOKEN_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
+  ORBIT_GSC_CLIENT_ID: "fixture-client",
+  ORBIT_GSC_CLIENT_SECRET: "fixture-client-secret",
+  ORBIT_TEST_GSC_URL: gsc.transport.token.replace(/\/token$/, ""),
   ORBIT_OPENAI_API_KEY: "",
   ORBIT_ANTHROPIC_API_KEY: "",
   ORBIT_GOOGLE_API_KEY: "",
@@ -22,10 +28,14 @@ const env = {
 let server: ChildProcess | undefined, worker: ChildProcess | undefined;
 let output = "";
 function start(args: string[]) {
-  const child = spawn(process.execPath, args, {
-    env,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const child = spawn(
+    process.execPath,
+    ["--import", "tsx", "--import", "./test/e2e/gsc-runtime.ts", ...args],
+    {
+      env,
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
   child.stdout?.on("data", (b) => (output += b.toString()));
   child.stderr?.on("data", (b) => (output += b.toString()));
   return child;
@@ -477,6 +487,237 @@ try {
       2,
     ) + "\n",
   );
+  // Full Phase 3 HTTP_STUB path: API OAuth → GSC → durable worker → dataset.
+  assert.equal(
+    (await request("gsc/status", "GET", undefined, { Cookie: "" })).status,
+    401,
+  );
+  const begin = await request("gsc/oauth/start", "POST", {});
+  assert.equal(begin.status, 200);
+  const browserCookie = begin.headers.get("set-cookie")!.split(";")[0];
+  const authorization = await begin.json();
+  const state = new URL(authorization.url).searchParams.get("state");
+  const callbackUrl =
+    origin +
+    "/api/gsc/oauth/callback?state=" +
+    encodeURIComponent(state!) +
+    "&code=fixture-code";
+  const wrongBrowser = await fetch(callbackUrl, {
+    headers: { Cookie: cookie },
+    redirect: "manual",
+  });
+  assert.equal(wrongBrowser.status, 303);
+  assert.ok(wrongBrowser.headers.get("location")?.includes("GSC_OAUTH_STATE"));
+  const callback = await fetch(callbackUrl, {
+    headers: { Cookie: cookie + "; " + browserCookie },
+    redirect: "manual",
+  });
+  assert.equal(callback.status, 303);
+  assert.ok(callback.headers.get("location")?.includes("authorized"));
+  const discovery = await request("gsc/properties", "POST", {});
+  assert.equal(discovery.status, 200);
+  assert.equal((await discovery.json()).kind, "HTTP_STUB");
+  assert.equal(
+    (await (await request("gsc/status")).json()).status,
+    "HTTP_STUB",
+  );
+  const gscBefore = gsc.requests.length;
+  gsc.state.failPageAt = 2;
+  const syncKey = randomUUID();
+  const syncResponse = await request("gsc/sync", "POST", {
+    request_key: syncKey,
+    spec: testSpec,
+  });
+  assert.equal(syncResponse.status, 202);
+  const sync = await syncResponse.json();
+  assert.equal(
+    (
+      await (
+        await request("gsc/sync", "POST", {
+          request_key: syncKey,
+          spec: testSpec,
+        })
+      ).json()
+    ).run_id,
+    sync.run_id,
+  );
+  await waitFor(async () => {
+    const row = (
+      await pool.query("SELECT checkpoint FROM gsc_jobs WHERE id=$1", [
+        sync.job_id,
+      ])
+    ).rows[0];
+    return row.checkpoint.pages?.length === 1;
+  });
+  await stop(worker);
+  worker = undefined;
+  const checkpoint = (
+    await pool.query("SELECT checkpoint FROM gsc_jobs WHERE id=$1", [
+      sync.job_id,
+    ])
+  ).rows[0].checkpoint;
+  assert.equal(checkpoint.pages.length, 1);
+  gsc.state.failPageAt = -1;
+  await stop(server);
+  server = undefined;
+  server = start([
+    "node_modules/next/dist/bin/next",
+    "start",
+    "--hostname",
+    "127.0.0.1",
+    "--port",
+    "3201",
+  ]);
+  await waitFor(async () => (await request("gsc/jobs")).ok);
+  worker = start(["--import", "tsx", "src/worker.ts"]);
+  await waitFor(
+    async () =>
+      (await (await request("runs/" + sync.run_id)).json()).run.status ===
+      "COMPLETED",
+  );
+  const syncJob = (
+    await pool.query("SELECT * FROM gsc_jobs WHERE id=$1", [sync.job_id])
+  ).rows[0];
+  assert.ok(syncJob.dataset_id);
+  assert.equal(
+    gsc.requests
+      .slice(gscBefore)
+      .filter(
+        (r) =>
+          r.body.startDate === testSpec.current.start && r.body.startRow === 0,
+      ).length,
+    1,
+  );
+  const sourceDataset = await (
+    await request("gsc/datasets/" + syncJob.dataset_id)
+  ).json();
+  assert.equal(sourceDataset.provenance.kind, "HTTP_STUB");
+  assert.equal(sourceDataset.facts.totals.clicks, 55);
+  const form = new FormData();
+  form.set("spec", JSON.stringify(testSpec));
+  form.set("request_key", randomUUID());
+  form.set(
+    "file",
+    new File(
+      [JSON.stringify({ current: currentRows, previous: previousRows })],
+      "gsc-export.json",
+      { type: "application/json" },
+    ),
+  );
+  const imported = await fetch(origin + "/api/gsc/import", {
+    method: "POST",
+    headers: { Cookie: cookie, Origin: origin },
+    body: form,
+  });
+  assert.equal(imported.status, 201);
+  assert.equal((await imported.json()).kind, "IMPORT");
+  const seoRequest = {
+    ...goal,
+    request_key: randomUUID(),
+    seo_dataset_id: syncJob.dataset_id,
+    planning_strategy: "TEMPLATE",
+  };
+  const seoCreated = await request("runs", "POST", seoRequest);
+  assert.equal(seoCreated.status, 201);
+  const seoRun = await seoCreated.json();
+  await waitFor(
+    async () =>
+      (await (await request("runs/" + seoRun.id)).json()).run.status ===
+      "WAITING_APPROVAL",
+  );
+  let seoDetail = await (await request("runs/" + seoRun.id)).json();
+  assert.equal(seoDetail.tasks.length, 7);
+  assert.equal(
+    seoDetail.tasks.find((t: { key: string }) => t.key === "board").output
+      .metrics.clicks,
+    55,
+  );
+  const seoGate = seoDetail.approvals[0];
+  assert.equal(
+    (
+      await request("approvals/" + seoGate.id, "POST", {
+        decision: "approve",
+        output_hash: "0".repeat(64),
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await request("approvals/" + seoGate.id, "POST", {
+        decision: "approve",
+        output_hash: seoGate.output_hash,
+      })
+    ).status,
+    200,
+  );
+  await waitFor(
+    async () =>
+      (await (await request("runs/" + seoRun.id)).json()).run.status ===
+      "COMPLETED",
+  );
+  seoDetail = await (await request("runs/" + seoRun.id)).json();
+  assert.equal(seoDetail.artifacts.length, 10);
+  for (const file of seoDetail.artifacts.filter((f: { kind: string }) =>
+    f.kind.startsWith("report_"),
+  )) {
+    const response = await request("artifacts/" + file.id);
+    const bytes = Buffer.from(await response.arrayBuffer());
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), file.sha256);
+    assert.ok(
+      response.headers
+        .get("content-disposition")
+        ?.includes(
+          file.kind === "report_md"
+            ? ".md"
+            : file.kind === "report_csv"
+              ? ".csv"
+              : ".json",
+        ),
+    );
+  }
+  assert.equal(
+    (
+      await request("gsc/datasets/" + syncJob.dataset_id, "GET", undefined, {
+        Cookie: otherCookie,
+      })
+    ).status,
+    404,
+  );
+  assert.equal((await request("gsc/revoke", "POST", {})).status, 200);
+  assert.equal((await (await request("gsc/status")).json()).status, "REVOKED");
+  checks.push(
+    "GSC HTTP_STUB OAuth/discovery/pagination survives app+worker restart at page checkpoint; duplicate job, import, SEO validation, approval and MD/CSV/JSON checksums verified",
+  );
+  await mkdir("docs/evidence", { recursive: true });
+  await writeFile(
+    "docs/evidence/phase3-e2e.json",
+    JSON.stringify(
+      {
+        at: new Date().toISOString(),
+        status: "PASS",
+        gsc: "HTTP_STUB_TESTED",
+        ai: "MOCK",
+        live_gsc_verified: false,
+        live_ai_verified: false,
+        ingestion_run_id: sync.run_id,
+        seo_run_id: seoRun.id,
+        dataset_id: syncJob.dataset_id,
+        task_count: seoDetail.tasks.length,
+        artifact_count: seoDetail.artifacts.length,
+        page_checkpoint_restart: "PASS",
+        approval_hash: seoGate.output_hash,
+        report_checksums: seoDetail.artifacts
+          .filter((a: { kind: string }) => a.kind.startsWith("report_"))
+          .map((a: { kind: string; sha256: string }) => ({
+            kind: a.kind,
+            sha256: a.sha256,
+          })),
+      },
+      null,
+      2,
+    ) + "\n",
+  );
   await mkdir("docs/evidence", { recursive: true });
   await writeFile(
     "docs/evidence/phase1-e2e.json",
@@ -529,4 +770,5 @@ try {
   await stop(server);
   await pool.end();
   await environment.cleanup();
+  await gsc.close();
 }

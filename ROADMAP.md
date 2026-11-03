@@ -1,26 +1,28 @@
 # ORBIT — bốn giai đoạn
 
-## Phase 1 — Foundation, giữ nguyên nghiệm thu
+## Phase 1 — Foundation
 
-Baseline `orbit/phase1-foundation-audit` / `9f07558` đã được xác minh và chạy lại: 14 unit, 10 PostgreSQL integration, typecheck/build, E2E restart app/worker đều PASS. Có 7 shared packages, 4 workspace modules, mock providers, durable DAG/lease/checkpoint, routing, schema validation, budgets, retries, controls, approval, artifact và audit. Mọi regression vẫn nằm trong bộ kiểm thử Phase 2.
+Đã nghiệm thu lại ở `9f07558`: 7 packages, 4 workspace modules, mock providers, durable DAG/leases/checkpoints/retry/controls/budgets, validation, approval, artifacts và audit. Toàn bộ regression được giữ trong Phase 2–3; không lấy HTML demo làm bằng chứng.
 
-## Phase 2 — Real multi-AI execution, code có sẵn; LIVE chưa nghiệm thu
+## Phase 2 — Real Multi-AI implementation; LIVE BLOCKED
 
-Đã triển khai bốn REST adapters Anthropic/OpenAI/Gemini/xAI độc lập, server-only credentials, model/pricing configuration, structured inference probe và provenance, route theo capability/cost/latency/availability, structured handoff, usage/accounting và bounded AI planning/fallback. Engine/7 packages được giữ. Offline unit/HTTP_STUB/integration và E2E qua worker/database đã chạy; xem docs/PHASE2_VALIDATION.md.
+Parent `b6bb1fc` đã xác minh lại: 19 unit, 19 integration, typecheck/build và E2E PASS. Bốn REST adapters độc lập, server credentials, model/pricing/probes, capability/cost/latency/availability routing, structured handoff, usage và bounded AI planning/fallback. Không phụ thuộc Claude Code. Chưa có ít nhất hai API credentials/quota/model probes thật; không đánh dấu LIVE từ HTTP stub.
 
-Còn chặn nghiệm thu thật:
+## Phase 3 — GSC/SEO CODE COMPLETE + HTTP_STUB TESTED; LIVE BLOCKED
 
-1. Cấp API credentials có quota/quyền cho ít nhất hai provider, bật đúng bốn egress hosts cần dùng trong environment settings rồi restart web/worker. Draft lưu chưa tương đương runtime đã apply/publish.
-2. Cấu hình model ID, giá và token caps theo quyền API thực tế; xác nhận external data policy/consent. Probe thật phải thành công, receipts không hết hạn.
-3. Chạy `npm run verify:live -- --execute`, kiểm tra hai nhà cung cấp trả structured outputs qua worker/database. Không coi HTTP stub là LIVE.
-4. Người dùng duyệt run theo checksum trong UI, kiểm tra final artifact/download, usage, logs và giới hạn chi phí. Lưu bằng chứng thật rồi mới công bố nghiệm thu Phase 2.
+GSC OAuth read-only/PKCE/token encryption/refresh/revoke; property discovery/Search Analytics/pagination/rate limits; source/checksum/date/filter warnings và CSV/JSON imports. Dùng lại engine cho ingestion/checkpoint, không queue mới. AI1 → AI2 khác provider → code validation → synthesis/board → human approval → MD/CSV/JSON. Deterministic facts không cho AI tự tạo số liệu. SEO UI/backend đã nối, desktop/mobile 390 px được kiểm tra.
 
-AI chỉ lập kế hoạch trong topology read-only đã duyệt. Chưa sinh arbitrary DAG, không công cụ ghi/remote execution. Research/Video/Development LIVE dùng USER_INPUT, chưa đọc nguồn bên ngoài. SEO LIVE bị chặn đến Phase 3. Không tích hợp codebase Claude Code.
+Đã chạy 25 unit, 31 integration (giữ 19 regression Phase 1–2), typecheck/build, E2E OAuth HTTP_STUB/app+worker restart và browser 11 nhóm/9 views. Xem docs/PHASE3_VALIDATION.md và evidence summary. Không tự sửa website, không paid calls trong lượt này.
 
-## Phase 3 — Real workflow, chưa triển khai
+Chưa nghiệm thu LIVE:
 
-GSC read-only OAuth/service account theo property, pagination/filters/date range, provenance/source integrity; hai AI phân tích/review, task board, human approval, report/history. Cần quyền GSC và Phase 2 LIVE đã nghiệm thu. Không sửa CMS trong MVP.
+1. Cấu hình Google OAuth web client, redirect, consent testing user và property read grant; review/save/publish environment draft, kiểm tra runtime đã apply; restart web/worker cùng encryption key.
+2. Lấy dataset official qua worker và kiểm chứng source pages/hash/history bằng `verify:gsc -- --dataset=<id>`. Import/HTTP_STUB không được nâng thành GSC_API.
+3. Ít nhất hai AI API credentials/quota/model/pricing/probes thật, data policy + consent và quyền paid calls riêng. Chạy SEO qua hai API, kiểm tra usage/evidence, human approval và final reports.
+4. Lưu chứng cứ GSC và AI riêng, rồi mới ghi nhận nghiệm thu Phase 3 LIVE.
 
 ## Phase 4 — Production hardening, chưa triển khai
 
-OIDC, authorization/security review, distributed rate limits, secret manager, monitoring/alerting, recovery drills, object storage, backup/restore, deployment/quota Google Cloud. Không deploy public bản auth development. CMS write là mở rộng riêng có quyền thực thi, approval, before/after và rollback/reconciliation.
+Chỉ chuyển sau các gates LIVE ở trên. OIDC/multi-user authorization/session lifecycle, OAuth/security review, HTTPS/secure cookies, stable encryption key và secret manager, distributed rate limits, observability/alerting, object storage/lifecycle, backup + restore drills, deployment/quota Google Cloud thực tế. Không public local-development auth.
+
+CMS write/publish là phần mở rộng riêng, không tự động thuộc hardening: cần quyền, human approval, before/after và rollback/reconciliation. Không triển khai ở Phase 3.

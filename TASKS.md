@@ -1,38 +1,45 @@
 # ORBIT — checklist triển khai
 
-## Foundation được giữ
+## Baseline và kiến trúc
 
-- [x] Xác minh parent branch/commit `orbit/phase1-foundation-audit` / `9f07558` và code hoạt động, không HTML demo.
-- [x] Chạy baseline: 14 unit, 10 integration, typecheck/build, backend/worker/database E2E.
-- [x] Giữ 7 packages, 4 workspace modules, mock providers và mọi acceptance tests Phase 1.
-- [x] Regression controls, retry/timeout, fencing/recovery, idempotency/budgets, approval, artifacts và restart app/worker.
+- [x] HEAD `b6bb1fc`, branch Phase 2 và working tree sạch được xác minh trước sửa.
+- [x] Baseline chạy lại 19 unit/19 integration/typecheck/build/E2E; archive docs/evidence/phase2-baseline.
+- [x] Branch riêng orbit/phase3-gsc-seo-workflow, không merge main.
+- [x] Giữ 7 packages và Phase 1–2 engine; không tạo queue khác hoặc phụ thuộc Claude Code.
+- [x] Giữ mock providers và toàn bộ Foundation/Phase 2 regressions.
 
-## Phase 2 — đã triển khai code
+## Phase 3 implementation
 
-- [x] Bốn REST wires độc lập: Anthropic Messages, OpenAI Chat Completions, Google generateContent, xAI Chat Completions.
-- [x] Giữ mock adapters và HTTP_STUB tests mang nhãn riêng, không Connected/LIVE giả.
-- [x] Server environment secrets, official HTTPS endpoints cố định, proxy/CA verification, lỗi chuẩn hóa/redaction, không retry ngầm.
-- [x] Model/pricing/token caps config thực trong backend/UI; không bịa giá hoặc quyền API.
-- [x] Provider probes và receipts bền vững; readiness theo owner, TTL/config/credential binding; chặn stub/expired/failed.
-- [x] LIVE admission cần hai providers, data policy/consent; routing theo capability/cost/latency/availability.
-- [x] Usage/evidence và giá snapshot theo attempt; giữ chi phí khi invalid output/cancel, tính reservation bảo thủ cho lỗi billable không chắc chắn.
-- [x] Probe ledger, budget guard/serialization, giới hạn tần suất và crash settlement.
-- [x] AI Goal Interpreter/planning task có schema, quyền read-only, giữ objective/criteria/dependencies/approval, template fallback có lý do.
-- [x] Không gọi AI tính phí từ preview; source MOCK không được coi là LIVE; GSC thật để Phase 3.
-- [x] Migrations 0002/0003 additive, seed giữ run và owner configs; 14 bảng.
-- [x] 19 unit/protocol + 19 PostgreSQL integration tests; production build/typecheck; E2E Foundation và AI planning MOCK qua worker/database.
-- [x] Browser regression 10 nhóm, mobile 390 px; không runtime exceptions.
-- [x] `verify:live` và evidence BLOCKED khi thiếu prerequisites; không tự approve trong script.
-- [x] README, architecture/schema/roadmap/tasks, preflight, provider protocol docs và validation evidence.
+- [x] OAuth read-only, PKCE/state/browser nonce/TTL/replay prevention.
+- [x] Token encryption AES-256-GCM/AAD/key riêng, không secrets client/log.
+- [x] Row-locked refresh, 401 một lần, invalid_grant reauthorize; revoke/pending/version guard.
+- [x] Property discovery, Search Analytics filters/date range, bounded pagination, 403/429/timeout handling.
+- [x] Ingestion chạy qua engine tool task, page checkpoint + fence, restart/retry/duplicate jobs.
+- [x] Immutable normalized dataset, raw import checksum/API page hashes, provenance/timezone/warnings.
+- [x] CSV/JSON import và equal nonoverlapping period comparison.
+- [x] Deterministic CTR/weighted position/counts/deltas và bounded evidence facts.
+- [x] AI1 + AI2 khác provider dùng schemas không cho số liệu tự tạo; code validation + synthesis.
+- [x] Task Board/evidence/criteria, hash-bound human approval, MD/CSV/JSON artifacts.
+- [x] Backend/UI connection/property/datasets/insights/execution/reports; OAuth controls honest khi chưa có config.
+- [x] Không website write/publish hoặc paid AI call trong lượt này.
 
-## Phase 2 — chưa nghiệm thu LIVE
+## Kiểm chứng
 
-- [ ] Secure credentials cho ít nhất hai AI APIs, quota/model entitlement thực.
-- [ ] Review/save/publish environment draft, kiểm tra egress/runtime đã apply và restart processes.
-- [ ] Model/pricing đã xác nhận và hai inference probes API chính thức.
-- [ ] Structured handoff thật giữa ít nhất hai providers qua backend/worker/database.
-- [ ] Human approval và final artifact thật; lưu receipts/usage/cost/errors và bằng chứng nghiệm thu.
+- [x] 25 unit/protocol tests PASS.
+- [x] 31 PostgreSQL integration tests PASS (19 regression + 11 Phase 3 + 1 teardown reliability).
+- [x] Typecheck/production build PASS.
+- [x] E2E API–worker–database, OAuth/GSC HTTP_STUB và app+worker restart ở pagination checkpoint PASS.
+- [x] Browser 11 nhóm, 9 views ở mobile 390 px; không runtime exceptions.
+- [x] Report checksums/ownership/approval integrity, source mismatch, invented values, expired state/token, refresh/revoke/429/timeout/duplicate jobs được kiểm tra.
+- [x] Live verifiers trả BLOCKED/exit 2 rõ nguyên nhân, không coi đó là passed LIVE test.
+- [x] README/architecture/schema/roadmap/tasks và docs/PHASE3_VALIDATION.md + evidence.
 
-Không merge main. Branch làm việc: `orbit/phase2-real-multi-ai`. Commit/push được xác nhận qua Git khi bàn giao, không ghi một SHA dự đoán.
+## LIVE gates chưa đạt
 
-Phase 3 GSC thật và Phase 4 production hardening chưa triển khai.
+- [ ] Google OAuth client ID/secret thật, consent/property read grant.
+- [ ] Publish/apply egress + secure server config; GSC_API snapshot qua worker và official source evidence.
+- [ ] Ít nhất hai AI API keys/quota/model/pricing, probes và paid-call permission riêng.
+- [ ] SEO multi-AI LIVE → validation → human approval → artifacts, evidence GSC/AI riêng.
+- [ ] Sau nghiệm thu LIVE mới chuyển Phase 4 auth/security/storage/backup/deployment.
+
+CODE COMPLETE và HTTP_STUB TESTED không đồng nghĩa LIVE VERIFIED. Commit/push được xác nhận bằng Git khi bàn giao; không dự đoán SHA trong tài liệu.

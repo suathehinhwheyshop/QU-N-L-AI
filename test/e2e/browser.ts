@@ -3,7 +3,11 @@ import { writeFile, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { config } from "dotenv";
 config({ path: ".env.local", quiet: true });
-const tabs = await (await fetch("http://127.0.0.1:9230/json/list")).json();
+const tabs = await (
+  await fetch(
+    (process.env.ORBIT_BROWSER_CDP ?? "http://127.0.0.1:9230") + "/json/list",
+  )
+).json();
 const ws = new WebSocket(
   tabs.find((t: { type: string }) => t.type === "page").webSocketDebuggerUrl,
 );
@@ -79,7 +83,9 @@ try {
   await send("Page.enable");
   await send("Page.navigate", { url: "about:blank" });
   await waitFor("location.href==='about:blank'");
-  await send("Page.navigate", { url: "http://127.0.0.1:3200" });
+  await send("Page.navigate", {
+    url: process.env.ORBIT_BROWSER_ORIGIN ?? "http://127.0.0.1:3200",
+  });
   await waitFor(
     "document.querySelector('#password') || document.querySelector('.page-heading')",
   );
@@ -192,6 +198,60 @@ try {
     "document.querySelector('.toast')?.textContent.includes('Đã lưu')",
   );
   checks.push("settings form saves backend policy");
+  await route("#seo");
+  await waitFor("document.querySelector('[data-testid=seo-import]')");
+  assert.ok(
+    await evaluate(
+      "Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Kết nối Google read-only').disabled",
+    ),
+  );
+  for (const [field, value] of [
+    ["current_start", "2026-10-01"],
+    ["current_end", "2026-10-28"],
+  ]) {
+    await evaluate(
+      `(()=>{const input=document.querySelector('input[name="${field}"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'${value}');input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));})()`,
+    );
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  await writeFile(
+    ".orbit/seo-browser.csv",
+    "period,page,query,clicks,impressions,position\ncurrent,https://wheyshop.vn/whey,whey,20,1000,8\ncurrent,https://wheyshop.vn/creatine,creatine,30,500,3\ncurrent,https://wheyshop.vn/bcaa,bcaa,5,500,12\n",
+  );
+  const seoDom = await send("DOM.getDocument");
+  const seoInput = await send("DOM.querySelector", {
+    nodeId: (seoDom.root as { nodeId: number }).nodeId,
+    selector: "[data-testid=seo-import] input[type=file]",
+  });
+  await send("DOM.setFileInputFiles", {
+    nodeId: seoInput.nodeId,
+    files: [resolve(".orbit/seo-browser.csv")],
+  });
+  await clickText("Import dataset");
+  await waitFor("document.querySelector('[data-testid=seo-insights]')");
+  assert.ok(
+    (
+      await evaluate<string>("document.querySelector('.seo-metrics').innerText")
+    ).includes("55"),
+  );
+  await clickText("Xem kế hoạch SEO");
+  await waitFor("document.querySelectorAll('.seo-preview li').length===7");
+  await clickText("Khởi chạy SEO MOCK");
+  await waitFor("document.querySelector('.approval-card')");
+  await clickText("Phê duyệt báo cáo");
+  await waitFor(
+    "document.querySelector('.run-hero .pill')?.textContent.includes('Đã kiểm chứng')",
+  );
+  const seoRun = await evaluate<string>("location.hash.slice(10)");
+  assert.equal(
+    await evaluate(
+      `fetch('/api/runs/'+${JSON.stringify(seoRun)}).then(r=>r.json()).then(d=>d.artifacts.filter(f=>f.kind.startsWith('report_')).length)`,
+    ),
+    3,
+  );
+  checks.push(
+    "SEO UI imports real CSV bytes, shows deterministic 55 clicks, previews seven-step plan, executes MOCK and approves three report files; OAuth disabled without server config",
+  );
   await route("#artifacts");
   await waitFor("document.querySelectorAll('.artifact-card').length>=7");
   checks.push("real uploaded/generated artifacts visible");
@@ -202,6 +262,7 @@ try {
     mobile: true,
   });
   for (const hash of [
+    "#seo",
     "#dashboard",
     "#new",
     "#workflows",
@@ -220,7 +281,7 @@ try {
       hash + " horizontal overflow: " + JSON.stringify(size),
     );
   }
-  checks.push("eight views fit 390px mobile viewport");
+  checks.push("nine views including SEO fit 390px mobile viewport");
   await mkdir("docs/evidence", { recursive: true });
   await new Promise((r) => setTimeout(r, 4200));
   await send("Emulation.setDeviceMetricsOverride", {
@@ -262,6 +323,17 @@ try {
   });
   await writeFile(
     "docs/evidence/workflow-mobile.png",
+    Buffer.from(shot.data as string, "base64"),
+  );
+  await route("#seo");
+  await waitFor("document.querySelector('[data-testid=seo-insights]')");
+  await evaluate("scrollTo(0,0)");
+  shot = await send("Page.captureScreenshot", {
+    format: "png",
+    captureBeyondViewport: false,
+  });
+  await writeFile(
+    "docs/evidence/seo-mobile.png",
     Buffer.from(shot.data as string, "base64"),
   );
   assert.deepEqual(errors, []);

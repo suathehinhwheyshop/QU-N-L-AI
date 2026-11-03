@@ -1,6 +1,6 @@
 {
   "name": "orbit-platform",
-  "version": "1.1.0-phase2",
+  "version": "1.2.0-phase3",
   "private": true,
   "type": "module",
   "engines": {
@@ -23,7 +23,10 @@
     "format:check": "prettier --check src packages scripts test *.ts *.json *.md",
     "verify:foundation": "node scripts/verify-foundation.mjs",
     "verify:live": "node --import tsx scripts/live-smoke.ts",
-    "verify:phase2": "node scripts/verify-phase2.mjs"
+    "verify:phase2": "node scripts/verify-phase2.mjs",
+    "verify:phase3": "node scripts/verify-phase3.mjs",
+    "verify:gsc": "node --import tsx scripts/gsc-smoke.ts",
+    "test:browser:isolated": "node --import tsx test/e2e/browser-runner.ts"
   },
   "dependencies": {
     "dotenv": "^18.0.9",

@@ -4,7 +4,13 @@ export const xai: VendorDefinition = {
   name: "Grok / xAI",
   mockId: "mock-xai",
   model: "mock-xai/structured-v1",
-  capabilities: ["analysis", "review", "planning"],
+  capabilities: [
+    "analysis",
+    "review",
+    "planning",
+    "seo_analysis",
+    "seo_review",
+  ],
   latencyMs: 100,
 };
 export const createXAIMock = () => createMockAdapter(xai);

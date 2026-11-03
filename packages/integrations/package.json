@@ -9,6 +9,9 @@
   "dependencies": {
     "@orbit/shared": "*",
     "@orbit/core": "*",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "@orbit/database": "*",
+    "@orbit/storage": "*",
+    "undici": "^8.12.3"
   }
 }

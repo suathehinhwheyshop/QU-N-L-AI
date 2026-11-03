@@ -1,0 +1,19 @@
+
+> orbit-platform@1.1.0-phase2 test:e2e
+> node --import tsx test/e2e/workflow.ts
+
+{
+  "result": "PASS",
+  "checks": [
+    "unauthenticated API and cross-origin mutation blocked",
+    "application server restart preserves run, outputs, approval and authentication",
+    "goal → source → two different mock providers → board → WAITING_APPROVAL",
+    "persisted model configuration controls actual routing; unsupported models rejected",
+    "worker process restart continues from durable checkpoint; approval and real file checksum verified",
+    "mock health stays MOCK; LIVE and writes remain blocked; settings persist",
+    "authenticated upload and download store real bytes",
+    "backend pause/resume/cancel and bounded retry validated over HTTP with worker",
+    "owner authorization enforced for run and artifact",
+    "AI schema planning → two MOCK providers → approval → 7 stored artifacts; LIVE stays disconnected without a real API probe"
+  ]
+}

@@ -294,3 +294,79 @@ export const providerProbes = pgTable(
   },
   (t) => [index().on(t.owner_id, t.provider_id, t.created_at)],
 );
+
+export const gscAccounts = pgTable("gsc_accounts", {
+  owner_id: uuid()
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  status: text().notNull(),
+  kind: text().notNull(),
+  scope: text().notNull(),
+  access_cipher: text(),
+  refresh_cipher: text(),
+  expires_at: time("expires_at"),
+  properties: jsonb()
+    .$type<{ siteUrl: string; permissionLevel: string }[]>()
+    .default([])
+    .notNull(),
+  verified_at: time("verified_at"),
+  error_code: text(),
+  updated_at: time("updated_at").defaultNow().notNull(),
+});
+export const gscOAuthStates = pgTable("gsc_oauth_states", {
+  state_hash: text().primaryKey(),
+  owner_id: uuid()
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  browser_hash: text().notNull(),
+  verifier_cipher: text().notNull(),
+  expires_at: time("expires_at").notNull(),
+  consumed_at: time("consumed_at"),
+});
+export const gscJobs = pgTable(
+  "gsc_jobs",
+  {
+    id: id(),
+    owner_id: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    request_key: uuid().notNull(),
+    run_id: uuid()
+      .unique()
+      .references(() => runs.id, { onDelete: "cascade" }),
+    spec: jsonb().$type<Record<string, unknown>>().notNull(),
+    checkpoint: jsonb().$type<Record<string, unknown>>().default({}).notNull(),
+    dataset_id: uuid(),
+    created_at: time("created_at").defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex().on(t.owner_id, t.request_key)],
+);
+export const seoDatasets = pgTable(
+  "seo_datasets",
+  {
+    id: id(),
+    owner_id: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    request_key: uuid().notNull(),
+    request_hash: text().notNull(),
+    job_id: uuid()
+      .unique()
+      .references(() => gscJobs.id),
+    name: text().notNull(),
+    kind: text().notNull(),
+    spec: jsonb().$type<Record<string, unknown>>().notNull(),
+    sha256: text().notNull(),
+    blob_key: text().notNull(),
+    raw_sha256: text(),
+    raw_blob_key: text(),
+    row_count: integer().notNull(),
+    previous_row_count: integer().notNull(),
+    warnings: jsonb().$type<string[]>().notNull(),
+    created_at: time("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex().on(t.owner_id, t.request_key),
+    index().on(t.owner_id, t.created_at),
+  ],
+);

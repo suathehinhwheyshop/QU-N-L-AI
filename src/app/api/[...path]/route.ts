@@ -352,7 +352,7 @@ async function endpoint(
       return new NextResponse(new Uint8Array(bytes), {
         headers: {
           "Content-Type": a.media_type,
-          "Content-Disposition": `attachment; filename="orbit-${a.id}.${a.kind === "upload" ? "txt" : "json"}"`,
+          "Content-Disposition": `attachment; filename="orbit-${a.id}.${a.media_type === "text/markdown" ? "md" : a.media_type === "text/csv" ? "csv" : a.kind === "upload" ? "txt" : "json"}"`,
           "Cache-Control": "private, no-store",
         },
       });

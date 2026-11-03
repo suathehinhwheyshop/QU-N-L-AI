@@ -1,3 +1,4 @@
+import { SeoAdvice, SeoReview } from "@orbit/shared/seo";
 import { z } from "zod";
 import {
   Analysis,
@@ -21,6 +22,8 @@ export const outputSchemas = {
   review: Review,
   planning: ProposedPlan,
   probe: ProbeOutput,
+  seo_analysis: SeoAdvice,
+  seo_review: SeoReview,
 };
 export function outputSchema(capability: string) {
   const schema = outputSchemas[capability as keyof typeof outputSchemas];
@@ -39,7 +42,13 @@ export function createLiveAdapter(
       mode: transport.kind === "LIVE_API" ? "LIVE" : "MOCK",
       models: [],
       model: "",
-      capabilities: ["analysis", "review", "planning"],
+      capabilities: [
+        "analysis",
+        "review",
+        "planning",
+        "seo_analysis",
+        "seo_review",
+      ],
       available: true,
       costCents: 0,
       latencyMs: 9999,

@@ -4,6 +4,7 @@ export const GoalInput = z
   .object({
     goal: z.string().trim().min(10).max(5000),
     workspace_id: z.uuid(),
+    seo_dataset_id: z.uuid().optional(),
     acceptance_criteria: z
       .array(z.string().trim().min(1).max(500))
       .max(10)
@@ -260,10 +261,41 @@ export const phase2Messages: Record<string, string> = {
   API_RESPONSE_INVALID: "Phản hồi API không hợp lệ.",
   CONTEXT_LIMIT: "Input vượt giới hạn token đã cấu hình.",
   LIVE_SOURCE_UNAVAILABLE:
-    "GSC thật thuộc Phase 3; Phase 2 LIVE dùng Research/Video/Development với yêu cầu người dùng.",
+    "SEO LIVE cần dataset đã lưu trong SEO Workspace; nguồn fixture không được coi là dữ liệu thật.",
   UNTRUSTED_EXECUTION: "Không có bằng chứng thực thi API thật.",
 };
 Object.assign(safeMessage, phase2Messages);
 
 safeMessage.PROBE_BUSY =
   "Đang có probe hoặc vừa kiểm tra kết nối. Vui lòng thử lại sau.";
+
+Object.assign(safeMessage, {
+  GSC_ENCRYPTION_REQUIRED: "Thiếu encryption key 32 bytes phía server.",
+  GSC_CONFIG_REQUIRED: "Chưa cấu hình Google OAuth client phía server.",
+  GSC_REAUTH_REQUIRED: "Quyền Google đã hết hiệu lực; cần kết nối lại.",
+  GSC_FORBIDDEN: "Không có quyền đọc property GSC này.",
+  GSC_RATE_LIMIT: "GSC giới hạn tốc độ; worker sẽ thử lại có backoff.",
+  GSC_TIMEOUT: "GSC quá thời gian; checkpoint được giữ để thử lại.",
+  GSC_UNAUTHORIZED: "Google từ chối token.",
+  GSC_RESPONSE_INVALID: "Phản hồi GSC không hợp lệ.",
+  GSC_INVALID_DATA: "Dataset không hợp lệ, trùng dòng hoặc ngoài property.",
+  GSC_EMPTY_DATASET: "Dataset không có dòng để phân tích.",
+  GSC_TOKEN_DECRYPT_FAILED:
+    "Không giải mã được token; kiểm tra encryption key.",
+  GSC_SOURCE_MISMATCH: "Checksum nguồn hoặc evidence không khớp.",
+  SEO_TEMPLATE_REQUIRED:
+    "Dataset SEO dùng template có bước validation bắt buộc.",
+  GSC_DISCONNECTED: "Chưa kết nối GSC.",
+  GSC_REVOKE_PENDING:
+    "Đang chờ thu hồi quyền; kết nối không được phép đọc dữ liệu.",
+});
+Object.assign(safeMessage, {
+  GSC_OAUTH_STATE:
+    "Phiên OAuth không hợp lệ, hết hạn hoặc đã dùng; hãy bắt đầu kết nối lại.",
+  GSC_SCOPE_REJECTED:
+    "Token trả về có scope ngoài webmasters.readonly; kết nối bị từ chối.",
+  GSC_REFRESH_TOKEN_REQUIRED:
+    "Google chưa cấp refresh token; cần consent offline mới.",
+  GSC_UNAVAILABLE: "Dịch vụ Google tạm lỗi; worker sẽ thử lại có giới hạn.",
+  GSC_REQUEST_REJECTED: "Google từ chối yêu cầu đọc dữ liệu.",
+});

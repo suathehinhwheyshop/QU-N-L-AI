@@ -2,7 +2,7 @@
   "status": "PASS",
   "mode": "MOCK_AND_HTTP_STUB",
   "live_api_verified": false,
-  "at": "2026-11-02T17:17:26.679Z",
+  "at": "2026-11-03T00:27:54.538Z",
   "results": [
     {
       "name": "unit",
@@ -37,7 +37,7 @@
       "log": "e2e.log"
     }
   ],
-  "e2e_run_id": "eec8dbc4-b6a9-4fe5-a076-4fafac4309b5",
-  "phase2_e2e_run_id": "545635af-2a05-46ee-8ccf-893427e6a571",
+  "e2e_run_id": "fd086f47-e3f2-443d-907f-557ed8e63d69",
+  "phase2_e2e_run_id": "975a1843-0085-4f08-ab07-bf48667f7785",
   "notice": "Offline Phase 2 implementation and Phase 1 regressions only. Official API proof is separate: phase2-live.json. No website writes."
 }

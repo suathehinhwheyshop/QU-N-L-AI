@@ -73,8 +73,9 @@ export function createMockAdapter(
         limitations: ["Chỉ kiểm chứng orchestration bằng fixture."],
         source_sha256: data.source_sha256,
       };
-      const output =
-        capability === "planning"
+      const output = data.structured_fixture
+        ? structuredClone(data.structured_fixture)
+        : capability === "planning"
           ? structuredClone(data.planning_fixture)
           : capability === "review"
             ? {

@@ -18,12 +18,29 @@ export async function testDatabase() {
   return {
     name,
     async cleanup() {
-      await admin.query(
-        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname=$1 AND pid<>pg_backend_pid()",
-        [name],
-      );
-      await admin.query(`DROP DATABASE "${name}"`);
-      await admin.end();
+      // pg-pool removes clients before Client.end's socket callback finishes.
+      // Force-terminating those backends races graceful shutdown and creates
+      // unhandled FATAL errors. Wait for actual disconnect; do not hide leaks.
+      try {
+        const deadline = Date.now() + 3000;
+        while (true) {
+          const {
+            rows: [row],
+          } = await admin.query(
+            "SELECT count(*)::int AS n FROM pg_stat_activity WHERE datname=$1",
+            [name],
+          );
+          if (!row.n) break;
+          if (Date.now() >= deadline)
+            throw Error(
+              "Test database still has open connections after shutdown",
+            );
+          await new Promise((resolve) => setTimeout(resolve, 25));
+        }
+        await admin.query(`DROP DATABASE "${name}"`);
+      } finally {
+        await admin.end();
+      }
     },
   };
 }

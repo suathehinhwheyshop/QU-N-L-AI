@@ -4,7 +4,13 @@ export const google: VendorDefinition = {
   name: "Gemini / Google",
   mockId: "mock-google",
   model: "mock-google/structured-v1",
-  capabilities: ["analysis", "review", "planning"],
+  capabilities: [
+    "analysis",
+    "review",
+    "planning",
+    "seo_analysis",
+    "seo_review",
+  ],
   latencyMs: 80,
 };
 export const createGoogleMock = () => createMockAdapter(google);

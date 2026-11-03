@@ -1,3 +1,4 @@
+import { seoDatasetTemplate } from "./seo-template";
 import { getWorkspace } from "./registry";
 import {
   NodeSchema,
@@ -10,6 +11,7 @@ export function reviewedTemplate(
   kind: string,
 ): { template: string; nodes: Node[] } {
   const workspace = getWorkspace(kind);
+  if (kind === "seo" && goal.seo_dataset_id) return seoDatasetTemplate(goal);
   if (goal.mode === "LIVE" && !workspace.liveInput)
     throw new OrbitError("LIVE_SOURCE_UNAVAILABLE");
   const raw = [

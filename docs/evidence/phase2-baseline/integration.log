@@ -1,0 +1,31 @@
+
+> orbit-platform@1.1.0-phase2 test:integration
+> node --import tsx --test --test-concurrency=1 test/integration/*.test.ts
+
+✔ PostgreSQL workflow: idempotency, two providers, hash-bound approval and verified artifacts (857.541108ms)
+✔ paused and canceled runs never start downstream tasks; inflight result discarded (36.988094ms)
+✔ expired lease recovers checkpoint and fences late completion (48.063607ms)
+✔ parallel runnable tasks respect owner concurrency; competing claim cannot duplicate attempt (134.107715ms)
+✔ timeout aborts adapter and exhausts bounded retry with backoff (592.505534ms)
+✔ invalid structured output never reaches review or report (151.453397ms)
+✔ budget reservations are atomic across parallel tasks (83.074087ms)
+✔ rejected approval prevents delivery; tampered source blocks validation (426.682ms)
+✔ each non-SEO workspace runs on the same durable engine without SEO fixtures (1277.877781ms)
+✔ owner-specific provider configuration changes actual routing and can block all unavailable adapters (505.532258ms)
+✔ two real protocol adapters hand structured data across durable worker tasks, always labeled HTTP_STUB/MOCK (681.279443ms)
+✔ unsafe AI planning falls back and cannot remove approval or enable writes (338.880043ms)
+✔ uncertain billable errors consume reservation and budget halts retries (893.087096ms)
+✔ LIVE admission rejects HTTP stub providers even after successful protocol tests (8.415829ms)
+✔ a changed operator price after claim cannot change an in-flight reservation snapshot (55.572531ms)
+✔ cancel discards in-flight output while preserving reported HTTP_STUB usage and cost (195.354789ms)
+✔ review with a wrong source checksum cannot create a task board or approval (172.453044ms)
+✔ HTTP 429 retries at engine boundary with backoff, without charging a rejected request (494.20182ms)
+✔ a synthetic HTTP_STUB probe receipt cannot activate a credential-present LIVE adapter (10.694454ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8657.334799

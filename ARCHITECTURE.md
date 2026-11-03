@@ -1,4 +1,4 @@
-# ORBIT — kiến trúc nền tảng V1 / mở rộng Phase 2
+# ORBIT — kiến trúc nền tảng V1 / mở rộng Phase 2–3
 
 ## Quyết định trước khi triển khai
 
@@ -44,7 +44,7 @@ Giao dịch điều phối có advisory transaction lock chung để thứ tự 
 
 Mọi kết nối database dùng parameterized queries; Drizzle dùng cho schema/migrations và CRUD, SQL trực tiếp chỉ cho transaction/queue cần locking rõ ràng. API trả DTO đã chọn trường, không trả blob path hay secret. Session development ký HMAC và không đặt password vào URL; cần session revocation, OIDC và distributed rate limit trước khi public.
 
-Tool layer dùng IntegrationAdapter độc lập với ProviderAdapter, có input/output schema, scopes và healthcheck. GSC fixture là connector MOCK thực sự được gọi trong workflow; GSC thật giữ DISCONNECTED và webmasters.readonly chỉ là yêu cầu quyền tương lai, chưa được cấp. Drive/Sheets, CMS, GitHub và công cụ khác sẽ lắp vào cùng contract khi triển khai adapter.
+Tool layer dùng IntegrationAdapter độc lập với ProviderAdapter, có input/output schema, scopes và healthcheck. GSC fixture là connector MOCK thực sự được gọi trong workflow; GSC OAuth read-only đã có implementation Phase 3; credential/grant thật vẫn chưa được cấp trong môi trường này. Drive/Sheets, CMS, GitHub và công cụ khác sẽ lắp vào cùng contract khi triển khai adapter.
 
 ## Cấu trúc package sau audit
 
@@ -57,7 +57,7 @@ Tool layer dùng IntegrationAdapter độc lập với ProviderAdapter, có inpu
 | Database / schema                                                                       | @orbit/database — packages/database                                                      |
 | ArtifactStore                                                                           | @orbit/storage — packages/storage                                                        |
 | Provider adapters                                                                       | @orbit/providers — bốn module anthropic/openai/google/xai, mock và REST network adapters |
-| Tool connector                                                                          | @orbit/integrations — GSC fixture MOCK                                                   |
+| Tool connector                                                                          | @orbit/integrations — GSC fixture + OAuth read-only/data services                        |
 | Workspace modules                                                                       | @orbit/workspaces — seo/video/research/development                                       |
 
 Các file src/core, src/db, src/providers… chỉ re-export để giữ tương thích đường import; implementation chuẩn nằm trong packages. Npm workspaces liên kết package, Next transpile các package TS. Core không import concrete provider, integration hoặc workspace; composition root lắp implementation. Có boundary tests để kiểm tra ràng buộc này.
@@ -78,6 +78,20 @@ LIVE admission yêu cầu external policy + consent theo goal + ít nhất hai p
 
 AI planning là task `interpret` bền vững giữa source và analysis, có reservation, timeout, usage, checkpoint và artifact. Preview vẫn deterministic, không gọi tính phí. AI phải trả ProposedPlan strict (objective, acceptance criteria, đúng năm bước, dependencies và effect read); validator giữ nguyên objective/criteria bắt buộc và topology/approval. Instructions hợp lệ được truyền sang analyst/reviewer; handler/tool/model quyền thực thi vẫn do template và router chọn. Đây là **bounded AI planning trong template đã duyệt**, chưa phải tự sinh workflow tùy ý. Sai schema/quyền hoặc không có planning provider trả TEMPLATE_FALLBACK cùng lý do, không báo AI thành công. Deadline invoke 30 giây nằm trong deadline task LIVE 60 giây để còn thời gian lưu fallback.
 
-Research/Video/Development LIVE nhận ContextData nguồn USER_INPUT. Không trộn GSC fixture vào run LIVE; workspace SEO từ chối LIVE khi chưa có source connector thật. Upload hiện chỉ lưu bytes/metadata; chưa đưa nội dung vào prompt. Phase 3 mới đọc GSC thật.
+Research/Video/Development LIVE nhận ContextData nguồn USER_INPUT. SEO LIVE chỉ nhận dataset ID đã kiểm tra owner/checksum; không chuyển fixture thành LIVE. Legacy upload giữ bytes/metadata; SEO CSV/JSON import là đường parse dữ liệu riêng trong Phase 3.
 
 Probes chỉ ra đường gọi API đã trả JSON hợp lệ; bằng chứng thực tế từ multi-step worker vẫn cần run/attempt/usage/artifact thực. Môi trường hiện thiếu keys, `verify:live` ghi BLOCKED. Bản draft môi trường thêm đúng bốn API hosts và secret requirements; chưa được publish/apply, không coi là runtime access đã có.
+
+## Phase 3 — GSC và evidence-first SEO
+
+GSC client/OAuth/crypto/immutable dataset services thuộc @orbit/integrations; metrics/AI schemas/template/validation/synthesis thuộc @orbit/workspaces với contracts @orbit/shared. Vẫn 7 packages; engine không import concrete integration/workspace. Workspace goal-policy hook xác minh quyền dataset trước preview/create. HandlerContext thêm execution IDs phục vụ owner access và checkpoint fence; core thêm Retry-After và optional artifact renderer, giữ queue/DAG/lease/approval hiện có.
+
+GSC ingestion là một tool task của engine, không queue riêng. gsc_jobs liên kết run + spec + checkpoint pages/cursor + dataset ID. Mỗi page lưu canonical normalized envelope vào ArtifactStore rồi commit checkpoint dưới coordinator/attempt fence; HTTP ở ngoài transaction. Restart/retry đọc lại pages, tiếp tục startRow; stale attempt không commit. Immutable dataset unique theo owner/request key và job, idempotent finalization. Thu thập source có thể chạy mà không AI keys; run.mode mô tả AI inference, dataset.provenance.kind mô tả nguồn riêng.
+
+OAuth start là POST authenticated/Origin-checked, state hash/browser nonce và encrypted PKCE verifier, TTL/one-use DB. Cookie OAuth Lax cho callback; app session vẫn Strict. Tokens AES-256-GCM/AAD theo owner và purpose, key riêng. Row lock serialized refresh; 401 chỉ refresh/retry một lần; read-only scope, fixed official endpoints và proxy/TLS. Revoke pending deny reads và retry; encrypted token version mới không bị revoke finalization cũ xóa nhầm. No raw token/client secret trong DTO/events/artifacts.
+
+Nguồn có spec/date/filter/timezone/capture/source hashes và warning. API không bảo đảm mọi query; normalized sums không phải property totals. Imported CSV/JSON chỉ USER_SUPPLIED. Facts giữ top 20 evidence IDs + deterministic measurements; AI chọn action/reason/priority theo enum và fact ID, không numeric/free prose output. Review khác provider; validation recompute facts/checksum từ dataset immutable trước synthesis. Bước board bind facts/dataset/source hashes cùng metrics/criteria; approval hash bảo vệ toàn board.
+
+Delivery renderer tạo MD/CSV/JSON và JSON checkpoint của task; blobs put trước transaction, metadata commit cùng completed attempt, source lineage và cost. Cancel/fencing discard metadata, không phát hành report. Orphan blob cleanup vẫn thuộc Phase 4. Trusted server composition port cho GscClient cho phép E2E preload cài HTTP_STUB; không có client/env endpoint override và stub không mang kind GSC_API.
+
+OAuth/GSC/AI LIVE phải kiểm chứng riêng. Code + HTTP_STUB passes chưa xác nhận tài khoản Google, property entitlement hoặc AI billing. Phase 4 giữ OIDC/session lifecycle, production OAuth/security review, KMS/object storage, backup/restore, monitoring và deployment.

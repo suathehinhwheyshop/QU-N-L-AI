@@ -1,0 +1,10 @@
+# Phase 3 implementation decisions
+
+Parent verified b6bb1fc; Phase 2 baseline rerun: 19 unit + 19 integration + typecheck/build + backend/worker/DB E2E. Keep seven packages and existing queue/leases/checkpoints/approvals.
+
+- OAuth read-only + PKCE/state/browser binding; encrypted access/refresh tokens on server (dedicated AES-256-GCM key), serialized refresh, revoke pending blocks reads. SameSite=Lax OAuth nonce cookie permits callback while application session stays Strict. OAuth/GSC proof separate from AI proof.
+- GSC discovery and Search Analytics use fixed official endpoints. Page/query dimensions, explicit filters/date windows, bounded pagination. Durable ingestion is a read-only tool task on the existing engine, with fenced page checkpoints in gsc_jobs. No second queue engine. Source mode and AI mode are independent: ingestion run has MOCK AI mode because it does not invoke a model; dataset provenance records GSC_API/HTTP_STUB/IMPORT explicitly.
+- Immutable normalized datasets + raw/source/page checksums. Imported files are USER_SUPPLIED, never proof of GSC API. Explicit incompleteness/anonymized-query/top-rows/date warnings. Period comparison requires equal-length nonoverlapping windows and identical filters.
+- Deterministic totals/CTR/impression-weighted position/deltas produce bounded evidence facts. AI response schema contains fact IDs and action/reason enums, no numeric/free prose fields. Code validates fact hashes/reason eligibility and synthesizes text/metrics from stored facts. Review uses different provider. Extra validation stage cannot be removed. Dataset workflow uses a fixed SEO template; legacy template/AI planning remain available independently.
+- Report outputs MD/CSV/JSON persisted atomically with delivery via a generic optional handler renderer; before this, human approval binds synthesized board hash. No website writes.
+- Unit/HTTP_STUB, PostgreSQL integration, real HTTP+worker+DB E2E and mobile browser regression; no paid AI calls. Live API evidence remains BLOCKED without credentials/user grant.

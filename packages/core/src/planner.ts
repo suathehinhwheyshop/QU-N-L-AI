@@ -66,3 +66,21 @@ export function planGoal(goal: Goal, kind: string): Plan {
     },
   };
 }
+
+const goalPolicies = new Map<
+  string,
+  (owner: string, goal: Goal) => Promise<void>
+>();
+export function registerGoalPolicy(
+  kind: string,
+  policy: (owner: string, goal: Goal) => Promise<void>,
+) {
+  goalPolicies.set(kind, policy);
+}
+export async function validateGoalAccess(
+  owner: string,
+  goal: Goal,
+  kind: string,
+) {
+  await goalPolicies.get(kind)?.(owner, goal);
+}

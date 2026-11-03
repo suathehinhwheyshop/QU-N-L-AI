@@ -1,3 +1,4 @@
+import { adviceFixture } from "@orbit/workspaces/seo-insights";
 import { createServer, type IncomingHttpHeaders } from "node:http";
 import { once } from "node:events";
 import { templateAIPlan } from "@orbit/workspaces/ai-planning";
@@ -40,7 +41,15 @@ export async function stubApi() {
     const packet = JSON.parse(content),
       input = packet.input;
     let output: unknown;
-    if (packet.capability === "planning") {
+    if (packet.capability === "seo_analysis")
+      output = adviceFixture(
+        input.facts,
+        input.source_sha256,
+        input.facts_sha256,
+      );
+    else if (packet.capability === "seo_review")
+      output = { ...input.analysis, reviewed: true };
+    else if (packet.capability === "planning") {
       const plan = templateAIPlan(
         String(input.objective),
         input.planning_fixture?.acceptance_criteria ?? ["Fixture acceptance"],

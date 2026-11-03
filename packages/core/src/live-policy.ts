@@ -68,7 +68,11 @@ export async function configuredCandidates(
     };
   });
 }
-export async function admitLive(owner: string, goal: Goal) {
+export async function admitLive(
+  owner: string,
+  goal: Goal,
+  required: string[] = ["analysis", "review"],
+) {
   const client = await pool.connect();
   try {
     const setting = (
@@ -81,8 +85,7 @@ export async function admitLive(owner: string, goal: Goal) {
       (c) =>
         c.mode === "LIVE" &&
         c.available &&
-        c.capabilities.includes("analysis") &&
-        c.capabilities.includes("review"),
+        required.every((capability) => c.capabilities.includes(capability)),
     );
     if (new Set(available.map((c) => c.vendor ?? c.id)).size < 2)
       throw new OrbitError("LIVE_NOT_READY");
