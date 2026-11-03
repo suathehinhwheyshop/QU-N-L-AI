@@ -2,7 +2,7 @@
 
 Web điều phối đa AI: Next.js/TypeScript/React, PostgreSQL/Drizzle và worker độc lập. Giữ nguyên 7 shared packages, bốn workspace SEO/Video/Research/Development. Core không gán hãng AI vào vai trò nghiệp vụ, không phụ thuộc hoặc sao chép Claude Code.
 
-**Định hướng hiện tại (03/11/2026):** webapp localhost dùng riêng, ưu tiên tận dụng hạn mức/token của các gói AI đã đăng ký qua cơ chế đăng nhập chính thức được từng hãng hỗ trợ. Xem [quyết định sản phẩm](docs/PRODUCT_DECISIONS.md). Các REST adapters hiện có vẫn cần API credentials riêng; kết nối bằng thuê bao chat chưa được triển khai hoặc xác minh.
+**Quyết định hiện tại:** webapp cá nhân **localhost trên Windows 10 + WSL2 + Docker Desktop**, chỉ dùng quyền/hạn mức AI thuê bao chính thức. Không public hosting/VPS/Google Cloud, không REST API key tính phí. [Cài đặt Windows](docs/LOCAL_SETUP_WINDOWS.md) · [Subscription AI integration](docs/SUBSCRIPTION_AI_INTEGRATION.md) · [Validation/blockers](docs/LOCAL_SUBSCRIPTION_VALIDATION.md). Codex/Gemini CLI adapters đã có code và CLI_STUB tests; đăng nhập/inference thuê bao thật và Windows thật chưa VERIFIED. Các báo cáo Phase 1–4 bên dưới là lịch sử triển khai.
 
 Phase 1 đã chạy lại baseline từ `orbit/phase1-foundation-audit`, commit `9f07558`: 14 unit, 10 integration, typecheck/build và E2E qua backend/worker/database đều PASS. Bằng chứng được giữ tại [docs/evidence/phase1-baseline](docs/evidence/phase1-baseline).
 
@@ -30,7 +30,9 @@ npm run dev -- --port 3200
 
 Chạy `npm run worker` trong terminal khác. Web/worker phải dùng cùng database và storage. `setup:local` giữ cấu hình có sẵn; lần đầu tạo credential ngẫu nhiên trong `.env.local` và `.orbit/postgres.env` (ignored, chmod 0600). PostgreSQL bind loopback `127.0.0.1:55432`, volume riêng. Provision account bằng `npm run auth:provision -- --email=<email> --password-file=<private-file>`; nếu nhận lại dữ liệu dev owner cũ, thêm `--adopt-owner=<UUID>`. Mật khẩu tối thiểu 16 ký tự; không gửi vào chat/log. Không còn environment-password login. `ORBIT_BASE_URL` phải khớp origin truy cập để kiểm tra CSRF. Chưa có URL production/public.
 
-## Bật API thật khi đã có quyền API
+## REST API adapters — lịch sử Phase 2, bị khóa trong Local Mode
+
+Hướng dẫn này chỉ mô tả implementation/test cũ. Quyết định sản phẩm hiện tại không dùng phương án này; Local Mode chặn route probe, router và paid transport trước network.
 
 1. Đặt ít nhất hai trong `ORBIT_OPENAI_API_KEY`, `ORBIT_ANTHROPIC_API_KEY`, `ORBIT_GOOGLE_API_KEY`, `ORBIT_XAI_API_KEY` trong secret/environment phía server. Khởi động lại web và worker. Không dùng biến `NEXT_PUBLIC_*`; không nhập key vào frontend. Gói thuê bao chat không bao gồm API credit/quyền API mặc định.
 2. Cho phép egress HTTPS đến endpoint tương ứng: `api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`, `api.x.ai`. Transport tôn trọng proxy/CA của môi trường; không tắt TLS verification.

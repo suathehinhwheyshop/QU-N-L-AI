@@ -1,0 +1,77 @@
+# ORBIT localhost trên Windows 10
+
+Mục tiêu hiện tại: một chủ tài khoản, web ở `http://127.0.0.1:3210`, web/worker chạy trong WSL2, PostgreSQL + backup qua Docker Desktop. Không public staging, VPS, Google Cloud hoặc REST API key tính phí. Máy/WSL phải hoạt động; sau restart các workflow đang chạy/chờ chạy bị PAUSED và cần Resume thủ công.
+
+## Trạng thái kiểm chứng
+
+Install/start/stop/restart/manual resume/backup/restore đã chạy trên Linux với Docker thật; **chưa chạy trên Windows 10/WSL2 thật** vì môi trường phát triển hiện là Linux. PowerShell wrapper, Bash bridge và Windows manual checklist được cung cấp để nghiệm thu trên máy người dùng. Không coi Linux equivalent hoặc CLI_STUB là Windows/LIVE verification. Node bootstrap tải bản chính thức 24.22.2, kiểm SHA-256 pin và đã được thử riêng.
+
+## Chuẩn bị một lần
+
+1. Windows 10 x64 22H2 build 19045 trở lên, bật virtualization. Tài liệu Docker hiện tại nêu WSL ≥2.1.5 và 8 GB RAM; kiểm tra edition/build cùng phiên bản Docker Desktop đang được hỗ trợ trên máy. Không tự đổi OS hoặc cài Docker/WSL có quyền admin trong script ứng dụng.
+2. Cài WSL2 + Ubuntu theo hướng dẫn Microsoft; nếu máy hỗ trợ, dùng PowerShell admin `wsl --install -d Ubuntu`, restart khi Windows yêu cầu, tạo user Linux. Kiểm tra `wsl --list --verbose` cho Ubuntu ở VERSION 2; `wsl --update` khi cần. Script từ chối WSL1.
+3. Cài Docker Desktop, chọn WSL2 engine và bật **Settings → Resources → WSL Integration → Ubuntu**. Mở Docker Desktop. Trong Ubuntu, `docker info` và `docker compose version` phải chạy được; không tạo Docker daemon thứ hai trong Ubuntu. Không cấu hình Docker TCP public.
+4. Cần Git, curl, xz/tar và CA certificates trong Ubuntu. Nếu thiếu: `sudo apt-get update` rồi `sudo apt-get install -y git curl xz-utils ca-certificates`. Node 24 được installer cài trong thư mục riêng của ORBIT nếu WSL chưa có Node ≥24; không thay system Node, HOME hay cấu hình Claude. Không tắt TLS/checksum verification.
+
+Nguồn chính thức: [Docker Windows install](https://docs.docker.com/desktop/setup/install/windows-install/), [Microsoft WSL install](https://learn.microsoft.com/windows/wsl/install), [Node 24.22.2 checksums](https://nodejs.org/dist/v24.22.2/SHASUMS256.txt). Trong lượt phát triển, Docker requirements đã đọc từ repo `docker/docs`; Windows prerequisite acceptance vẫn chưa được xác minh trên máy thật.
+
+## Cài ORBIT
+
+Clone trong Linux filesystem `/home/<user>/ORBIT`, tránh `/mnt/c` để giữ quyền files 0600/0700 và hiệu năng. Thay TEN bằng username Ubuntu thực tế:
+
+```sh
+git clone --branch orbit/local-subscription-ai https://github.com/suathehinhwheyshop/QU-N-L-AI.git /home/TEN/ORBIT
+```
+
+Trong PowerShell Windows:
+
+```powershell
+& '\\wsl$\Ubuntu\home\TEN\ORBIT\ops\windows\Install.ps1' -Repository '/home/TEN/ORBIT' -Distribution Ubuntu -OwnerEmail 'email-cua-anh@example.com'
+```
+
+Nếu chính sách PowerShell của máy chặn script, dùng chính sách cho phép script nguồn đã kiểm tra theo quy định của máy; không vô hiệu hóa bảo mật toàn hệ thống. Có thể chạy lệnh tương ứng ngay trong Ubuntu: `bash ops/windows/bridge.sh install /home/TEN/ORBIT --email email-cua-anh@example.com`.
+
+Installer kiểm Docker/Node, tạo private profile, `npm ci`, migration + DB grants, provision đúng một owner, hỏi mật khẩu **trong terminal và không echo**, production build và image backup. Không có signup/demo password. Không gửi password/token vào chat. Lần cài lại giữ profile/owner/dữ liệu hiện có; không seed/reset PostgreSQL. Lỗi build/prerequisite phải giải quyết trước khi start.
+
+Profile `.orbit/personal` (ignored): `config.json` chứa owner UUID/project/database/path; `secrets/` chứa DB/session/encryption/backup keys; `artifacts/`, `backups/`, `restores/` và `cli/` riêng. Không xóa thư mục này khi update. Database Docker volume tên theo project `orbit-personal-<id>`. Web/worker dùng DB roles riêng, artifacts/checkpoints bền vững; worker heartbeat và single-worker lease chống chạy hai worker local. Config được ghi atomically.
+
+## Thao tác thường dùng
+
+```powershell
+$Orbit = '\\wsl$\Ubuntu\home\TEN\ORBIT\ops\windows\Orbit.ps1'
+& $Orbit -Action start -Repository '/home/TEN/ORBIT'
+& $Orbit -Action status -Repository '/home/TEN/ORBIT'
+& $Orbit -Action stop -Repository '/home/TEN/ORBIT'
+& $Orbit -Action restart -Repository '/home/TEN/ORBIT'
+& $Orbit -Action update -Repository '/home/TEN/ORBIT'
+& $Orbit -Action backup -Repository '/home/TEN/ORBIT'
+& $Orbit -Action restore -Repository '/home/TEN/ORBIT' -BackupId 'ID_TRONG_BACKUPS'
+```
+
+Distro khác Ubuntu: thêm `-Distribution <tên chính xác>`. Start mở dịch vụ, người dùng truy cập IPv4 loopback `127.0.0.1:3210` trên Windows. Không bind `0.0.0.0`; truy cập điện thoại/LAN không thuộc chế độ này. Nếu WSL localhost forwarding trên máy bị tắt, sửa cấu hình WSL chính thức và nghiệm thu loopback; không mở port LAN để né lỗi.
+
+Stop dừng web/worker có grace rồi backup/DB containers, giữ volumes và files. Restart không tự Resume workflow; thao tác Resume/Cancel/Approval trong UI. Worker bị kill/mất điện: durable leases/fencing xử lý attempt cũ, startup pause chặn tác vụ mới; read-only checkpoint đã commit được giữ. Máy tắt không có tiến trình cloud chạy thay.
+
+Update yêu cầu Git working tree sạch, backup trước, dừng dịch vụ, `git pull --ff-only`, frozen dependencies/migrate/grants/build app và backup image. Không merge main, reset hoặc xóa volumes; không tự restart/resume sau update. Nếu update lỗi, dữ liệu nguồn còn và có backup; xem private logs, chọn image/code/schema tương thích trước start. Không auto downgrade schema.
+
+Backup mã hóa AES-256-GCM gồm pg_dump và immutable artifact blobs, chạy ngay khi backup service khởi động rồi mỗi 24 giờ khi máy/WSL bật, giữ 7 bản. Không bao gồm CLI login cache hoặc encryption/backup keys: lưu keys riêng an toàn, đăng nhập lại khi chuyển máy. Backup cùng máy chưa chống mất cả ổ đĩa; người dùng tự giữ bản encrypted và keys ở nơi tách biệt. Restore yêu cầu ORBIT dừng, chọn archive ID từ thư mục `backups`, xác thực trước tạo database/thư mục artifact **mới**, verify hashes, revoke sessions và pause active runs; giữ nguồn và `previous-config.json`. Không dùng `docker compose down -v`.
+
+## Đăng nhập AI thuê bao
+
+```powershell
+& $Orbit -Action install-cli -Repository '/home/TEN/ORBIT'
+& $Orbit -Action login-codex -Repository '/home/TEN/ORBIT'
+& $Orbit -Action login-gemini -Repository '/home/TEN/ORBIT'
+```
+
+`install-cli` cài chính xác Codex 0.166.0 và Gemini 0.66.0 từ npm chính thức trong profile ORBIT. Đây là phiên bản đã kiểm tra giao diện, không tự nâng latest. Đăng nhập chính thức ChatGPT/Google trong terminal/browser của CLI; không copy cookie/session/token. Gemini: thoát CLI sau đăng nhập nếu chưa muốn gửi prompt. Profiles độc lập, không đọc hoặc sửa `~/.claude`, projects/agents của Claude Code.
+
+Mở **AI & Kết nối**, xem status và bấm **Kiểm tra bằng hạn mức thuê bao** nếu đồng ý gửi một request nhỏ. Cài CLI/đăng nhập đơn thuần chưa là CONNECTED. Không suy đoán quota còn lại. Sau khi hai provider thật đã được kiểm tra, cho phép dữ liệu bên ngoài trong Settings, chọn LIVE và consent cho goal; AI1/AI2 dùng provider khác, giữ validation/checksum/human approval. REST AI bị khóa trong Local Mode dù có key trong environment.
+
+## Checklist trên Windows thật còn chờ
+
+- Install từ PowerShell với WSL2/Docker Desktop và Node bootstrap, không có password echo.
+- Windows browser mở đúng 127.0.0.1, login/logout/unauthorized/CSRF, connection statuses.
+- MOCK goal → approval → artifacts; stop/restart hoặc reboot không tự Resume, checkpoint/checksum còn.
+- Backup → restore fresh target → login và tải lại reports; thử update fast-forward trên branch sạch.
+- Chỉ sau đăng nhập và đồng ý: probe Codex/Gemini bằng gói thật, ghi receipt LIVE_CLI và usage; kiểm quota/cancel. Không paid API, không đổi billing settings.

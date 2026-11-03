@@ -1,5 +1,13 @@
 # Quyết định sản phẩm ORBIT
 
+## Quyết định cuối — Windows 10 localhost và subscription-only
+
+Chủ dự án chốt Windows 10/WSL2/Docker Desktop, single owner và 127.0.0.1; không public staging, VPS/Google Cloud hoặc REST API key có phí riêng. Chỉ dùng cơ chế đăng nhập chính thức/quyền/hạn mức của gói AI cho phép, không scraping/cookie/session extraction/API giả. Không tự Resume workflow sau reboot. Không thay đổi codebase/profiles Claude Code.
+
+Thực hiện Local Mode trước, Codex CLI rồi Gemini CLI; Claude Code chỉ khi eligibility được xác minh, hiện BLOCKED; Grok UNSUPPORTED trong subscription mode hiện tại. Hai adapter được kiểm bằng CLI_STUB không chứng minh LIVE. Windows10 và inference bằng login thật còn cần nghiệm thu trên máy người dùng; không yêu cầu token/password trong chat. Xem LOCAL_SETUP_WINDOWS.md, SUBSCRIPTION_AI_INTEGRATION.md và LOCAL_SUBSCRIPTION_VALIDATION.md.
+
+Ghi chú ban đầu dưới đây giữ lịch sử; quyết định cuối này có ưu tiên cao hơn các kế hoạch public/API trước đó.
+
 ## 03/11/2026 — localhost và quyền sử dụng từ các gói AI hiện có
 
 Yêu cầu của người dùng: “Anh làm webapp dạng localhost để dùng token sẵn ở chat của các gói AI đã đăng ký.”

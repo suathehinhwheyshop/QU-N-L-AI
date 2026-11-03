@@ -1,0 +1,51 @@
+# AI thuê bao trong ORBIT Local Mode
+
+Quyết định cuối của chủ dự án: webapp cá nhân localhost trên Windows 10/WSL2, dùng quyền/hạn mức thuê bao chính thức; không REST API key tính phí, scraping, cookie/session extraction hoặc API giả. Giữ 7 packages/engine/DAG/validation/approval. Không copy hoặc sửa codebase/configuration Claude Code.
+
+## Kết quả nghiên cứu ngày 03/11/2026
+
+| Provider          | Cơ chế đã tìm thấy                                                                                                                                                                                        | Implementation / verification                                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Codex CLI 0.166.0 | CLI chính thức có `login` ChatGPT, `login status`, `exec` non-interactive, JSONL + output schema, ephemeral/read-only và forced_login_method=chatgpt                                                      | Adapter code + CLI subprocess tests có thật; official binary version/help/login-status đã kiểm; **LIVE BLOCKED** do chưa đăng nhập và chưa có consent thực thi |
+| Gemini CLI 0.66.0 | Google OAuth `oauth-personal`, headless JSON response/stats, enforced auth type, policy deny, billing.overageStrategy=never                                                                               | Adapter code + CLI subprocess tests có thật; official binary version/help đã kiểm; **LIVE BLOCKED** do chưa đăng nhập/probe có consent                         |
+| Claude Code       | Việc dùng Claude Code trực tiếp không tự cấp quyền dùng Claude subscription qua ORBIT. README Claude Code/Agent SDK có tài liệu SDK nhưng chưa xác minh đầy đủ điều khoản cho orchestration bằng thuê bao | **BLOCKED: SUBSCRIPTION_ORCHESTRATOR_ELIGIBILITY_UNVERIFIED**; không adapter, không cài Claude SDK, không đọc token/config của Claude                          |
+| xAI/Grok          | Official xAI SDK được kiểm tra yêu cầu XAI_API_KEY. Chưa xác minh được giao diện chính thức tích hợp quyền chat subscription cho tác vụ này                                                               | **UNSUPPORTED** trong ORBIT subscription mode; không thử dùng session Grok hoặc giả API                                                                        |
+
+Không kết luận mọi gói ChatGPT/Google đều có cùng model/quota hoặc quyền CLI. Tài khoản/region/plan/enterprise policy vẫn cần kiểm bằng login và request chính thức của chính người dùng. Không suy ra quyền REST hoặc truy cập projects/agents/history từ việc đã mua thuê bao.
+
+Nguồn chính thức đã dùng:
+
+- [OpenAI Codex repository authentication docs](https://github.com/openai/codex/blob/main/docs/authentication.md), [non-interactive docs](https://github.com/openai/codex/blob/main/docs/exec.md), [official config schema](https://github.com/openai/codex/blob/main/codex-rs/core/config.schema.json); installed official `codex exec --help`, `codex login --help`, `codex features list`, `codex --version`. Hai markdown docs redirect sang developers.openai.com; truy cập trực tiếp trang này bị network policy 403 trong môi trường, không lách. Đối chiếu CLI flags/schema chính thức và giữ LIVE blocked.
+- [Gemini README OAuth](https://github.com/google-gemini/gemini-cli#authentication-options), [headless](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/headless.md), [configuration](https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md), [policy engine](https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/policy-engine.md); installed official `gemini --help/--version`. OAuth selected/enforced type, profile path và credit-overage policy có tài liệu; quota remaining không được tích hợp vì chưa có contract chính thức qua CLI này.
+- [Claude Code README](https://github.com/anthropics/claude-code/blob/main/README.md), [Claude Agent SDK README](https://github.com/anthropics/claude-agent-sdk-python/blob/main/README.md). README/khả năng CLI đơn thuần không đủ chứng minh quyền dùng thuê bao cho orchestrator bên thứ ba; chưa cho phép adapter.
+- [xAI official SDK authentication](https://github.com/xai-org/xai-sdk-python/blob/main/README.md). SDK key-based không được dùng làm phương án thay thế trong Local Mode.
+
+Research snapshots ở private `.orbit/subscription-research` không chứa credentials; không dùng HTTP/CLI stub làm bằng chứng LIVE. Sources/version quan sát không phải lời bảo đảm điều khoản không thay đổi; version khác bị chặn cho tới khi kiểm giao diện lại.
+
+## Implementation thực tế
+
+`packages/providers/src/subscription-cli.ts`: adapter Codex/Gemini riêng, cố định executable trong profile ORBIT, spawn argv array/shell=false, bounded stdout/stderr/input, timeout, AbortSignal, kill process group, parse JSON + Zod output schema. Raw CLI stderr/events không ghi DB/browser/log; chỉ mã lỗi chuẩn hóa, token counters dạng số và evidence được lưu. Dữ liệu/commands từ AI output không bao giờ đưa vào shell/eval.
+
+Codex chạy scratch directory, schema file/output file server-created, ephemeral, ignore user config/rules, read-only sandbox, shell/unified_exec/multi-agent disabled, web search disabled, forced ChatGPT auth + official provider. Gọi official `login status`, không mở auth.json. Reject unexpected tool event. Gemini dùng isolated GEMINI_CLI_HOME, enforced OAuth, ignore local .env, deny-all tool policy/system tool allowlist rỗng, disabled hooks/MCP và overageStrategy=never. Không đọc OAuth token files bằng ORBIT; official CLI tự quản lý login. Các flags/settings này đã đối chiếu docs/help, nhưng enforcement end-to-end với inference thật **chưa LIVE verified**.
+
+Child environment allowlist loại mọi API key, database URL, Node options và cloud auth credentials từ environment cha; không đổi HOME hoặc profile Claude. Profiles official riêng trong `.orbit/personal/cli` không được đẩy Git, copy vào browser/DB hoặc đưa vào archive artifacts. OS user/admin cùng máy vẫn cần bảo vệ file profile. Session management: không resume history CLI tùy ý; mỗi ORBIT task nhận structured inputs/checksums từ database, tạo CLI session riêng. Credential cache do official CLI giữ; CLI conversations không tự đồng bộ với chat web.
+
+CLI providers đi qua registry/router và engine cũ, model `default` dùng model mà CLI/tài khoản được cấp. Real receipt kind **LIVE_CLI**, HTTP REST receipt **LIVE_API**, fixtures **CLI_STUB**. Candidate chỉ được admit LIVE khi latest receipt LIVE_CLI/VERIFIED khớp model/profile và còn 15 phút; cần hai vendors khác nhau. Stub không kích hoạt LIVE dù receipt ghi VERIFIED. Probe là request thật nhỏ `{ok:true}` với consent; không xác nhận chất lượng mọi workflow hoặc quota vô hạn.
+
+PostgreSQL advisory lease giới hạn một CLI invocation/provider trên mọi web/worker process, cộng owner concurrency và task timeout/retry hiện có. Cancellation từ backend được theo dõi và AbortSignal dừng subprocess; timeout cũng dừng process group. Không thực thi command tùy ý từ user/AI. Khi quota/auth lỗi: invalidate readiness, task/run PAUSED với mã rõ ràng, giữ checkpoint và không auto fallback/retry; planning cũng không nuốt lỗi quota để chuyển template. Người dùng xử lý login/quota, kiểm lại và Resume. Manual attempts vẫn có giới hạn max_attempts.
+
+Trong Local Mode registry không đưa paid REST providers vào router, API probe và transport đều chặn paid API trước network. Không đổi billing/plan settings. Gemini cấm tự dùng credits theo setting chính thức. Codex dùng quyền ChatGPT qua official CLI; ORBIT không có giao diện chính thức để đọc/chỉnh billing hoặc remaining allowance của tài khoản. Quota/cách tính của gói do provider thực thi; không hứa miễn phí/unlimited hoặc tự điều chỉnh gói. Không chuyển sang API key khi quota hết.
+
+## UI
+
+AI & Kết nối có các card method/login, version, trạng thái và nút request kiểm tra thật có consent. NOT_INSTALLED, NOT_SIGNED_IN, CONNECTED, LIMIT_REACHED, UNSUPPORTED; bổ sung NOT_VERIFIED cho CLI vừa cài/chưa có receipt và BLOCKED cho eligibility chưa rõ. Cài binary hoặc login không tạo CONNECTED. Remaining quota trả null khi chưa có dữ liệu chính thức; usage counters chỉ cho request đã thực hiện. Readiness dùng TTL/receipts, không phải cache token nội bộ; thay login ngoài ứng dụng có thể chỉ được phát hiện ở lần kiểm tra/gọi kế tiếp.
+
+## Kiểm thử và blockers
+
+- Unit: actual child-process JSON protocols, schema errors, auth/quota errors, AbortSignal/process cancellation, environment stripping, policy/no-overage config và installation ≠ connected.
+- PostgreSQL integration: hai CLI_STUB providers → structured data → validation → checksum-bound approval/artifacts, quota pause/no fallback, AI-planning quota không rơi template, bounded attempts, startup pause/owner isolation, forged CLI_STUB receipt không admit LIVE và provider lease.
+- Backend/worker/database E2E: CLI subprocess stubs, approval qua HTTP, worker restart, quota pause/no automatic retry và HTTP Cancel stops active subprocess. Label CLI_STUB; không live proof.
+- Local manager E2E: install/start/restart/manual Resume/MOCK approval/artifact hashes, encrypted dump + restore vào fresh database/persistent directory, preserve source. Linux equivalent đã chạy; Windows 10/WSL2 manual acceptance còn BLOCKED vì không có máy Windows trong môi trường.
+- Hồi quy Phase 1–4 được giữ. Evidence tổng hợp ở `docs/LOCAL_SUBSCRIPTION_VALIDATION.md` và `docs/evidence/`.
+
+**LIVE còn BLOCKED**: chưa đăng nhập tài khoản thuê bao của người dùng và chưa có consent cho inference thực tế. Đã chạy official version/help/offline login-status, không gửi model prompt thật hoặc paid API calls. Tiếp theo trên máy người dùng: login chính thức → đồng ý nút probe → lưu LIVE_CLI receipts riêng cho từng provider → hai-provider goal/approval/artifacts. Không yêu cầu dán token, cookies, password hoặc billing data vào chat.

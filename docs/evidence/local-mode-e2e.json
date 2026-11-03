@@ -1,0 +1,16 @@
+{
+  "at": "2026-11-03T05:47:38.231Z",
+  "status": "PASS",
+  "runtime": "LINUX_EQUIVALENT_NOT_WINDOWS",
+  "ai_mode": "MOCK",
+  "run_id": "84fa7190-f796-4b1b-aaa4-efbf69b0c509",
+  "checks": [
+    "actual local install/start/restart, single-owner login and API-key route denied",
+    "checkpoint and pause survive restart; no extra attempts without Resume",
+    "MOCK DAG completes through approval and checksum-verified artifacts",
+    "real encrypted PostgreSQL/artifact backup and fresh-target restore selected by local manager",
+    "restored owner/history/download hashes valid; source database and artifacts preserved"
+  ],
+  "windows10_verified": false,
+  "ai_live_verified": false
+}

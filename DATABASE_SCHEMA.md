@@ -63,3 +63,7 @@ users bổ sung password_hash nullable, role, is_active và auth_version. Accoun
 | worker_heartbeats | Worker UUID/status/updated_at cho drain/readiness/operations                                                                       |
 
 Fresh migration và Phase 3→0005 upgrade/re-run được kiểm bằng PostgreSQL thật. Không destructive schema reset hoặc auto-password. RBAC service bảo vệ API/workspace; PostgreSQL role separation là defense-in-depth, chưa dùng row-level security cho từng owner. Web cần đọc users hash để login; worker chỉ đọc id/role/is_active/auth_version, không sessions/password hashes. Migrator/backup/provision dùng privileged credential riêng; không mount cho runtime app.
+
+## Local/subscription — cùng schema 23 bảng
+
+Không cần migration mới. Codex/Gemini có connections riêng (`kind=subscription`) và provider_configs model=default. provider_probes phân biệt kind LIVE_CLI/CLI_STUB/UNVERIFIED; receipt chỉ giữ status/model/config hash/latency/numeric usage/capabilities/error, không token/cache credential. Chỉ LIVE_CLI VERIFIED còn TTL mới admit; fixtures không kích hoạt LIVE. Claim/provider_snapshot và approvals/artifacts/checksums vẫn dùng cùng engine/schema. Provider lease là advisory connection lock, startup pause ghi run status/audit vào bảng hiện có.

@@ -1,0 +1,31 @@
+{
+  "at": "2026-11-03T05:48:06.623Z",
+  "status": "BLOCKED",
+  "mode": "OFFLINE_OFFICIAL_CLI_INTERFACE_CHECK_ONLY",
+  "observations": [
+    {
+      "provider": "codex-cli",
+      "version": "0.166.0",
+      "installed": true,
+      "auth": "NOT_SIGNED_IN",
+      "status": "BLOCKED",
+      "reason": "USER_LOGIN_AND_EXPLICIT_EXECUTION_CONSENT_REQUIRED",
+      "live_verified": false
+    },
+    {
+      "provider": "gemini-cli",
+      "version": "0.66.0",
+      "installed": true,
+      "auth": "NOT_VERIFIED",
+      "status": "BLOCKED",
+      "reason": "USER_LOGIN_AND_EXPLICIT_EXECUTION_CONSENT_REQUIRED",
+      "live_verified": false
+    }
+  ],
+  "inference_calls": 0,
+  "paid_api_calls": 0,
+  "credential_files_read_by_orbit": false,
+  "claude_code": "BLOCKED_ELIGIBILITY_UNVERIFIED",
+  "grok": "UNSUPPORTED_NO_VERIFIED_SUBSCRIPTION_INTERFACE",
+  "windows10_verified": false
+}

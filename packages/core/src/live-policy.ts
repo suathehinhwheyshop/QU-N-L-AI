@@ -1,3 +1,4 @@
+import { subscriptionOnly } from "@orbit/shared/execution-policy";
 import type { PoolClient } from "pg";
 import { pool } from "@orbit/database/client";
 import { ModelProfile, OrbitError, type Goal } from "@orbit/shared/contracts";
@@ -32,6 +33,27 @@ export async function configuredCandidates(
           !!candidate.models?.includes(config.model),
         model: config?.model ?? candidate.model,
       };
+    if (candidate.execution === "SUBSCRIPTION_CLI") {
+      const probe = probes.find((p) => p.provider_id === candidate.id),
+        tag = getProvider(candidate.id).credentialTag?.();
+      const ready =
+        config?.enabled &&
+        config.model === "default" &&
+        probe?.kind === "LIVE_CLI" &&
+        probe.status === "VERIFIED" &&
+        probe.credential_tag === tag &&
+        probe.config_hash === configHash("default", null) &&
+        Date.parse(probe.created_at) > Date.now() - 15 * 60000;
+      return {
+        ...candidate,
+        available: !!ready,
+        model: "default",
+        costCents: 0,
+        latencyMs: probe?.latency_ms ?? candidate.latencyMs,
+      };
+    }
+    if (subscriptionOnly())
+      return { ...candidate, available: false, capabilities: [] };
     const profile = ModelProfile.safeParse(config?.model_config),
       tag = getProvider(candidate.id).credentialTag?.(),
       probe = probes.find((p) => p.provider_id === candidate.id);
@@ -101,8 +123,9 @@ export async function admitLive(
     if (minimum > goal.budget_cents) throw new OrbitError("BUDGET_EXCEEDED");
     return {
       estimate: minimum * 3,
-      notice:
-        "Worst-case happy-path input/output caps × 3 attempts; rounded up cents. Probes billed separately. Not a provider invoice.",
+      notice: subscriptionOnly()
+        ? "Dùng hạn mức CLI thuê bao, không chuyển sang REST API; không có số quota còn lại chính thức."
+        : "Worst-case happy-path input/output caps × 3 attempts; rounded up cents. Probes billed separately. Not a provider invoice.",
     };
   } finally {
     client.release();

@@ -1,3 +1,4 @@
+import { initializeSubscriptions } from "@orbit/database/subscriptions";
 import { db, pool } from "../src/db/client";
 import {
   users,
@@ -24,6 +25,8 @@ export async function seed() {
   return owner;
 }
 export async function initializeOwner(ownerId: string) {
+  if (process.env.ORBIT_SUBSCRIPTIONS_ENABLED === "true")
+    await initializeSubscriptions(ownerId);
   const owner = { id: ownerId };
   await db
     .insert(settings)

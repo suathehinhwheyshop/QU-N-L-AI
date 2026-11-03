@@ -1,3 +1,7 @@
+import {
+  assertPaidApiAllowed,
+  subscriptionOnly,
+} from "@orbit/shared/execution-policy";
 import { getGscClient } from "@orbit/integrations/gsc-runtime";
 import { pool } from "@orbit/database/client";
 import { ModelProfile, ProbeOutput, OrbitError } from "@orbit/shared/contracts";
@@ -25,7 +29,16 @@ export async function connectionCatalog(owner: string) {
       )
     ).rows;
     return rows
-      .filter((c) => c.metadata.archived !== true)
+      .filter(
+        (c) =>
+          c.metadata.archived !== true &&
+          c.metadata.kind !== "subscription" &&
+          !(
+            subscriptionOnly() &&
+            c.mode === "LIVE" &&
+            c.metadata.kind === "provider"
+          ),
+      )
       .map((c) => {
         const cfg = configs.find((x) => x.provider_id === c.id),
           candidate = ready.find((x) => x.id === c.id);
@@ -89,6 +102,7 @@ export async function connectionCatalog(owner: string) {
   }
 }
 export async function probeLive(owner: string, providerId: string) {
+  assertPaidApiAllowed();
   const adapter = liveProviders.find((p) => p.descriptor.id === providerId);
   if (!adapter) throw new OrbitError("NOT_FOUND");
   if (!credentialPresent(providerId))

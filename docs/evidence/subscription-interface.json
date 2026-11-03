@@ -1,0 +1,72 @@
+{
+  "at": "2026-11-03T05:50:52.565Z",
+  "status": "OFFICIAL_CLI_INTERFACE_INSPECTED_NO_INFERENCE",
+  "codex_version": "0.166.0",
+  "gemini_version": "0.66.0",
+  "cli_package_source": "official npm packages, integrity checked by npm",
+  "node_bootstrap": {
+    "version": "v24.22.2",
+    "artifact_sha256": "48cc0e21e048790e54c0cf5749c2725005313d652651c40b7a21feb9697aaf75",
+    "runtime": "LINUX_TEST_NOT_WINDOWS"
+  },
+  "documentation_snapshots": [
+    {
+      "name": "codex-config.json",
+      "sha256": "df9b8e76958d11b2be2b3a0276c2077d6b28b08a8af37a51274f0476b707ae36"
+    },
+    {
+      "name": "codex-exec-help.txt",
+      "sha256": "df0d864ca2076f7654288c6a1e3394e3eaa2ea8f15021df2524efdd90c70986c"
+    },
+    {
+      "name": "codex-login-help.txt",
+      "sha256": "06ef70370c92189627bf3d969c6b304506f5b161f8f751496a02668d2103771f"
+    },
+    {
+      "name": "codex-features.txt",
+      "sha256": "7a2bae12dae6de091678fad1f4e7f9d5cae4c35a632b9da4f0dfbe747f3e7031"
+    },
+    {
+      "name": "gemini-reference.md",
+      "sha256": "ec376db5857fe8dda715ce38575370c33aa03390925b2d7024f0642021525545"
+    },
+    {
+      "name": "gemini-config.md",
+      "sha256": "2aede57ecc85e7b448677a13ec71c6b9253e1c48478843b2319ccb268103c7e3"
+    },
+    {
+      "name": "gemini-policy.md",
+      "sha256": "4895bc05bccef1a16ab1442c7a9b12ebe61945f0f079e9fca3261cf8b9e2d0f5"
+    },
+    {
+      "name": "gemini-headless.md",
+      "sha256": "42718e00f5acac2ab039091fab282ed9b3d992ae9f49afc64ec7636fbf6fa6ec"
+    },
+    {
+      "name": "gemini-readme.md",
+      "sha256": "1dcb655995df3a664a7052a0c25d73565d698bc95d8d8965ecad95ef7d2a4568"
+    },
+    {
+      "name": "claude-readme.md",
+      "sha256": "07445fe9698dd4e038fa5b30ea3bde5f8f1480068b2f275fdd20725cecda0a6c"
+    },
+    {
+      "name": "claude-sdk.md",
+      "sha256": "c38a933bf8fef26316ea38635989b254e69a26d21d80b96bf5731cba4e88bcc6"
+    },
+    {
+      "name": "xai-sdk.md",
+      "sha256": "31b35957625483405e0595d8f41f62ae67f18a79d390dc0690dc2bd99c4de20e"
+    },
+    {
+      "name": "docker-windows.md",
+      "sha256": "b387be91d96c2ba957f9336d9fc36556a1a3051f8575803077ff1b8437691ca6"
+    }
+  ],
+  "openai_documentation_site": "403_NETWORK_POLICY; official GitHub config schema and installed CLI help inspected",
+  "claude_orchestrator_eligibility": "BLOCKED_NOT_VERIFIED",
+  "grok": "UNSUPPORTED_NO_VERIFIED_SUBSCRIPTION_INTERFACE",
+  "windows_verified": false,
+  "live_inference_calls": 0,
+  "paid_api_calls": 0
+}

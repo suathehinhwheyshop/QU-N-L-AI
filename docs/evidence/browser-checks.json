@@ -1,12 +1,13 @@
 {
   "result": "PASS",
   "mode": "MOCK",
-  "at": "2026-11-03T02:30:50.624Z",
+  "at": "2026-11-03T05:53:08.894Z",
   "checks": [
     "file attachment stored from UI",
     "natural goal → backend template plan and zero mock cost",
     "worker-backed task board, dependencies, acceptance and attempts",
     "hash-bound approval from UI → verified delivery",
+    "subscription connection cards show real unverified installation/auth state, blocked Claude and unsupported Grok",
     "mock health persisted; four real providers remain unavailable",
     "provider configuration form persists owner model/availability in backend",
     "settings form saves backend policy",

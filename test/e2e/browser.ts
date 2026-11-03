@@ -159,6 +159,27 @@ try {
   );
   checks.push("hash-bound approval from UI → verified delivery");
   await route("#connections");
+  if (process.env.ORBIT_TEST_SUBSCRIPTIONS_BROWSER === "true") {
+    await waitFor("document.querySelectorAll('[data-cli]').length===4");
+    assert.ok(
+      await evaluate(
+        "document.querySelector('[data-cli=claude-code]').innerText.includes('BLOCKED')",
+      ),
+    );
+    assert.ok(
+      await evaluate(
+        "document.querySelector('[data-cli=grok-subscription]').innerText.includes('UNSUPPORTED')",
+      ),
+    );
+    assert.ok(
+      await evaluate(
+        "document.querySelector('[data-cli=codex-cli] button').disabled",
+      ),
+    );
+    checks.push(
+      "subscription connection cards show real unverified installation/auth state, blocked Claude and unsupported Grok",
+    );
+  }
   await evaluate(
     `(()=>{const section=document.querySelector('form[data-provider-id="mock-anthropic"]').closest('section');Array.from(section.querySelectorAll('button')).find(b=>b.textContent.includes('Test mock adapter')).click()})()`,
   );

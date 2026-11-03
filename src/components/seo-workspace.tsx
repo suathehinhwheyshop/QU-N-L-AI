@@ -626,7 +626,9 @@ export default function SeoWorkspace({
                   Thực thi AI
                   <select name="mode">
                     <option value="MOCK">MOCK · không gọi AI thật</option>
-                    <option value="LIVE">LIVE · cần hai API đã probe</option>
+                    <option value="LIVE">
+                      LIVE · cần hai provider đã kiểm chứng
+                    </option>
                   </select>
                 </label>
                 <label>

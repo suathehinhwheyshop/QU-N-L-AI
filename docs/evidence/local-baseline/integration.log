@@ -1,0 +1,50 @@
+
+> orbit-platform@1.3.0-phase4 test:integration
+> node --import tsx --test --test-concurrency=1 test/integration/*.test.ts
+
+✔ database cleanup detects leaked clients instead of terminating or hiding them (3194.403506ms)
+✔ PostgreSQL workflow: idempotency, two providers, hash-bound approval and verified artifacts (766.85166ms)
+✔ paused and canceled runs never start downstream tasks; inflight result discarded (49.491133ms)
+✔ expired lease recovers checkpoint and fences late completion (43.291645ms)
+✔ parallel runnable tasks respect owner concurrency; competing claim cannot duplicate attempt (97.997833ms)
+✔ timeout aborts adapter and exhausts bounded retry with backoff (610.158563ms)
+✔ invalid structured output never reaches review or report (151.254561ms)
+✔ budget reservations are atomic across parallel tasks (79.439476ms)
+✔ rejected approval prevents delivery; tampered source blocks validation (424.977371ms)
+✔ each non-SEO workspace runs on the same durable engine without SEO fixtures (1216.208992ms)
+✔ owner-specific provider configuration changes actual routing and can block all unavailable adapters (476.17045ms)
+✔ Phase 3 database upgrades in place preserving owner, workspace and history; migration is repeatable (184.717283ms)
+✔ two real protocol adapters hand structured data across durable worker tasks, always labeled HTTP_STUB/MOCK (668.121948ms)
+✔ unsafe AI planning falls back and cannot remove approval or enable writes (328.648881ms)
+✔ uncertain billable errors consume reservation and budget halts retries (899.966638ms)
+✔ LIVE admission rejects HTTP stub providers even after successful protocol tests (5.072208ms)
+✔ a changed operator price after claim cannot change an in-flight reservation snapshot (46.863064ms)
+✔ cancel discards in-flight output while preserving reported HTTP_STUB usage and cost (194.406042ms)
+✔ review with a wrong source checksum cannot create a task board or approval (200.08336ms)
+✔ HTTP 429 retries at engine boundary with backoff, without charging a rejected request (490.868647ms)
+✔ a synthetic HTTP_STUB probe receipt cannot activate a credential-present LIVE adapter (6.955436ms)
+✔ OAuth PKCE/state/browser nonce is one-use, tokens encrypted and DTO contains no credential (272.892251ms)
+✔ expired tokens refresh once under concurrency; API 401 retries once, 403 remains permission error (42.560758ms)
+✔ invalid_grant requires reconnect and revoke clears encrypted tokens; no reads after revocation (47.357039ms)
+✔ CSV/JSON import stores immutable source/checksum, idempotent keys, period metadata and owner isolation (25.876749ms)
+✔ GSC pagination is a durable engine tool job, duplicate jobs reuse run/dataset and preserve API request filters (128.55202ms)
+✔ 429 resumes a persisted page checkpoint, without refetching prior pages or duplicate dataset (108.97667ms)
+✔ expired lease fences late GSC page commits, a recovered attempt produces one dataset (73.900997ms)
+✔ two HTTP_STUB AI providers → code validation → synthesis → hash approval → MD/CSV/JSON artifacts (375.601934ms)
+✔ invented numeric output and checksum mismatch cannot reach approval or report (98.15387ms)
+✔ expired OAuth state is rejected and a failed revoke blocks reads until retry succeeds (22.725582ms)
+✔ GSC task timeout settles attempt, retries from durable state, and does not mint a dataset early (204.984283ms)
+✔ token rotation rewraps persisted ciphertext, rejects wrong owner/key/tampering and rolls back on corrupt row (182.963811ms)
+✔ real account login has opaque hashed sessions; logout, absolute/idle expiry and password reset revoke access (545.069003ms)
+✔ environment password is not an authentication backdoor; distributed login quotas bound guessing (949.007823ms)
+✔ RBAC and workspace permissions are enforced on server and worker claim after revocation (143.44837ms)
+✔ inactive users and OAuth callbacks from revoked sessions are rejected before token exchange (15.209514ms)
+✔ active-workflow quota is enforced atomically and idempotent replays still succeed (25.529329ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18282.64517

@@ -1,3 +1,5 @@
+import { localMode } from "@orbit/shared/execution-policy";
+import { pauseLocalStartup } from "./server/local-mode";
 import "./server/runtime";
 import { tick } from "./core/engine";
 import { pool } from "./db/client";
@@ -25,6 +27,16 @@ process.on("SIGTERM", () => {
 process.on("SIGINT", () => {
   stopped = true;
 });
+const localLease = localMode() ? await pool.connect() : null;
+if (
+  localLease &&
+  !(await localLease.query("SELECT pg_try_advisory_lock(7493122) AS locked"))
+    .rows[0].locked
+) {
+  localLease.release();
+  throw Error("LOCAL_WORKER_ALREADY_RUNNING");
+}
+await pauseLocalStartup();
 await beat("RUNNING");
 console.log(JSON.stringify({ event: "WORKER_STARTED", worker_id: id }));
 const timer = setInterval(() => {
@@ -53,5 +65,9 @@ while (!stopped) {
 clearInterval(timer);
 await heartbeat;
 await beat("STOPPED");
+if (localLease) {
+  await localLease.query("SELECT pg_advisory_unlock(7493122)");
+  localLease.release();
+}
 await pool.end();
 console.log(JSON.stringify({ event: "WORKER_STOPPED", worker_id: id }));

@@ -64,6 +64,11 @@ export const workspaceHandlers: Record<string, Handler> = {
           fallback_reason: null,
         };
       } catch (error) {
+        if (
+          error instanceof OrbitError &&
+          ["CLI_LIMIT_REACHED", "CLI_NOT_SIGNED_IN"].includes(error.code)
+        )
+          throw error;
         return {
           strategy: "TEMPLATE_FALLBACK",
           plan: fallback,

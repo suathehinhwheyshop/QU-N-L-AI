@@ -1,0 +1,14 @@
+{
+  "at": "2026-11-03T05:52:43.861Z",
+  "status": "PASS",
+  "execution": "CLI_STUB_SUBPROCESSES",
+  "live_verified": false,
+  "run_id": "f682d25f-353c-42fa-a6b2-947267115add",
+  "checks": [
+    "real backend/worker/PostgreSQL via two CLI stub subprocesses",
+    "structured handoff across providers and approval-bound artifacts",
+    "worker restart preserves approval",
+    "quota pauses with no automatic fallback/retry",
+    "HTTP Cancel stops active CLI subprocess"
+  ]
+}

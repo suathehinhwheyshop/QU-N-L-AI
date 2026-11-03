@@ -1,3 +1,4 @@
+import { assertPaidApiAllowed } from "@orbit/shared/execution-policy";
 import { fetch as request, EnvHttpProxyAgent } from "undici";
 import { readFileSync } from "node:fs";
 import { rootCertificates } from "node:tls";
@@ -149,6 +150,7 @@ export async function structuredCall(
   signal: AbortSignal,
   getKey = () => process.env[wire.keyName],
 ): Promise<LiveResult> {
+  if (transport.kind === "LIVE_API") assertPaidApiAllowed();
   const key = getKey();
   if (!key) throw new ApiFailure("MISSING_CREDENTIAL");
   const system =

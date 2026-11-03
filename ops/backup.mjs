@@ -14,6 +14,7 @@ import {
   mkdtemp,
   stat,
   rename,
+  copyFile,
 } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
 import { spawn, execFileSync } from "node:child_process";
@@ -167,6 +168,7 @@ async function lockedBackup() {
   p.child.stdout.pipe(process.stdout);
   await p.done;
 }
+let restoreStage = "INIT";
 async function restore(id, target) {
   if (
     !/^\d{8}T\d{9}Z-[a-f0-9]{8}$/.test(id ?? "") ||
@@ -188,6 +190,7 @@ async function restore(id, target) {
   )
     throw Error("BACKUP_CHECKSUM_MISMATCH");
   const tmp = await mkdtemp("/tmp/orbit-restore-");
+  restoreStage = "AUTHENTICATE";
   try {
     const decipher = createDecipheriv(
       "aes-256-gcm",
@@ -202,6 +205,7 @@ async function restore(id, target) {
       decipher,
       createWriteStream(tmp + "/verified.tar", { mode: 0o600 }),
     );
+    restoreStage = "TAR_LIST";
     const names = execFileSync("tar", ["-tf", tmp + "/verified.tar"], {
       encoding: "utf8",
     })
@@ -215,6 +219,7 @@ async function restore(id, target) {
       )
     )
       throw Error("UNSAFE_BACKUP_PATH");
+    restoreStage = "TAR_EXTRACT";
     execFileSync(
       "tar",
       ["-xf", tmp + "/verified.tar", "--no-same-owner", "-C", tmp],
@@ -224,7 +229,9 @@ async function restore(id, target) {
       if ((await checksum(join(tmp, n))) !== n.slice(2))
         throw Error("ARTIFACT_CORRUPT");
     }
+    restoreStage = "CREATE_DATABASE";
     sql(`CREATE DATABASE "${target}"`);
+    restoreStage = "PG_RESTORE";
     const restore = await run("pg_restore", [
       "--exit-on-error",
       "--no-owner",
@@ -234,13 +241,17 @@ async function restore(id, target) {
       tmp + "/database.dump",
     ]);
     await restore.done;
+    restoreStage = "REVOKE_SESSIONS";
     sql(
       "TRUNCATE auth_sessions,gsc_oauth_states,worker_heartbeats; UPDATE runs SET status='PAUSED' WHERE status IN ('RUNNING','QUEUED'); UPDATE provider_probes SET status='FAILED' WHERE status='RUNNING';",
       target,
     );
+    restoreStage = "COPY_ARTIFACTS";
     let files = 0;
     for (const n of names.filter((n) => /^\.\/[a-f0-9]{64}$/.test(n))) {
-      await rename(join(tmp, n), join(out, n.slice(2)));
+      await copyFile(join(tmp, n), join(out, n.slice(2)), 1);
+      if ((await checksum(join(out, n.slice(2)))) !== n.slice(2))
+        throw Error("ARTIFACT_CORRUPT");
       files++;
     }
     console.log(
@@ -295,7 +306,20 @@ try {
         });
     }
   } else throw Error("UNKNOWN_BACKUP_COMMAND");
-} catch {
-  console.error(JSON.stringify({ event: "backup_operation_failed", mode }));
+} catch (error) {
+  const code =
+    error instanceof Error && /^[A-Z_]+$/.test(error.message)
+      ? error.message
+      : error && typeof error.code === "string" && /^[A-Z_]+$/.test(error.code)
+        ? error.code
+        : "BACKUP_OPERATION_FAILED";
+  console.error(
+    JSON.stringify({
+      event: "backup_operation_failed",
+      mode,
+      code,
+      stage: restoreStage,
+    }),
+  );
   process.exitCode = 1;
 }

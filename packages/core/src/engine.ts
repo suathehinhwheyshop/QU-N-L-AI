@@ -1,3 +1,4 @@
+import { withCliLease } from "./cli-lease";
 import { configuredCandidates, admitLive, configHash } from "./live-policy";
 import { randomUUID } from "node:crypto";
 import type { PoolClient } from "pg";
@@ -419,6 +420,23 @@ export async function executeClaim(claim: Claim) {
   let timer: NodeJS.Timeout | undefined,
     cost = 0,
     usage: Record<string, unknown> = { mock: run.mode === "MOCK" };
+  let cancellationQuery: Promise<void> | undefined;
+  const cancellationWatch =
+    task.provider_id &&
+    getProvider(task.provider_id).descriptor.execution === "SUBSCRIPTION_CLI"
+      ? setInterval(() => {
+          if (!cancellationQuery)
+            cancellationQuery = pool
+              .query("SELECT status FROM runs WHERE id=$1", [run.id])
+              .then((r) => {
+                if (r.rows[0]?.status === "CANCELED") controller.abort();
+              })
+              .catch(() => controller.abort())
+              .finally(() => {
+                cancellationQuery = undefined;
+              });
+        }, 200).unref()
+      : undefined;
   let successfulLiveCall = false;
   try {
     const work = async () => {
@@ -446,7 +464,7 @@ export async function executeClaim(claim: Claim) {
             throw new OrbitError("LIVE_NOT_READY");
           let result;
           try {
-            result = await adapter.invoke({
+            const invokeInput = {
               capability: task.capability,
               model: task.model ?? undefined,
               profile: attempt.provider_snapshot?.profile as Parameters<
@@ -466,7 +484,15 @@ export async function executeClaim(claim: Claim) {
                     AbortSignal.timeout(handler.invokeTimeoutMs),
                   ])
                 : controller.signal,
-            });
+            };
+            result =
+              adapter.descriptor.execution === "SUBSCRIPTION_CLI"
+                ? await withCliLease(
+                    adapter.descriptor.id,
+                    controller.signal,
+                    () => adapter.invoke(invokeInput),
+                  )
+                : await adapter.invoke(invokeInput);
           } catch (error) {
             if (
               run.mode === "LIVE" &&
@@ -475,6 +501,9 @@ export async function executeClaim(claim: Claim) {
                 "AUTH_FAILED",
                 "UNVERIFIED_MODEL",
                 "API_RESPONSE_INVALID",
+                "CLI_NOT_SIGNED_IN",
+                "CLI_LIMIT_REACHED",
+                "CLI_NOT_INSTALLED",
               ].includes(error.code)
             ) {
               await pool.query(
@@ -499,13 +528,18 @@ export async function executeClaim(claim: Claim) {
           usage = result.usage;
           if (
             run.mode === "LIVE" &&
-            (result.evidence?.kind !== "LIVE_API" ||
+            (result.evidence?.kind !==
+              (adapter.descriptor.execution === "SUBSCRIPTION_CLI"
+                ? "LIVE_CLI"
+                : "LIVE_API") ||
               result.evidence.provider !==
                 getProvider(task.provider_id).descriptor.vendor ||
               result.evidence.model !== task.model)
           )
             throw new OrbitError("UNTRUSTED_EXECUTION");
-          successfulLiveCall = result.evidence?.kind === "LIVE_API";
+          successfulLiveCall =
+            result.evidence?.kind === "LIVE_API" ||
+            result.evidence?.kind === "LIVE_CLI";
           return result;
         },
       });
@@ -568,6 +602,8 @@ export async function executeClaim(claim: Claim) {
         : 0,
     );
   } finally {
+    if (cancellationWatch) clearInterval(cancellationWatch);
+    await cancellationQuery;
     if (timer) clearTimeout(timer);
     controller.abort();
   }
@@ -717,6 +753,29 @@ async function failAttempt(
       await c.query(
         "UPDATE tasks SET status='CANCELED',lease_until=NULL WHERE id=$1",
         [task.id],
+      );
+      return;
+    }
+    if (["CLI_LIMIT_REACHED", "CLI_NOT_SIGNED_IN"].includes(code)) {
+      if (t.attempt_count >= t.max_attempts) {
+        await fatal(c, t, r, code);
+        return;
+      }
+      await c.query(
+        "UPDATE tasks SET status='PENDING',lease_until=NULL,active_attempt_id=NULL,error_code=$2 WHERE id=$1",
+        [task.id, code],
+      );
+      await c.query(
+        "UPDATE runs SET status='PAUSED',error_code=$2,updated_at=now() WHERE id=$1",
+        [run.id, code],
+      );
+      await event(
+        c,
+        run.id,
+        "SUBSCRIPTION_PAUSED",
+        safeMessage[code],
+        task.id,
+        attempt.id,
       );
       return;
     }

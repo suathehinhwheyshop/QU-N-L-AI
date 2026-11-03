@@ -1,0 +1,55 @@
+{
+  "at": "2026-11-03T05:48:09.731Z",
+  "started": "2026-11-03T05:44:52.553Z",
+  "status": "CODE_AND_LINUX_TESTS_PASS",
+  "mode": "MOCK_CLI_STUB",
+  "windows10_status": "BLOCKED_NO_WINDOWS_HOST",
+  "subscription_live_status": "BLOCKED_USER_LOGIN_AND_EXECUTION_CONSENT",
+  "paid_api_calls": 0,
+  "results": [
+    {
+      "name": "local-install",
+      "status": "PASS"
+    },
+    {
+      "name": "regression",
+      "status": "PASS"
+    },
+    {
+      "name": "cli-e2e",
+      "status": "PASS"
+    },
+    {
+      "name": "local-e2e",
+      "status": "PASS"
+    },
+    {
+      "name": "subscription-browser",
+      "status": "PASS"
+    },
+    {
+      "name": "official-cli-install",
+      "status": "PASS"
+    },
+    {
+      "name": "offline-status",
+      "status": "PASS"
+    },
+    {
+      "name": "security",
+      "status": "PASS"
+    },
+    {
+      "name": "audit",
+      "status": "PASS"
+    },
+    {
+      "name": "shell-syntax",
+      "status": "PASS"
+    },
+    {
+      "name": "format",
+      "status": "PASS"
+    }
+  ]
+}

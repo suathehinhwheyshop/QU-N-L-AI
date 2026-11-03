@@ -5,7 +5,12 @@ try {
     ["orbit_app", "api_db_password"],
     ["orbit_worker", "worker_db_password"],
   ]) {
-    const password = (await readFile("/run/secrets/" + file, "utf8")).trim();
+    const password = (
+      await readFile(
+        (process.env.ORBIT_DB_SECRETS_DIR ?? "/run/secrets") + "/" + file,
+        "utf8",
+      )
+    ).trim();
     if (password.length < 32) throw Error("DB_PASSWORD_POLICY");
     const exists = (
       await pool.query("SELECT 1 FROM pg_roles WHERE rolname=$1", [name])

@@ -1,3 +1,4 @@
+import { subscriptionCatalog, probeSubscription } from "@/server/subscriptions";
 import { observed } from "@/server/observability";
 import { authorizeRequest, clientIdentity } from "@/server/request-security";
 import { assertWorkspace } from "@orbit/database/security";
@@ -260,6 +261,19 @@ async function endpoint(
           data.output_hash,
         ),
       );
+    }
+    if (p === "subscriptions" && req.method === "GET")
+      return json(await subscriptionCatalog(owner));
+    if (
+      path[0] === "connections" &&
+      path[2] === "subscription-test" &&
+      req.method === "POST"
+    ) {
+      const id = z.enum(["codex-cli", "gemini-cli"]).parse(path[1]);
+      z.object({ consent: z.literal(true) })
+        .strict()
+        .parse(await body(req));
+      return json(await probeSubscription(owner, id, req.signal));
     }
     if (p === "connections" && req.method === "GET")
       return json(await connectionCatalog(owner));

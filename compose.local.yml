@@ -1,0 +1,51 @@
+# Personal WSL2: only PostgreSQL is published, on IPv4 loopback.
+name: orbit-personal
+services:
+  db:
+    image: postgres:17-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5
+    restart: "no"
+    environment:
+      POSTGRES_USER: orbit_migrator
+      POSTGRES_DB: orbit
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    ports: ["127.0.0.1:${ORBIT_LOCAL_DB_PORT:-55434}:5432"]
+    volumes: ["database:/var/lib/postgresql/data"]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U orbit_migrator -d orbit"]
+      interval: 3s
+      timeout: 3s
+      retries: 25
+  backup:
+    image: orbit-ops:local-subscription
+    restart: "no"
+    user: "${ORBIT_LOCAL_UID:?}:${ORBIT_LOCAL_GID:?}"
+    init: true
+    command: [daemon]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=1g,uid=${ORBIT_LOCAL_UID:?},gid=${ORBIT_LOCAL_GID:?}"]
+    environment:
+      ORBIT_DATABASE_HOST: db
+      ORBIT_DATABASE_NAME: ${ORBIT_DATABASE_NAME:-orbit}
+      ORBIT_STORAGE_DIR: /data/artifacts
+    secrets: [db_password,backup_key]
+    volumes:
+      - ${ORBIT_ARTIFACT_DIR:?}:/data/artifacts:ro
+      - ${ORBIT_LOCAL_DIR:?}/backups:/backups
+    depends_on:
+      db: {condition: service_healthy}
+  restore:
+    extends: backup
+    profiles: [tools]
+    command: [health]
+    environment:
+      ORBIT_RESTORE_DIR: /restore-artifacts
+    volumes:
+      - ${ORBIT_RESTORE_ARTIFACT_DIR:?}:/restore-artifacts
+secrets:
+  db_password: {file: "${ORBIT_LOCAL_DIR:?}/secrets/db_password"}
+  backup_key: {file: "${ORBIT_LOCAL_DIR:?}/secrets/backup_key"}
+volumes:
+  database:

@@ -17,6 +17,8 @@ const origin = "http://127.0.0.1:3202",
 const environment = {
   ...process.env,
   ORBIT_BASE_URL: origin,
+  ORBIT_SUBSCRIPTIONS_ENABLED:
+    process.env.ORBIT_TEST_SUBSCRIPTIONS_BROWSER === "true" ? "true" : "false",
   ORBIT_ADMIN_PASSWORD: "",
   ORBIT_TEST_LOGIN_EMAIL: "owner@orbit.local",
   ORBIT_SESSION_SECRET: randomBytes(32).toString("hex"),

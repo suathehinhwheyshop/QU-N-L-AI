@@ -243,7 +243,7 @@ export const InterpretedPlan = z
   .strict();
 export const ProbeOutput = z.object({ ok: z.literal(true) }).strict();
 export type Evidence = {
-  kind: "MOCK" | "HTTP_STUB" | "LIVE_API";
+  kind: "MOCK" | "HTTP_STUB" | "LIVE_API" | "LIVE_CLI" | "CLI_STUB";
   provider: string;
   model: string;
   request_id?: string;
@@ -307,4 +307,21 @@ Object.assign(safeMessage, {
   PASSWORD_POLICY: "Mật khẩu cần 16–512 ký tự.",
   AUTH_EXPIRED: "Phiên đăng nhập đã hết hạn.",
   SERVICE_NOT_READY: "Dịch vụ chưa sẵn sàng.",
+});
+
+Object.assign(safeMessage, {
+  PAID_API_DISABLED:
+    "Local Mode chỉ dùng đăng nhập thuê bao; REST API tính phí đã bị khóa.",
+  CLI_NOT_INSTALLED: "Chưa cài CLI chính thức hoặc phiên bản chưa được hỗ trợ.",
+  CLI_NOT_SIGNED_IN:
+    "Cần đăng nhập qua CLI chính thức bằng tài khoản thuê bao.",
+  CLI_LIMIT_REACHED:
+    "Hết hạn mức hoặc bị giới hạn. Workflow đã dừng; không chuyển sang API tính phí.",
+  CLI_BUSY: "Provider CLI đang có tác vụ khác; hãy thử lại sau.",
+  CLI_FAILED:
+    "CLI không hoàn tất tác vụ; kiểm tra đăng nhập hoặc kết nối mạng.",
+  CLI_OUTPUT_INVALID:
+    "CLI trả đầu ra không đúng schema hoặc có tool execution bị chặn.",
+  CLI_UNSUPPORTED:
+    "Phương thức đăng nhập này chưa được hỗ trợ hoặc chưa xác minh điều kiện sử dụng.",
 });

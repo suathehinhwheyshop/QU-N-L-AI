@@ -44,6 +44,24 @@ export function loadServerSecrets() {
 }
 export function validateServerConfig() {
   loadServerSecrets();
+  if (process.env.ORBIT_LOCAL_MODE === "true") {
+    const origin = new URL(process.env.ORBIT_BASE_URL ?? "http://invalid");
+    if (
+      origin.hostname !== "127.0.0.1" ||
+      origin.protocol !== "http:" ||
+      origin.username ||
+      origin.password ||
+      origin.pathname !== "/" ||
+      origin.search ||
+      origin.hash
+    )
+      throw Error("LOCAL_LOOPBACK_REQUIRED");
+    if (
+      process.env.ORBIT_AI_POLICY !== "subscription-only" ||
+      !process.env.ORBIT_OWNER_ID
+    )
+      throw Error("LOCAL_OWNER_POLICY_REQUIRED");
+  }
   const stage = ["staging", "production"].includes(process.env.ORBIT_ENV ?? "");
   if (stage) {
     const base = new URL(process.env.ORBIT_BASE_URL ?? "http://invalid");

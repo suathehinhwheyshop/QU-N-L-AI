@@ -1,3 +1,4 @@
+import { assertLocalOwner } from "./local-mode";
 import { randomBytes } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { pool } from "../db/client";
@@ -68,6 +69,7 @@ export async function actor(req: NextRequest) {
   validateServerConfig();
   const user = await session(req.cookies.get("orbit_session")?.value);
   if (!user) throw new OrbitError("UNAUTHORIZED");
+  await assertLocalOwner(user.user_id);
   await rateLimit("api:" + user.user_id, 900, 60);
   return user.user_id as string;
 }
@@ -95,6 +97,7 @@ export async function login(
     await securityEvent(null, "LOGIN", "DENIED");
     throw new OrbitError("UNAUTHORIZED");
   }
+  await assertLocalOwner(row.id);
   await securityEvent(row.id, "LOGIN", "SUCCESS");
   return row.id as string;
 }

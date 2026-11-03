@@ -1,8 +1,8 @@
 # ORBIT — bốn giai đoạn
 
-## Ưu tiên hiện tại — localhost và các gói AI đã đăng ký
+## Ưu tiên hiện tại — Windows localhost, subscription-only
 
-Theo yêu cầu ngày 03/11/2026, bước tiếp theo là kiểm tra cơ chế đăng nhập chính thức qua ứng dụng/CLI/SDK của từng provider để tận dụng hạn mức thuê bao chat trong ORBIT localhost. Tài liệu Phase 1–4 bên dưới giữ lịch sử triển khai; public hosting không phải mục tiêu ưu tiên hiện tại. Chỉ triển khai adapter sau khi xác minh quyền của gói, khả năng gọi tác vụ/lấy kết quả và giới hạn thực thi; giữ nguyên engine và mock tests. Chi tiết tại docs/PRODUCT_DECISIONS.md.
+Local Mode + Windows/WSL2 scripts, official Codex/Gemini CLI adapters và engine handoff đã triển khai. Đang phân biệt Linux/CLI_STUB evidence với Windows và AI LIVE chưa có login/consent. Claude Code BLOCKED eligibility, Grok UNSUPPORTED. Không cần public hosting/domain/Google Cloud hoặc paid REST API. Báo cáo Phase 1–4 bên dưới giữ lịch sử; các public/REST gates cũ không phải điều kiện của local release. Xem docs/LOCAL_SUBSCRIPTION_VALIDATION.md.
 
 ## Phase 1 — Foundation
 

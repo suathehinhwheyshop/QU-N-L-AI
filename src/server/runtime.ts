@@ -1,3 +1,5 @@
+import { subscriptionProviders } from "@orbit/providers/subscription-cli";
+import { subscriptionOnly } from "@orbit/shared/execution-policy";
 import { validateSeoGoal } from "@orbit/workspaces/seo-template";
 import { installRegistry } from "../core/registry";
 import { registerTemplate, registerGoalPolicy } from "@orbit/core/planner";
@@ -9,7 +11,13 @@ import { workspaceHandlers } from "../workspaces/handlers";
 import { reviewedTemplate } from "../workspaces/templates";
 import { integrations } from "../integrations/registry";
 installRegistry({
-  providers: [...providers, ...liveProviders],
+  providers: [
+    ...providers,
+    ...(subscriptionOnly() ? [] : liveProviders),
+    ...(process.env.ORBIT_SUBSCRIPTIONS_ENABLED === "true"
+      ? subscriptionProviders
+      : []),
+  ],
   handlers: workspaceHandlers,
   integrations,
 });

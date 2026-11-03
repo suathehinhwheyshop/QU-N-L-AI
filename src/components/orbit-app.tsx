@@ -1,4 +1,5 @@
 "use client";
+import SubscriptionConnections from "./subscription-connections";
 import SeoWorkspace from "./seo-workspace";
 import {
   useState,
@@ -907,6 +908,7 @@ export default function OrbitApp() {
           )}
           {view === "connections" && (
             <>
+              <SubscriptionConnections />
               <div className="connection-grid">
                 {data.connections.map((c) => (
                   <section className="panel connection-card" key={c.id}>
@@ -1201,7 +1203,9 @@ function NewGoal({
               <label htmlFor="execution-mode">Chế độ thực thi</label>
               <select id="execution-mode" name="mode">
                 <option value="MOCK">MOCK · kiểm thử offline</option>
-                <option value="LIVE">LIVE · cần 2 API đã probe thật</option>
+                <option value="LIVE">
+                  LIVE · cần 2 provider đã kiểm chứng
+                </option>
               </select>
             </div>
             <div>

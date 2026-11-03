@@ -2,6 +2,7 @@ import type { PricingProfile } from "@orbit/shared/contracts";
 import { OrbitError } from "@orbit/shared/contracts";
 export interface Candidate {
   vendor?: string;
+  execution?: "API" | "SUBSCRIPTION_CLI";
   models?: string[];
   profile?: PricingProfile;
   id: string;

@@ -1,0 +1,32 @@
+
+> orbit-platform@1.3.0-phase4 build
+> next build --webpack
+
+▲ Next.js 16.4.4 (webpack)
+- Environments: .env.local
+✓ Running next.config.ts took 61ms
+- Experiments (use with caution):
+  · cpus: 2
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.7s
+  Running TypeScript ...
+  Finished TypeScript in 2.7s ...
+  Collecting page data using 2 workers ...
+  Generating static pages using 2 workers (0/1) ...
+✓ Generating static pages using 2 workers (1/1) in 239ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/[...path]
+├ ƒ /api/gsc/[...path]
+├ ƒ /api/health/[check]
+└ ƒ /login
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand

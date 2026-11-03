@@ -67,3 +67,17 @@ CODE COMPLETE và HTTP_STUB TESTED không đồng nghĩa LIVE VERIFIED. Commit/p
 - [ ] Kiểm chứng đăng nhập, execution và usage thật trước khi ghi CONNECTED/LIVE; không suy ra quyền API từ thuê bao chat.
 
 Các mục mới là công việc tiếp theo, chưa được triển khai bởi lần ghi chú này. Xem docs/PRODUCT_DECISIONS.md.
+
+## Local-first / Subscription AI release
+
+- [x] Baseline 531ef61 và giữ 7 packages/engine; branch orbit/local-subscription-ai.
+- [x] WSL2/Windows entry scripts, verified Node bootstrap, native loopback web/worker và Docker PostgreSQL/backup.
+- [x] Single owner, durable data/checkpoints, startup pause, manual Resume; local start/stop/restart/backup/restore đã chạy Linux equivalent.
+- [x] Official Codex/Gemini CLI adapters, pinned versions, strict schema, environment isolation, timeout/process cancellation, provider lease, no paid API fallback.
+- [x] CLI_STUB multi-provider workflow/validation/approval/artifacts, quota/auth pause và bounded attempts, UI connection methods/status/probe.
+- [x] Claude eligibility BLOCKED, Grok UNSUPPORTED, không động tới Claude Code config/source hoặc billing.
+- [ ] Windows 10 + WSL2/Docker Desktop acceptance trên máy thật; không suy ra từ Linux.
+- [ ] User login và consent probe/inference qua ít nhất một subscription provider thật, sau đó multi-provider LIVE acceptance.
+- [ ] Claude subscription qua orchestrator chỉ xem xét lại sau khi có điều khoản/cơ chế được xác minh.
+
+Public hosting và API-key requirements lịch sử không áp dụng cho mục tiêu local hiện tại.
