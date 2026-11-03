@@ -2,6 +2,8 @@
 
 Web điều phối đa AI: Next.js/TypeScript/React, PostgreSQL/Drizzle và worker độc lập. Giữ nguyên 7 shared packages, bốn workspace SEO/Video/Research/Development. Core không gán hãng AI vào vai trò nghiệp vụ, không phụ thuộc hoặc sao chép Claude Code.
 
+**Định hướng hiện tại (03/11/2026):** webapp localhost dùng riêng, ưu tiên tận dụng hạn mức/token của các gói AI đã đăng ký qua cơ chế đăng nhập chính thức được từng hãng hỗ trợ. Xem [quyết định sản phẩm](docs/PRODUCT_DECISIONS.md). Các REST adapters hiện có vẫn cần API credentials riêng; kết nối bằng thuê bao chat chưa được triển khai hoặc xác minh.
+
 Phase 1 đã chạy lại baseline từ `orbit/phase1-foundation-audit`, commit `9f07558`: 14 unit, 10 integration, typecheck/build và E2E qua backend/worker/database đều PASS. Bằng chứng được giữ tại [docs/evidence/phase1-baseline](docs/evidence/phase1-baseline).
 
 Phase 2 bổ sung bốn adapter REST độc lập, cấu hình model/giá, probe, structured handoff, accounting và AI planning có validation/fallback. **Chưa nghiệm thu LIVE:** môi trường hiện thiếu cả bốn API credentials. HTTP_STUB/MOCK tests không chứng minh đã gọi AI thật. Xem [báo cáo kiểm thử Phase 2](docs/PHASE2_VALIDATION.md) và [live evidence](docs/evidence/phase2-live.json).

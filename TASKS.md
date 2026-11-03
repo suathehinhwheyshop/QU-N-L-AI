@@ -58,3 +58,12 @@ CODE COMPLETE và HTTP_STUB TESTED không đồng nghĩa LIVE VERIFIED. Commit/p
 - [ ] Offsite backup và fresh-host recovery; đo RPO/RTO trên dữ liệu thật.
 - [ ] External alert delivery, OS image CVE scan và independent security review.
 - [ ] Remote CI run, production acceptance; GSC LIVE và hai AI LIVE vẫn BLOCKED.
+
+## Ưu tiên mới — localhost/subscription (03/11/2026)
+
+- [x] Ghi nhận webapp localhost dùng riêng và ưu tiên hạn mức/token từ các gói AI đã đăng ký.
+- [ ] Kiểm tra từng provider: ứng dụng/CLI/SDK nào hỗ trợ đăng nhập bằng gói hiện có và cho phép ORBIT giao việc/lấy kết quả.
+- [ ] Thiết kế adapter độc lập cho cơ chế được xác minh, phân biệt subscription auth với API-key auth; dùng lại engine, approval và mocks.
+- [ ] Kiểm chứng đăng nhập, execution và usage thật trước khi ghi CONNECTED/LIVE; không suy ra quyền API từ thuê bao chat.
+
+Các mục mới là công việc tiếp theo, chưa được triển khai bởi lần ghi chú này. Xem docs/PRODUCT_DECISIONS.md.

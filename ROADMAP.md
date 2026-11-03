@@ -1,5 +1,9 @@
 # ORBIT — bốn giai đoạn
 
+## Ưu tiên hiện tại — localhost và các gói AI đã đăng ký
+
+Theo yêu cầu ngày 03/11/2026, bước tiếp theo là kiểm tra cơ chế đăng nhập chính thức qua ứng dụng/CLI/SDK của từng provider để tận dụng hạn mức thuê bao chat trong ORBIT localhost. Tài liệu Phase 1–4 bên dưới giữ lịch sử triển khai; public hosting không phải mục tiêu ưu tiên hiện tại. Chỉ triển khai adapter sau khi xác minh quyền của gói, khả năng gọi tác vụ/lấy kết quả và giới hạn thực thi; giữ nguyên engine và mock tests. Chi tiết tại docs/PRODUCT_DECISIONS.md.
+
 ## Phase 1 — Foundation
 
 Đã nghiệm thu lại ở `9f07558`: 7 packages, 4 workspace modules, mock providers, durable DAG/leases/checkpoints/retry/controls/budgets, validation, approval, artifacts và audit. Toàn bộ regression được giữ trong Phase 2–3; không lấy HTML demo làm bằng chứng.
