@@ -2,7 +2,7 @@
 set -euo pipefail
 umask 077
 [[ "$(uname -m)" == x86_64 ]] || { printf '%s\n' 'This bootstrap supports Linux x64 in WSL2.' >&2; exit 1; }
-orbit_node_destination="${ORBIT_NODE_INSTALL_DIR:-$HOME/.local/share/orbit/node24}"
+orbit_node_destination="${ORBIT_NODE_INSTALL_DIR:-$HOME/.local/share/orbit-codex/node24}"
 if [[ -x "$orbit_node_destination/bin/node" ]] && "$orbit_node_destination/bin/node" -e 'process.exit(Number(process.versions.node.split(".")[0])>=24?0:1)'; then exit 0; fi
 [[ ! -e "$orbit_node_destination" ]] || { printf '%s\n' 'Existing Node directory preserved; inspect before updating it.' >&2; exit 1; }
 orbit_node_tmp="$(mktemp -d)"

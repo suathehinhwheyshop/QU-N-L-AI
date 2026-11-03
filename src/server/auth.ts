@@ -1,3 +1,4 @@
+import { sessionCookieName } from "./cookie-names";
 import { assertLocalOwner } from "./local-mode";
 import { randomBytes } from "node:crypto";
 import type { NextRequest } from "next/server";
@@ -67,7 +68,7 @@ export async function revokeSession(token: string | undefined) {
 }
 export async function actor(req: NextRequest) {
   validateServerConfig();
-  const user = await session(req.cookies.get("orbit_session")?.value);
+  const user = await session(req.cookies.get(sessionCookieName())?.value);
   if (!user) throw new OrbitError("UNAUTHORIZED");
   await assertLocalOwner(user.user_id);
   await rateLimit("api:" + user.user_id, 900, 60);

@@ -1,6 +1,7 @@
 .git
 .orbit
 .next
+.next-codex
 node_modules
 .env*
 attachments

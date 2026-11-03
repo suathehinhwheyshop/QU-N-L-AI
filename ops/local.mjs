@@ -1,3 +1,9 @@
+import {
+  codexInstance,
+  localDirectory,
+  validateCodexConfig,
+} from "./local-instance.mjs";
+import { createServer } from "node:net";
 import { spawn, execFileSync } from "node:child_process";
 import {
   readFile,
@@ -13,7 +19,7 @@ import { resolve, join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { fileURLToPath } from "node:url";
 const root = resolve(fileURLToPath(new URL("..", import.meta.url))),
-  dir = resolve(process.env.ORBIT_LOCAL_DIR ?? join(root, ".orbit/personal"));
+  dir = localDirectory(root, process.env.ORBIT_LOCAL_DIR);
 const action = process.argv[2],
   option = (n) => {
     const inline = process.argv.find((x) => x.startsWith("--" + n + "="));
@@ -65,13 +71,7 @@ async function compose(extra, cfg, variables = {}) {
 }
 async function config() {
   const c = await read(dir + "/config.json");
-  if (
-    !/^orbit-personal-[a-f0-9]{8}$/.test(c.project) ||
-    !/^orbit(?:_restore_[a-z0-9_]+)?$/.test(c.database) ||
-    !/^\d+$/.test(String(c.port)) ||
-    !/^\d+$/.test(String(c.dbPort))
-  )
-    throw Error("LOCAL_CONFIG_INVALID");
+  validateCodexConfig(c);
   return c;
 }
 async function env(c, role = "orbit_app") {
@@ -96,6 +96,8 @@ async function env(c, role = "orbit_app") {
     ORBIT_DATABASE_NAME: c.database,
     ORBIT_ENV: "local",
     ORBIT_LOCAL_MODE: "true",
+    ORBIT_LOCAL_INSTANCE: "codex",
+    ORBIT_ENABLE_OPTIONAL_GEMINI: "false",
     ORBIT_OWNER_ID: c.owner ?? "provisioning",
     ORBIT_AI_POLICY: "subscription-only",
     ORBIT_SUBSCRIPTIONS_ENABLED: "true",
@@ -148,6 +150,11 @@ async function start(c) {
   await composeEnv(c);
   if (await running())
     return console.log("ORBIT is already running at 127.0.0.1:" + c.port);
+  await new Promise((resolve, reject) => {
+    const socket = createServer();
+    socket.once("error", () => reject(Error("CODEX_PORT_3211_IN_USE")));
+    socket.listen(c.port, "127.0.0.1", () => socket.close(resolve));
+  });
   await compose(["up", "-d", "--wait", "db"], c);
   const output = await open(dir + "/server.log", "a", 0o600);
   const child = spawn(process.execPath, [root + "/ops/local.mjs", "serve"], {
@@ -213,10 +220,11 @@ try {
           { mode: 0o600, flag: "wx" },
         );
       c = {
-        project: "orbit-personal-" + randomBytes(4).toString("hex"),
-        database: "orbit",
-        port: 3210,
-        dbPort: 55434,
+        instance: codexInstance.id,
+        project: codexInstance.projectPrefix + randomBytes(4).toString("hex"),
+        database: codexInstance.database,
+        port: codexInstance.port,
+        dbPort: codexInstance.dbPort,
         artifacts: dir + "/artifacts",
       };
       await save(dir + "/config.json", c);
@@ -270,7 +278,7 @@ try {
       "-f",
       "Dockerfile.ops",
       "-t",
-      "orbit-ops:local-subscription",
+      codexInstance.opsImage,
       ".",
     ]);
     console.log(
@@ -392,7 +400,7 @@ try {
         "-f",
         "Dockerfile.ops",
         "-t",
-        "orbit-ops:local-subscription",
+        codexInstance.opsImage,
         ".",
       ]);
       console.log(

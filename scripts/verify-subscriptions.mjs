@@ -6,8 +6,8 @@ const started = Date.now(),
   results = [];
 await mkdir(".orbit", { recursive: true });
 await mkdir("docs/evidence", { recursive: true });
-const local = resolve(".orbit/personal-test"),
-  password = resolve(".orbit/local-install-password");
+const local = resolve(".orbit/codex-test"),
+  password = resolve(".orbit/codex-test-owner-password");
 try {
   await access(password);
 } catch {
@@ -36,7 +36,7 @@ async function run(name, program, args, extra = {}) {
 await run(
   "local-install",
   process.execPath,
-  ["ops/local.mjs", "install", "--email", "owner@local-test.invalid"],
+  ["ops/local.mjs", "install", "--email", "owner@codex-test.invalid"],
   { ORBIT_LOCAL_DIR: local, ORBIT_INSTALL_PASSWORD_FILE: password },
 );
 await run("regression", "npm", ["run", "verify:phase3"]);
@@ -90,6 +90,9 @@ await writeFile(
       windows10_status: "BLOCKED_NO_WINDOWS_HOST",
       subscription_live_status: "BLOCKED_USER_LOGIN_AND_EXECUTION_CONSENT",
       paid_api_calls: 0,
+      default_providers: ["claude-code", "codex-cli", "grokbot"],
+      optional_gemini: "DISABLED",
+      codex_origin: "http://127.0.0.1:3211",
       results,
     },
     null,

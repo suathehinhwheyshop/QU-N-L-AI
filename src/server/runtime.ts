@@ -1,4 +1,6 @@
-import { subscriptionProviders } from "@orbit/providers/subscription-cli";
+import { localMode } from "@orbit/shared/execution-policy";
+import { subscriptionCliEnabled } from "@orbit/shared/subscription-policy";
+import { activeSubscriptionProviders } from "@orbit/providers/subscription-cli";
 import { subscriptionOnly } from "@orbit/shared/execution-policy";
 import { validateSeoGoal } from "@orbit/workspaces/seo-template";
 import { installRegistry } from "../core/registry";
@@ -12,10 +14,17 @@ import { reviewedTemplate } from "../workspaces/templates";
 import { integrations } from "../integrations/registry";
 installRegistry({
   providers: [
-    ...providers,
+    ...providers.filter(
+      (p) =>
+        !(
+          localMode() &&
+          p.descriptor.vendor === "google" &&
+          !subscriptionCliEnabled("gemini-cli")
+        ),
+    ),
     ...(subscriptionOnly() ? [] : liveProviders),
     ...(process.env.ORBIT_SUBSCRIPTIONS_ENABLED === "true"
-      ? subscriptionProviders
+      ? activeSubscriptionProviders()
       : []),
   ],
   handlers: workspaceHandlers,

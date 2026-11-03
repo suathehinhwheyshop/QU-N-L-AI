@@ -96,9 +96,10 @@ export default function SubscriptionConnections() {
         ))}
       </div>
       <p>
-        Claude Code: BLOCKED khi chưa xác minh quyền tích hợp qua ORBIT. Grok:
-        UNSUPPORTED trong chế độ thuê bao hiện tại. Không chuyển sang REST API
-        tính phí.
+        Claude Max 5x và Grokbot đang BLOCKED về quyền tích hợp. ChatGPT dùng
+        Codex CLI chính thức; chỉ chạy khi cơ chế dùng hạn mức bao gồm được xác
+        minh. Gemini tắt mặc định; không dùng để thay thế provider còn thiếu.
+        Không bật overage, top-up hoặc chuyển sang API tính phí.
       </p>
     </section>
   );

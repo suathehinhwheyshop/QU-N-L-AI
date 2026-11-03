@@ -1,23 +1,23 @@
 # Personal WSL2: only PostgreSQL is published, on IPv4 loopback.
-name: orbit-personal
+name: orbit-codex
 services:
   db:
     image: postgres:17-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5
     restart: "no"
     environment:
       POSTGRES_USER: orbit_migrator
-      POSTGRES_DB: orbit
+      POSTGRES_DB: orbit_codex
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
     secrets: [db_password]
-    ports: ["127.0.0.1:${ORBIT_LOCAL_DB_PORT:-55434}:5432"]
+    ports: ["127.0.0.1:${ORBIT_LOCAL_DB_PORT:-55435}:5432"]
     volumes: ["database:/var/lib/postgresql/data"]
     healthcheck:
-      test: [CMD-SHELL, "pg_isready -U orbit_migrator -d orbit"]
+      test: [CMD-SHELL, "pg_isready -U orbit_migrator -d orbit_codex"]
       interval: 3s
       timeout: 3s
       retries: 25
   backup:
-    image: orbit-ops:local-subscription
+    image: orbit-ops:codex-local
     restart: "no"
     user: "${ORBIT_LOCAL_UID:?}:${ORBIT_LOCAL_GID:?}"
     init: true
@@ -28,7 +28,7 @@ services:
     tmpfs: ["/tmp:rw,noexec,nosuid,size=1g,uid=${ORBIT_LOCAL_UID:?},gid=${ORBIT_LOCAL_GID:?}"]
     environment:
       ORBIT_DATABASE_HOST: db
-      ORBIT_DATABASE_NAME: ${ORBIT_DATABASE_NAME:-orbit}
+      ORBIT_DATABASE_NAME: ${ORBIT_DATABASE_NAME:-orbit_codex}
       ORBIT_STORAGE_DIR: /data/artifacts
     secrets: [db_password,backup_key]
     volumes:

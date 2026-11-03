@@ -1,7 +1,8 @@
+import { codexIncludedOnlyEnforcement } from "@orbit/shared/subscription-policy";
 import { pool } from "@/db/client";
 import {
-  cliDefinitions,
-  subscriptionProviders,
+  enabledCliDefinitions,
+  activeSubscriptionProviders,
   installedVersion,
   cliTag,
   type CliId,
@@ -12,8 +13,19 @@ import { configHash } from "@orbit/core/live-policy";
 import { withCliLease } from "@orbit/core/cli-lease";
 export async function subscriptionCatalog(owner: string) {
   if (process.env.ORBIT_SUBSCRIPTIONS_ENABLED !== "true") return [];
-  const result = [];
-  for (const d of cliDefinitions) {
+  const result: Record<string, unknown>[] = [
+    {
+      id: "claude-code",
+      name: "Claude Max 5x",
+      vendor: "anthropic",
+      method: "Claude Code / Agent SDK: quyền qua ORBIT chưa được xác minh",
+      status: "BLOCKED",
+      code: "MAX_SUBSCRIPTION_ORCHESTRATOR_ELIGIBILITY_UNVERIFIED",
+      implementation: "BLOCKED",
+      remaining_quota: null,
+    },
+  ];
+  for (const d of enabledCliDefinitions()) {
     let status = "NOT_INSTALLED",
       code = "CLI_NOT_INSTALLED";
     try {
@@ -42,7 +54,17 @@ export async function subscriptionCatalog(owner: string) {
         code = "LIVE_CLI_VERIFIED";
       }
     } catch {}
+    if (
+      d.id === "codex-cli" &&
+      status !== "NOT_INSTALLED" &&
+      codexIncludedOnlyEnforcement === "UNVERIFIED"
+    ) {
+      status = "BLOCKED";
+      code = "CLI_INCLUDED_ALLOWANCE_UNVERIFIED";
+    }
     result.push({
+      implementation: "IMPLEMENTED",
+      included_allowance_verification: "UNVERIFIED",
       id: d.id,
       name: d.name,
       vendor: d.vendor,
@@ -57,21 +79,13 @@ export async function subscriptionCatalog(owner: string) {
     });
   }
   result.push({
-    id: "claude-code",
-    name: "Claude Code",
-    vendor: "anthropic",
-    method: "Chưa xác minh quyền dùng qua orchestrator",
+    id: "grokbot",
+    name: "Grokbot",
+    vendor: "grokbot-unverified",
+    method: "Chưa xác minh Grokbot có quyền dùng Grok Build chính thức",
     status: "BLOCKED",
-    code: "SUBSCRIPTION_ORCHESTRATOR_ELIGIBILITY_UNVERIFIED",
-    remaining_quota: null,
-  });
-  result.push({
-    id: "grok-subscription",
-    name: "Grok",
-    vendor: "xai",
-    method: "Chưa có cơ chế thuê bao được hỗ trợ trong ORBIT",
-    status: "UNSUPPORTED",
-    code: "NO_VERIFIED_OFFICIAL_SUBSCRIPTION_INTERFACE",
+    code: "GROKBOT_BUILD_ENTITLEMENT_UNVERIFIED",
+    implementation: "BLOCKED",
     remaining_quota: null,
   });
   return result;
@@ -83,8 +97,12 @@ export async function probeSubscription(
 ) {
   if (process.env.ORBIT_SUBSCRIPTIONS_ENABLED !== "true")
     throw new OrbitError("CLI_UNSUPPORTED");
-  const adapter = subscriptionProviders.find((p) => p.descriptor.id === id);
-  if (!adapter) throw new OrbitError("NOT_FOUND");
+  const adapter = activeSubscriptionProviders().find(
+    (p) => p.descriptor.id === id,
+  );
+  if (!adapter) throw new OrbitError("CLI_OPTIONAL_DISABLED");
+  if (id === "codex-cli" && codexIncludedOnlyEnforcement === "UNVERIFIED")
+    throw new OrbitError("CLI_INCLUDED_ALLOWANCE_UNVERIFIED");
   await initializeSubscriptions(owner);
   const latest = (
     await pool.query(

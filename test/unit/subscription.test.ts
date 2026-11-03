@@ -80,7 +80,7 @@ test("CLI environment excludes API keys, DB credentials and inherited model conf
       assert.equal(env.DATABASE_URL, undefined);
       assert.equal(env.HOME, undefined);
     }
-    await prepareCliProfiles();
+    await prepareCliProfiles("gemini-cli");
     const cfg = JSON.parse(
       await readFile(root + "/gemini-system.json", "utf8"),
     );

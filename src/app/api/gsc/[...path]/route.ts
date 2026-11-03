@@ -1,3 +1,4 @@
+import { sessionCookieName, gscCookieName } from "@/server/cookie-names";
 import { observed } from "@/server/observability";
 import { authorizeGsc } from "@/server/request-security";
 import { tokenHash } from "@orbit/database/security";
@@ -57,13 +58,19 @@ async function endpoint(
     if (p === "oauth/callback" && req.method === "GET") {
       const state = req.nextUrl.searchParams.get("state") ?? "",
         code = req.nextUrl.searchParams.get("code") ?? "",
-        browser = req.cookies.get("orbit_gsc_oauth")?.value ?? "";
+        browser = req.cookies.get(gscCookieName())?.value ?? "";
       await oauth.callback(state, browser, code, req.signal);
       const response = NextResponse.redirect(
         new URL("/?gsc=authorized#seo", process.env.ORBIT_BASE_URL!),
         303,
       );
-      response.cookies.delete("orbit_gsc_oauth");
+      response.cookies.set(gscCookieName(), "", {
+        path: "/api/gsc/oauth/callback",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.ORBIT_COOKIE_SECURE === "true",
+        maxAge: 0,
+      });
       response.headers.set("Cache-Control", "no-store");
       response.headers.set("Referrer-Policy", "no-referrer");
       return response;
@@ -75,10 +82,10 @@ async function endpoint(
     if (p === "oauth/start" && req.method === "POST") {
       const result = await oauth.begin(
         owner,
-        tokenHash(req.cookies.get("orbit_session")!.value),
+        tokenHash(req.cookies.get(sessionCookieName())!.value),
       );
       const response = json({ url: result.url });
-      response.cookies.set("orbit_gsc_oauth", result.browser, {
+      response.cookies.set(gscCookieName(), result.browser, {
         httpOnly: true,
         sameSite: "lax",
         secure: process.env.ORBIT_COOKIE_SECURE === "true",
@@ -171,7 +178,13 @@ async function endpoint(
         ),
         303,
       );
-      response.cookies.delete("orbit_gsc_oauth");
+      response.cookies.set(gscCookieName(), "", {
+        path: "/api/gsc/oauth/callback",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.ORBIT_COOKIE_SECURE === "true",
+        maxAge: 0,
+      });
       response.headers.set("Referrer-Policy", "no-referrer");
       return response;
     }

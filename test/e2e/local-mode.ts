@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -5,9 +6,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { randomUUID, createHash } from "node:crypto";
 const exec = promisify(execFile),
-  dir = resolve(process.env.ORBIT_LOCAL_DIR ?? ".orbit/personal-test");
-if (!dir.endsWith("/personal-test"))
-  throw Error("ISOLATED_TEST_PROFILE_REQUIRED");
+  dir = resolve(process.env.ORBIT_LOCAL_DIR ?? ".orbit/codex-test");
+if (!dir.endsWith("/codex-test")) throw Error("ISOLATED_TEST_PROFILE_REQUIRED");
 const command = async (action: string, ...args: string[]) =>
   exec(process.execPath, ["ops/local.mjs", action, ...args], {
     env: { ...process.env, ORBIT_LOCAL_DIR: dir },
@@ -31,13 +31,14 @@ async function api(path: string, method = "GET", body?: unknown) {
 }
 async function login() {
   const password = (
-    await readFile(".orbit/local-install-password", "utf8")
+    await readFile(".orbit/codex-test-owner-password", "utf8")
   ).trim();
   const r = await api("auth/login", "POST", {
-    email: "owner@local-test.invalid",
+    email: "owner@codex-test.invalid",
     password,
   });
   assert.equal(r.status, 200);
+  assert.ok(r.headers.get("set-cookie")!.startsWith("orbit_codex_session="));
   cookie = r.headers.get("set-cookie")!.split(";")[0];
 }
 async function wait(fn: () => Promise<boolean>) {
@@ -49,8 +50,50 @@ async function wait(fn: () => Promise<boolean>) {
   throw Error("LOCAL_CONDITION_TIMEOUT");
 }
 const checks: string[] = [];
+const companion = createServer((_req, res) => {
+  res.setHeader(
+    "Set-Cookie",
+    "orbit_session=claude-sentinel; HttpOnly; SameSite=Strict; Path=/",
+  );
+  res.end("CLAUDE_3210_SENTINEL");
+});
+await new Promise<void>((resolve, reject) => {
+  companion.once("error", reject);
+  companion.listen(3210, "127.0.0.1", resolve);
+});
+async function otherInstanceAlive() {
+  assert.equal(
+    await (await fetch("http://127.0.0.1:3210")).text(),
+    "CLAUDE_3210_SENTINEL",
+  );
+}
+assert.equal(before.port, 3211);
+assert.equal(before.dbPort, 55435);
+assert.equal(before.instance, "codex");
+assert.match(before.project, /^orbit-codex-/);
 try {
   await command("start");
+  await otherInstanceAlive();
+  assert.equal((await api("bootstrap")).status, 401);
+  await login();
+  const bothCookies = "orbit_session=claude-sentinel; " + cookie;
+  assert.equal(
+    (
+      await fetch(origin + "/api/bootstrap", {
+        headers: { Cookie: bothCookies },
+      })
+    ).status,
+    200,
+  );
+  const logout = await fetch(origin + "/api/auth/logout", {
+    method: "POST",
+    headers: { Cookie: bothCookies, Origin: origin },
+  });
+  assert.equal(logout.status, 200);
+  assert.ok(
+    logout.headers.get("set-cookie")!.startsWith("orbit_codex_session="),
+  );
+  assert.ok(!logout.headers.get("set-cookie")!.includes("orbit_session="));
   assert.equal((await api("bootstrap")).status, 401);
   await login();
   const bootstrap = await (await api("bootstrap")).json();
@@ -64,7 +107,12 @@ try {
   ).json();
   assert.equal(denied.code, "PAID_API_DISABLED");
   const rows = await (await api("subscriptions")).json();
-  assert.equal(rows.length, 4);
+  assert.equal(rows.length, 3);
+  assert.deepEqual(
+    rows.map((r: { id: string }) => r.id),
+    ["claude-code", "codex-cli", "grokbot"],
+  );
+  assert.ok(!rows.some((r: { id: string }) => r.id === "gemini-cli"));
   assert.ok(rows.every((r: { status: string }) => r.status !== "CONNECTED"));
   const goal = {
     goal: "Kiểm tra workflow localhost bảo toàn checkpoint sau khi tắt và mở máy",
@@ -146,6 +194,10 @@ try {
     );
     assert.equal(createHash("sha256").update(bytes).digest("hex"), a.sha256);
   }
+  await otherInstanceAlive();
+  checks.push(
+    "3210 companion stays alive through Codex install/start/restart/restore/stop; cookie names and storage/project namespaces differ",
+  );
   checks.push(
     "real encrypted PostgreSQL/artifact backup and fresh-target restore selected by local manager",
     "restored owner/history/download hashes valid; source database and artifacts preserved",
@@ -172,4 +224,6 @@ try {
   );
 } finally {
   await command("stop");
+  await otherInstanceAlive();
+  await new Promise<void>((r) => companion.close(() => r()));
 }

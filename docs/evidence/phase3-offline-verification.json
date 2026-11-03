@@ -2,20 +2,20 @@
   "status": "PASS",
   "mode": "MOCK_AND_HTTP_STUB",
   "live_api_verified": false,
-  "at": "2026-11-03T05:46:51.458Z",
+  "at": "2026-11-03T07:46:44.107Z",
   "results": [
     {
       "name": "unit",
       "command": "npm run test",
       "status": "PASS",
-      "tests": 33,
+      "tests": 37,
       "log": "unit.log"
     },
     {
       "name": "integration",
       "command": "npm run test:integration",
       "status": "PASS",
-      "tests": 44,
+      "tests": 47,
       "log": "integration.log"
     },
     {
@@ -43,8 +43,8 @@
       "log": "browser.log"
     }
   ],
-  "e2e_run_id": "fb2f1f7a-8a62-4619-bb46-06b09c35bc9f",
-  "phase2_e2e_run_id": "5c98e626-ed69-4118-91e6-3b813708731c",
-  "phase3_e2e_run_id": "23bc4d36-5d0f-4c1d-9465-b82e0b2beda5",
+  "e2e_run_id": "a61b420a-af4e-4cc3-9ae9-ddd07b5529c0",
+  "phase2_e2e_run_id": "bafaf38b-fff9-4f71-8294-9f7fd0cc13d3",
+  "phase3_e2e_run_id": "f9998a5e-5957-4d7b-af7e-c27a95e27997",
   "notice": "Phase 3 CODE/HTTP_STUB verification with Phase 1–2 regressions; GSC and AI LIVE proofs are separate and may remain BLOCKED. No website writes."
 }

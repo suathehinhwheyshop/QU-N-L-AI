@@ -105,3 +105,7 @@ GSC token rotation đọc active+previous, ghi active, transaction rewrap + inva
 ## Local/subscription boundary hiện tại
 
 Quyết định mới: Windows 10/WSL2, single owner, 127.0.0.1, không public/cloud/paid REST. Web/worker native cùng WSL user để dùng official CLI profiles riêng; PG/backup qua Docker Desktop. Startup pause và single-worker lease giữ dữ liệu nhưng không tự Resume. CLI adapter độc lập trong package providers, process runner bounded/cancelable và schema outputs; core chỉ mở rộng evidence kind/CLI lease/quota pause, không đổi DAG/state storage. Local Mode chặn paid REST ở registry/probe/transport. Claude eligibility BLOCKED, Grok UNSUPPORTED; Codex/Gemini LIVE và Windows acceptance chưa verified. Xem docs/SUBSCRIPTION_AI_INTEGRATION.md, LOCAL_SETUP_WINDOWS.md và LOCAL_SUBSCRIPTION_VALIDATION.md.
+
+## Provider correction boundary
+
+Product configuration now prefers Claude Max5x/ChatGPT/Grokbot. Optional Gemini is disabled before registration/probe/install/invoke; the generic router still uses capability, availability, vendor and policy. Codex included-only enforcement is UNVERIFIED, so live prompt execution stays fail-closed. Claude/Grokbot have no runtime adapters without eligibility. Codex instance marker separates port3211/PG55435/project/volume/profile/build/cookie names; legacy instances keep prior behavior. Separate Codex checkout is required for source/node_modules isolation. No schema or DAG rewrite. See docs/PROVIDER_CORRECTION_VALIDATION.md.

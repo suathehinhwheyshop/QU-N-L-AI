@@ -1,5 +1,6 @@
+import { subscriptionCliEnabled } from "@orbit/shared/subscription-policy";
 const definitions = [
-  ["codex-cli", "Codex CLI", "openai"],
+  ["codex-cli", "ChatGPT · Codex CLI", "openai"],
   ["gemini-cli", "Gemini CLI", "google"],
 ];
 export async function initializeSubscriptions(owner: string) {
@@ -10,8 +11,13 @@ export async function initializeSubscriptions(owner: string) {
       [id, name, { kind: "subscription", vendor, method: "OFFICIAL_CLI" }],
     );
     await pool.query(
-      "INSERT INTO provider_configs(owner_id,provider_id,enabled,model) VALUES($1,$2,true,'default') ON CONFLICT DO NOTHING",
-      [owner, id],
+      "INSERT INTO provider_configs(owner_id,provider_id,enabled,model) VALUES($1,$2,$3,'default') ON CONFLICT DO NOTHING",
+      [owner, id, subscriptionCliEnabled(id)],
     );
+    if (!subscriptionCliEnabled(id))
+      await pool.query(
+        "UPDATE provider_configs SET enabled=false WHERE owner_id=$1 AND provider_id=$2",
+        [owner, id],
+      );
   }
 }

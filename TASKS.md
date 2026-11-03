@@ -81,3 +81,15 @@ Các mục mới là công việc tiếp theo, chưa được triển khai bởi
 - [ ] Claude subscription qua orchestrator chỉ xem xét lại sau khi có điều khoản/cơ chế được xác minh.
 
 Public hosting và API-key requirements lịch sử không áp dụng cho mục tiêu local hiện tại.
+
+## Provider correction — quyết định hiện hành
+
+- [x] Baseline f5eee50, branch orbit/subscription-provider-correction; không rewrite engine/7 packages.
+- [x] Default Claude Max5x/ChatGPT/Grokbot; Gemini hidden/disabled trong install/login/probe/router và không bù reviewer.
+- [x] Codex port3211/PG55435/.orbit/codex namespace, riêng Docker project/volume, .next-codex và cookies; reject legacy3210 profile.
+- [x] ChatGPT official CLI adapter retained, only-included gate fail-closed trước real requests, không env tự xác nhận/overage/top-up.
+- [x] Research official SDK terms/Grok Build auth/headless/community CLI; không conflating Grokbot/GrokBuild/Grokchat/xAI API.
+- [ ] Claude Max5x personal orchestration eligibility + included-only enforcement: BLOCKED.
+- [ ] Grokbot subscription→official Grok Build entitlement/quota: BLOCKED.
+- [ ] ChatGPT LIVE account + official included-only enforcement: BLOCKED; binary/help/CLI_STUB không phải LIVE.
+- [ ] Windows10/DockerDesktop/WSL2 thật: BLOCKED_NO_WINDOWS_HOST.

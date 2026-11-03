@@ -1,3 +1,4 @@
+import { sessionCookieName } from "@/server/cookie-names";
 import { subscriptionCatalog, probeSubscription } from "@/server/subscriptions";
 import { observed } from "@/server/observability";
 import { authorizeRequest, clientIdentity } from "@/server/request-security";
@@ -76,21 +77,21 @@ async function endpoint(
         .strict()
         .parse(input);
       const owner = await login(data.email, data.password, clientIdentity(req));
-      await revokeSession(req.cookies.get("orbit_session")?.value);
+      await revokeSession(req.cookies.get(sessionCookieName())?.value);
       const response = nativeForm
         ? NextResponse.redirect(new URL("/", req.url), 303)
         : json({ ok: true });
       response.cookies.set(
-        "orbit_session",
+        sessionCookieName(),
         await issueSession(owner),
         cookieOptions(),
       );
       return response;
     }
     if (p === "auth/logout" && req.method === "POST") {
-      await revokeSession(req.cookies.get("orbit_session")?.value);
+      await revokeSession(req.cookies.get(sessionCookieName())?.value);
       const res = json({ ok: true });
-      res.cookies.delete("orbit_session");
+      res.cookies.delete(sessionCookieName());
       return res;
     }
     const owner = await actor(req);
@@ -150,11 +151,12 @@ async function endpoint(
         stats,
         activity,
         mode: process.env.ORBIT_ENV ?? "development",
-        identity: await session(req.cookies.get("orbit_session")?.value).then(
-          (u) =>
-            u
-              ? { id: u.user_id, role: u.role, email: u.email, name: u.name }
-              : null,
+        identity: await session(
+          req.cookies.get(sessionCookieName())?.value,
+        ).then((u) =>
+          u
+            ? { id: u.user_id, role: u.role, email: u.email, name: u.name }
+            : null,
         ),
         permissions: { read: true, report: true, website_write: false },
         storage: "PostgreSQL + local artifacts",

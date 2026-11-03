@@ -1,8 +1,10 @@
 # ORBIT — bốn giai đoạn
 
-## Ưu tiên hiện tại — Windows localhost, subscription-only
+## Ưu tiên hiện tại — provider correction / Codex 3211
 
-Local Mode + Windows/WSL2 scripts, official Codex/Gemini CLI adapters và engine handoff đã triển khai. Đang phân biệt Linux/CLI_STUB evidence với Windows và AI LIVE chưa có login/consent. Claude Code BLOCKED eligibility, Grok UNSUPPORTED. Không cần public hosting/domain/Google Cloud hoặc paid REST API. Báo cáo Phase 1–4 bên dưới giữ lịch sử; các public/REST gates cũ không phải điều kiện của local release. Xem docs/LOCAL_SUBSCRIPTION_VALIDATION.md.
+Chỉ Claude Max 5x, ChatGPT, Grokbot. ChatGPT giữ Codex CLI adapter nhưng LIVE bị chặn khi chưa xác minh only-included quota/account execution. Claude Max qua ORBIT/SDK và Grokbot→official Grok Build còn BLOCKED; không bù bằng Gemini/xAI API. Gemini adapter cũ optional/disabled.
+
+Windows Codex checkout riêng, 127.0.0.1:3211, PG55435, .orbit/codex, Docker/build/cookies riêng; 3210 Claude giữ nguyên, old profile không auto-migrate. Windows thật và LIVE chưa nghiệm thu. Không overage/top-up/paid REST/public hosting. Xem docs/PROVIDER_CORRECTION_VALIDATION.md; các phase dưới là lịch sử.
 
 ## Phase 1 — Foundation
 

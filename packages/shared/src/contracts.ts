@@ -252,7 +252,7 @@ export type Evidence = {
 export const phase2Messages: Record<string, string> = {
   MISSING_CREDENTIAL: "Thiếu API key phía server.",
   LIVE_NOT_READY:
-    "Cần ít nhất hai provider/model đã probe API thật và cho phép xử lý dữ liệu bên ngoài.",
+    "Cần hai provider khác hãng đã xác minh thực thi, quyền/hạn mức phù hợp và cho phép gửi dữ liệu.",
   EXTERNAL_POLICY: "Chưa cấp phép gửi dữ liệu đến AI bên ngoài.",
   PRICING_REQUIRED: "Thiếu cấu hình giá/token limits hợp lệ.",
   UNVERIFIED_MODEL: "Model chưa có probe API thật còn hiệu lực.",
@@ -325,3 +325,9 @@ Object.assign(safeMessage, {
   CLI_UNSUPPORTED:
     "Phương thức đăng nhập này chưa được hỗ trợ hoặc chưa xác minh điều kiện sử dụng.",
 });
+
+safeMessage.CLI_OPTIONAL_DISABLED =
+  "Provider optional đang tắt; không đăng nhập, cài đặt hoặc thực thi.";
+
+safeMessage.CLI_INCLUDED_ALLOWANCE_UNVERIFIED =
+  "Chưa xác minh cơ chế bảo đảm chỉ dùng hạn mức bao gồm của ChatGPT. ORBIT chưa gửi prompt và không bật credits/overage/top-up.";

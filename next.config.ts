@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
+  distDir:
+    process.env.ORBIT_LOCAL_INSTANCE === "codex" ? ".next-codex" : ".next",
   poweredByHeader: false,
   transpilePackages: [
     "@orbit/shared",

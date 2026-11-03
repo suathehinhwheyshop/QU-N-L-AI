@@ -2,7 +2,7 @@
 
 Web điều phối đa AI: Next.js/TypeScript/React, PostgreSQL/Drizzle và worker độc lập. Giữ nguyên 7 shared packages, bốn workspace SEO/Video/Research/Development. Core không gán hãng AI vào vai trò nghiệp vụ, không phụ thuộc hoặc sao chép Claude Code.
 
-**Quyết định hiện tại:** webapp cá nhân **localhost trên Windows 10 + WSL2 + Docker Desktop**, chỉ dùng quyền/hạn mức AI thuê bao chính thức. Không public hosting/VPS/Google Cloud, không REST API key tính phí. [Cài đặt Windows](docs/LOCAL_SETUP_WINDOWS.md) · [Subscription AI integration](docs/SUBSCRIPTION_AI_INTEGRATION.md) · [Validation/blockers](docs/LOCAL_SUBSCRIPTION_VALIDATION.md). Codex/Gemini CLI adapters đã có code và CLI_STUB tests; đăng nhập/inference thuê bao thật và Windows thật chưa VERIFIED. Các báo cáo Phase 1–4 bên dưới là lịch sử triển khai.
+**Quyết định hiện tại:** chỉ Claude Max 5x, ChatGPT và Grokbot; Gemini optional/disabled. Bản Codex Windows 10/WSL2 chạy **127.0.0.1:3211**, profile/build/cookies/Docker data riêng với bản Claude 3210. [Windows setup](docs/LOCAL_SETUP_WINDOWS.md) · [Provider integration](docs/SUBSCRIPTION_AI_INTEGRATION.md) · [Correction validation](docs/PROVIDER_CORRECTION_VALIDATION.md). ChatGPT adapter IMPLEMENTED; Claude/Grokbot và LIVE only-included enforcement còn BLOCKED. Không API key trả phí, overage/top-up hoặc public/cloud hosting. Các báo cáo Phase 1–4/local trước đó giữ như lịch sử.
 
 Phase 1 đã chạy lại baseline từ `orbit/phase1-foundation-audit`, commit `9f07558`: 14 unit, 10 integration, typecheck/build và E2E qua backend/worker/database đều PASS. Bằng chứng được giữ tại [docs/evidence/phase1-baseline](docs/evidence/phase1-baseline).
 

@@ -67,3 +67,7 @@ Fresh migration và Phase 3→0005 upgrade/re-run được kiểm bằng Postgre
 ## Local/subscription — cùng schema 23 bảng
 
 Không cần migration mới. Codex/Gemini có connections riêng (`kind=subscription`) và provider_configs model=default. provider_probes phân biệt kind LIVE_CLI/CLI_STUB/UNVERIFIED; receipt chỉ giữ status/model/config hash/latency/numeric usage/capabilities/error, không token/cache credential. Chỉ LIVE_CLI VERIFIED còn TTL mới admit; fixtures không kích hoạt LIVE. Claim/provider_snapshot và approvals/artifacts/checksums vẫn dùng cùng engine/schema. Provider lease là advisory connection lock, startup pause ghi run status/audit vào bảng hiện có.
+
+## Provider correction — schema unchanged
+
+23 tables và migrations được giữ. Gemini provider_configs được chuyển enabled=false khi optional policy tắt, không xóa lịch sử/probes. Codex included-only gate không tạo VERIFIED receipt khi chưa có proof và không nhận env self-attestation. Claude/Grokbot chỉ có catalog metadata, chưa có model candidate/API alias. Codex mới dùng PostgreSQL cluster/volume/project riêng; không auto-migrate database 3210. Cookie namespace khác nhau ở application boundary, không sửa auth schema của bản legacy.

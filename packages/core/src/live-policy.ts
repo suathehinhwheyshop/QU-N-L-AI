@@ -37,6 +37,7 @@ export async function configuredCandidates(
       const probe = probes.find((p) => p.provider_id === candidate.id),
         tag = getProvider(candidate.id).credentialTag?.();
       const ready =
+        candidate.available &&
         config?.enabled &&
         config.model === "default" &&
         probe?.kind === "LIVE_CLI" &&

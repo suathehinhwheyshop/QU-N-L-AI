@@ -1,0 +1,68 @@
+{
+  "at": "2026-11-03T07:52:12.563Z",
+  "status": "DOCUMENTS_INSPECTED_NO_LIVE_CALLS",
+  "findings": {
+    "chatgpt": "IMPLEMENTED_INTERFACE_INSPECTED_INCLUDED_ONLY_ENFORCEMENT_UNVERIFIED",
+    "claude_max_5x": "BLOCKED_SDK_COMMERCIAL_TERMS_NOT_MAX_ENTITLEMENT_PROOF",
+    "official_grok_build": "DOCUMENTED_BROWSER_AUTH_AND_HEADLESS",
+    "grokbot_to_build_entitlement": "BLOCKED_NOT_VERIFIED",
+    "community_grok_cli": "UNSUPPORTED_UNAFFILIATED_API_KEY_REQUIRED",
+    "xai_api": "UNSUPPORTED_PAID_API_KEY_PATH",
+    "gemini": "OPTIONAL_DISABLED"
+  },
+  "snapshots": [
+    {
+      "url": "https://github.com/anthropics/claude-agent-sdk-typescript/blob/main/README.md",
+      "sha256": "d7f8965afea6198e0448bb8a3f3e0806d4dd6cfb3696cab21b1ee36faaef2065",
+      "bytes": 2502
+    },
+    {
+      "url": "https://github.com/anthropics/claude-agent-sdk-python/blob/main/README.md",
+      "sha256": "c38a933bf8fef26316ea38635989b254e69a26d21d80b96bf5731cba4e88bcc6",
+      "bytes": 13250
+    },
+    {
+      "url": "https://github.com/anthropics/claude-code/blob/main/README.md",
+      "sha256": "07445fe9698dd4e038fa5b30ea3bde5f8f1480068b2f275fdd20725cecda0a6c",
+      "bytes": 2867
+    },
+    {
+      "url": "https://github.com/openai/codex/blob/main/codex-rs/core/config.schema.json",
+      "sha256": "b8d7cb073dace89fe2abbb93c742ec3ffeb284af3322b9c452f0d5728873b67d",
+      "bytes": 262805
+    },
+    {
+      "url": "https://github.com/xai-org/grok-build/blob/main/crates/codegen/xai-grok-pager/docs/user-guide/02-authentication.md",
+      "sha256": "4e2d87b5edded0aa676349ab44bf0a297669f64aeb635f3f3cd3e2e265931c63",
+      "bytes": 15578
+    },
+    {
+      "url": "https://github.com/xai-org/grok-build/blob/main/crates/codegen/xai-grok-pager/docs/user-guide/14-headless-mode.md",
+      "sha256": "248d83a99ec6fbeb0443754b98cc195b3ab44168bf30a2f110e3188d4045f230",
+      "bytes": 41624
+    },
+    {
+      "url": "https://github.com/xai-org/grok-build/blob/main/crates/codegen/xai-grok-pager/docs/user-guide/24-monitoring-usage.md",
+      "sha256": "1518dc540b48fdad9f72d94ac66f589374c14b3b5b148db34f107504e878d1d9",
+      "bytes": 21172
+    },
+    {
+      "url": "https://github.com/xai-org/grok-build/blob/main/README.md",
+      "sha256": "322066de9f5bc136295bd0ae4f1752cef3d8dcb1a8f9d88044609e7b6d7abcf7",
+      "bytes": 5757
+    },
+    {
+      "url": "https://github.com/superagent-ai/grok-cli/blob/main/README.md",
+      "sha256": "937bb00f20aa30e04f8863191586fdfa2cfafed1656998d237d8632b55240bee",
+      "bytes": 18853
+    },
+    {
+      "url": "https://github.com/xai-org/xai-sdk-python/blob/main/README.md",
+      "sha256": "31b35957625483405e0595d8f41f62ae67f18a79d390dc0690dc2bd99c4de20e",
+      "bytes": 26333
+    }
+  ],
+  "account_credentials_read": false,
+  "model_calls": 0,
+  "billing_changes": 0
+}

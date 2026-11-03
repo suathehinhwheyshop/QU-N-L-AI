@@ -3,12 +3,16 @@ import {
   cliRoot,
   prepareCliProfiles,
   childEnvironment,
-  cliDefinitions,
+  enabledCliDefinitions,
 } from "@orbit/providers/subscription-cli";
 import { join } from "node:path";
 const action = process.argv[2];
-await prepareCliProfiles();
-const id = action === "login-codex" ? "codex-cli" : "gemini-cli";
+const id = action === "login-gemini" ? "gemini-cli" : "codex-cli";
+if (!["install-cli", "login-codex", "login-gemini"].includes(action ?? ""))
+  throw Error("UNKNOWN_CLI_ACTION");
+if (!enabledCliDefinitions().some((d) => d.id === id))
+  throw Error("CLI_OPTIONAL_DISABLED");
+await prepareCliProfiles(id);
 // Credentials and OAuth URLs remain within the user's official interactive CLI terminal.
 const child =
   action === "install-cli"
@@ -19,7 +23,7 @@ const child =
           "--prefix",
           join(cliRoot(), "tools"),
           "--no-save",
-          ...cliDefinitions.map((d) => d.package + "@" + d.version),
+          ...enabledCliDefinitions().map((d) => d.package + "@" + d.version),
         ],
         { stdio: "inherit", shell: false },
       )

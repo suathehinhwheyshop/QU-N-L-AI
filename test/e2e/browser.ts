@@ -160,7 +160,7 @@ try {
   checks.push("hash-bound approval from UI → verified delivery");
   await route("#connections");
   if (process.env.ORBIT_TEST_SUBSCRIPTIONS_BROWSER === "true") {
-    await waitFor("document.querySelectorAll('[data-cli]').length===4");
+    await waitFor("document.querySelectorAll('[data-cli]').length===3");
     assert.ok(
       await evaluate(
         "document.querySelector('[data-cli=claude-code]').innerText.includes('BLOCKED')",
@@ -168,7 +168,7 @@ try {
     );
     assert.ok(
       await evaluate(
-        "document.querySelector('[data-cli=grok-subscription]').innerText.includes('UNSUPPORTED')",
+        "document.querySelector('[data-cli=grokbot]').innerText.includes('BLOCKED')",
       ),
     );
     assert.ok(
@@ -177,7 +177,7 @@ try {
       ),
     );
     checks.push(
-      "subscription connection cards show real unverified installation/auth state, blocked Claude and unsupported Grok",
+      "subscription connection cards show real unverified installation/auth state, Claude Max 5x/Grokbot blocked and no default Gemini",
     );
   }
   await evaluate(

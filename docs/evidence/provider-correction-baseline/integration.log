@@ -1,0 +1,56 @@
+
+> orbit-platform@1.4.0-local-subscription test:integration
+> node --import tsx --test --test-concurrency=1 test/integration/*.test.ts
+
+✔ database cleanup detects leaked clients instead of terminating or hiding them (3218.533335ms)
+✔ PostgreSQL workflow: idempotency, two providers, hash-bound approval and verified artifacts (744.166416ms)
+✔ paused and canceled runs never start downstream tasks; inflight result discarded (46.493171ms)
+✔ expired lease recovers checkpoint and fences late completion (32.45641ms)
+✔ parallel runnable tasks respect owner concurrency; competing claim cannot duplicate attempt (95.045853ms)
+✔ timeout aborts adapter and exhausts bounded retry with backoff (609.758422ms)
+✔ invalid structured output never reaches review or report (156.098658ms)
+✔ budget reservations are atomic across parallel tasks (84.714994ms)
+✔ rejected approval prevents delivery; tampered source blocks validation (418.079433ms)
+✔ each non-SEO workspace runs on the same durable engine without SEO fixtures (1174.575805ms)
+✔ owner-specific provider configuration changes actual routing and can block all unavailable adapters (429.323409ms)
+✔ Phase 3 database upgrades in place preserving owner, workspace and history; migration is repeatable (155.028398ms)
+✔ two real protocol adapters hand structured data across durable worker tasks, always labeled HTTP_STUB/MOCK (713.821043ms)
+✔ unsafe AI planning falls back and cannot remove approval or enable writes (347.272174ms)
+✔ uncertain billable errors consume reservation and budget halts retries (878.631394ms)
+✔ LIVE admission rejects HTTP stub providers even after successful protocol tests (5.672914ms)
+✔ a changed operator price after claim cannot change an in-flight reservation snapshot (43.509322ms)
+✔ cancel discards in-flight output while preserving reported HTTP_STUB usage and cost (188.729687ms)
+✔ review with a wrong source checksum cannot create a task board or approval (162.824561ms)
+✔ HTTP 429 retries at engine boundary with backoff, without charging a rejected request (478.453621ms)
+✔ a synthetic HTTP_STUB probe receipt cannot activate a credential-present LIVE adapter (5.76381ms)
+✔ OAuth PKCE/state/browser nonce is one-use, tokens encrypted and DTO contains no credential (263.269249ms)
+✔ expired tokens refresh once under concurrency; API 401 retries once, 403 remains permission error (36.068256ms)
+✔ invalid_grant requires reconnect and revoke clears encrypted tokens; no reads after revocation (43.442487ms)
+✔ CSV/JSON import stores immutable source/checksum, idempotent keys, period metadata and owner isolation (31.216345ms)
+✔ GSC pagination is a durable engine tool job, duplicate jobs reuse run/dataset and preserve API request filters (131.550378ms)
+✔ 429 resumes a persisted page checkpoint, without refetching prior pages or duplicate dataset (116.790166ms)
+✔ expired lease fences late GSC page commits, a recovered attempt produces one dataset (75.747364ms)
+✔ two HTTP_STUB AI providers → code validation → synthesis → hash approval → MD/CSV/JSON artifacts (391.866006ms)
+✔ invented numeric output and checksum mismatch cannot reach approval or report (112.507429ms)
+✔ expired OAuth state is rejected and a failed revoke blocks reads until retry succeeds (26.069072ms)
+✔ GSC task timeout settles attempt, retries from durable state, and does not mint a dataset early (208.045781ms)
+✔ token rotation rewraps persisted ciphertext, rejects wrong owner/key/tampering and rolls back on corrupt row (214.632873ms)
+✔ real account login has opaque hashed sessions; logout, absolute/idle expiry and password reset revoke access (611.816037ms)
+✔ environment password is not an authentication backdoor; distributed login quotas bound guessing (1058.210398ms)
+✔ RBAC and workspace permissions are enforced on server and worker claim after revocation (152.071777ms)
+✔ inactive users and OAuth callbacks from revoked sessions are rejected before token exchange (18.420732ms)
+✔ active-workflow quota is enforced atomically and idempotent replays still succeed (46.648618ms)
+✔ two real CLI subprocess stubs traverse persistent DAG, structured handoff, hash-bound approval and delivery (874.56741ms)
+✔ quota exhaustion pauses the run without retry/fallback and preserves the completed source checkpoint (216.87015ms)
+✔ AI planning quota never falls through to template or another provider; manual retries remain bounded (528.962491ms)
+✔ startup pauses outstanding runs and only the configured local owner can authenticate (35.127402ms)
+✔ CLI_STUB and stale receipts cannot admit LIVE subscription workflow (8.697065ms)
+✔ provider lease serializes processes and releases after errors (236.551702ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21012.40714

@@ -1,13 +1,13 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import {
-  cliDefinitions,
+  enabledCliDefinitions,
   installedVersion,
   officialCliRunner,
   childEnvironment,
   cliRoot,
 } from "@orbit/providers/subscription-cli";
 const observations = [];
-for (const d of cliDefinitions) {
+for (const d of enabledCliDefinitions()) {
   let installed = false,
     auth = "NOT_VERIFIED";
   try {
@@ -36,7 +36,7 @@ for (const d of cliDefinitions) {
     auth,
     status: "BLOCKED",
     reason: installed
-      ? "USER_LOGIN_AND_EXPLICIT_EXECUTION_CONSENT_REQUIRED"
+      ? "LOGIN_AND_INCLUDED_ALLOWANCE_POLICY_UNVERIFIED"
       : "CLI_NOT_INSTALLED",
     live_verified: false,
   });
@@ -51,7 +51,7 @@ const result = {
   paid_api_calls: 0,
   credential_files_read_by_orbit: false,
   claude_code: "BLOCKED_ELIGIBILITY_UNVERIFIED",
-  grok: "UNSUPPORTED_NO_VERIFIED_SUBSCRIPTION_INTERFACE",
+  grokbot: "BLOCKED_BUILD_ENTITLEMENT_UNVERIFIED",
   windows10_verified: false,
 };
 await writeFile(

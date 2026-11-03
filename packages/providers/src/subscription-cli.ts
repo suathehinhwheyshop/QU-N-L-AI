@@ -1,3 +1,7 @@
+import {
+  subscriptionCliEnabled,
+  codexIncludedOnlyEnforcement,
+} from "@orbit/shared/subscription-policy";
 import { localMode } from "@orbit/shared/execution-policy";
 import { spawn } from "node:child_process";
 import {
@@ -19,7 +23,7 @@ export const cliDefinitions = [
   {
     id: "codex-cli" as const,
     vendor: "openai",
-    name: "Codex CLI",
+    name: "ChatGPT · Codex CLI",
     version: "0.166.0",
     package: "@openai/codex",
     login: "ChatGPT",
@@ -48,7 +52,7 @@ export interface CliRunner {
   ): Promise<CliResult>;
 }
 export const cliRoot = () =>
-  resolve(process.env.ORBIT_CLI_DIR ?? ".orbit/subscription-cli");
+  resolve(process.env.ORBIT_CLI_DIR ?? ".orbit/codex/cli");
 export const cliTag = (id: string) =>
   createHash("sha256")
     .update(cliRoot() + ":" + id + ":subscription-v1")
@@ -99,7 +103,11 @@ export function childEnvironment(id: CliId): NodeJS.ProcessEnv {
   env.NO_COLOR = "1";
   return env;
 }
-export async function prepareCliProfiles() {
+export async function prepareCliProfiles(id: CliId = "codex-cli") {
+  if (id === "codex-cli") {
+    await mkdir(join(cliRoot(), "codex"), { recursive: true, mode: 0o700 });
+    return;
+  }
   for (const p of ["codex", "gemini/.gemini"])
     await mkdir(join(cliRoot(), p), { recursive: true, mode: 0o700 });
   await writeFile(join(cliRoot(), "gemini-defaults.json"), "{}", {
@@ -263,7 +271,9 @@ export function createSubscriptionAdapter(
       mode: runner.kind === "LIVE_CLI" ? "LIVE" : "MOCK",
       models: ["default"],
       model: "default",
-      available: true,
+      available:
+        runner.kind === "CLI_STUB" ||
+        (subscriptionCliEnabled(id) && id !== "codex-cli"),
       capabilities: [
         "analysis",
         "review",
@@ -286,6 +296,14 @@ export function createSubscriptionAdapter(
       }
     },
     async invoke(input: InvokeInput) {
+      if (
+        runner.kind === "LIVE_CLI" &&
+        id === "codex-cli" &&
+        codexIncludedOnlyEnforcement === "UNVERIFIED"
+      )
+        throw new OrbitError("CLI_INCLUDED_ALLOWANCE_UNVERIFIED");
+      if (runner.kind === "LIVE_CLI" && !subscriptionCliEnabled(id))
+        throw new OrbitError("CLI_OPTIONAL_DISABLED");
       if (runner.kind === "LIVE_CLI" && !localMode())
         throw new OrbitError("CLI_UNSUPPORTED");
       if (busy.has(id)) throw new OrbitError("CLI_BUSY", true);
@@ -293,7 +311,7 @@ export function createSubscriptionAdapter(
       let work: string | undefined;
       try {
         await installedVersion(id, runner);
-        await prepareCliProfiles();
+        await prepareCliProfiles(id);
         work = await mkdtemp(join(tmpdir(), "orbit-inference-"));
         const signal = AbortSignal.any([
             input.signal,
@@ -453,3 +471,8 @@ export function createSubscriptionAdapter(
 export const subscriptionProviders = cliDefinitions.map((d) =>
   createSubscriptionAdapter(d.id),
 );
+
+export const enabledCliDefinitions = () =>
+  cliDefinitions.filter((d) => subscriptionCliEnabled(d.id));
+export const activeSubscriptionProviders = () =>
+  subscriptionProviders.filter((p) => subscriptionCliEnabled(p.descriptor.id));

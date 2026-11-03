@@ -1,3 +1,5 @@
+import { localMode } from "@orbit/shared/execution-policy";
+import { subscriptionCliEnabled } from "@orbit/shared/subscription-policy";
 import {
   assertPaidApiAllowed,
   subscriptionOnly,
@@ -32,6 +34,11 @@ export async function connectionCatalog(owner: string) {
       .filter(
         (c) =>
           c.metadata.archived !== true &&
+          !(
+            localMode() &&
+            c.metadata.vendor === "google" &&
+            !subscriptionCliEnabled("gemini-cli")
+          ) &&
           c.metadata.kind !== "subscription" &&
           !(
             subscriptionOnly() &&

@@ -1,6 +1,16 @@
 # Quyết định sản phẩm ORBIT
 
-## Quyết định cuối — Windows 10 localhost và subscription-only
+## Quyết định hiện hành — provider correction, 03/11/2026
+
+Chủ dự án chỉ dùng **Claude Max 5x, ChatGPT và Grokbot**. Gemini giữ optional/disabled, ngoài UI/install/login/probe/router mặc định; không dùng Gemini hoặc xAI API để thay provider thiếu. Không API key tính phí, không tự bật overage/top-up/usage billing, không scraping/token/session extraction.
+
+Bản ORBIT Codex dùng **127.0.0.1:3211**, PostgreSQL loopback 55435, profile `.orbit/codex`, Docker project `orbit-codex-<id>`, volume/secrets/artifacts/checkpoints/CLI profiles và cookies riêng. Bản ORBIT Claude ở 3210 được giữ nguyên. Dùng checkout Codex riêng; không trỏ installer/updater vào codebase Claude. Legacy 3210 profile bị từ chối và không tự migrate/reset.
+
+ChatGPT giữ Codex CLI adapter/official login; interface và CLI_STUB được kiểm, LIVE BLOCKED khi chưa xác minh included-only enforcement/account execution. Claude Max5x qua ORBIT/SDK và Grokbot→official Grok Build entitlement còn BLOCKED; có official Grok Build headless, không suy ra gói Grokbot tương thích. Không cài/sửa Claude Code hoặc billing. Hai-AI LIVE cần hai vendors đủ quyền, không tự vượt gate.
+
+Xem SUBSCRIPTION_AI_INTEGRATION.md, LOCAL_SETUP_WINDOWS.md và PROVIDER_CORRECTION_VALIDATION.md. Các phần dưới giữ lịch sử, không ưu tiên hơn quyết định này.
+
+## Quyết định trước provider correction — Windows localhost/subscription-only
 
 Chủ dự án chốt Windows 10/WSL2/Docker Desktop, single owner và 127.0.0.1; không public staging, VPS/Google Cloud hoặc REST API key có phí riêng. Chỉ dùng cơ chế đăng nhập chính thức/quyền/hạn mức của gói AI cho phép, không scraping/cookie/session extraction/API giả. Không tự Resume workflow sau reboot. Không thay đổi codebase/profiles Claude Code.
 

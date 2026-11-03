@@ -1,13 +1,14 @@
 {
-  "at": "2026-11-03T05:47:38.231Z",
+  "at": "2026-11-03T07:52:49.957Z",
   "status": "PASS",
   "runtime": "LINUX_EQUIVALENT_NOT_WINDOWS",
   "ai_mode": "MOCK",
-  "run_id": "84fa7190-f796-4b1b-aaa4-efbf69b0c509",
+  "run_id": "94b9560b-94e6-457b-9af4-62a0b7e3b2d1",
   "checks": [
     "actual local install/start/restart, single-owner login and API-key route denied",
     "checkpoint and pause survive restart; no extra attempts without Resume",
     "MOCK DAG completes through approval and checksum-verified artifacts",
+    "3210 companion stays alive through Codex install/start/restart/restore/stop; cookie names and storage/project namespaces differ",
     "real encrypted PostgreSQL/artifact backup and fresh-target restore selected by local manager",
     "restored owner/history/download hashes valid; source database and artifacts preserved"
   ],

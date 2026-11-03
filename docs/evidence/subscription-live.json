@@ -1,5 +1,5 @@
 {
-  "at": "2026-11-03T05:48:06.623Z",
+  "at": "2026-11-03T07:48:01.226Z",
   "status": "BLOCKED",
   "mode": "OFFLINE_OFFICIAL_CLI_INTERFACE_CHECK_ONLY",
   "observations": [
@@ -9,16 +9,7 @@
       "installed": true,
       "auth": "NOT_SIGNED_IN",
       "status": "BLOCKED",
-      "reason": "USER_LOGIN_AND_EXPLICIT_EXECUTION_CONSENT_REQUIRED",
-      "live_verified": false
-    },
-    {
-      "provider": "gemini-cli",
-      "version": "0.66.0",
-      "installed": true,
-      "auth": "NOT_VERIFIED",
-      "status": "BLOCKED",
-      "reason": "USER_LOGIN_AND_EXPLICIT_EXECUTION_CONSENT_REQUIRED",
+      "reason": "LOGIN_AND_INCLUDED_ALLOWANCE_POLICY_UNVERIFIED",
       "live_verified": false
     }
   ],
@@ -26,6 +17,6 @@
   "paid_api_calls": 0,
   "credential_files_read_by_orbit": false,
   "claude_code": "BLOCKED_ELIGIBILITY_UNVERIFIED",
-  "grok": "UNSUPPORTED_NO_VERIFIED_SUBSCRIPTION_INTERFACE",
+  "grokbot": "BLOCKED_BUILD_ENTITLEMENT_UNVERIFIED",
   "windows10_verified": false
 }
