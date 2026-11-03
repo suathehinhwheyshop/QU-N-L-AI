@@ -1,0 +1,11 @@
+# Prepared configuration only. Do not run without approval for public deployment.
+# Requires Compose >=2.24.4, DNS, inbound 80/443 and a real HTTPS origin.
+services:
+  tls:
+    environment:
+      ORBIT_ACME_EMAIL: ${ORBIT_ACME_EMAIL:?ACME contact email required}
+    ports: !override ["0.0.0.0:80:80", "0.0.0.0:443:443"]
+    volumes: !override
+      - ./deploy/Caddyfile.public:/etc/caddy/Caddyfile:ro
+      - tls-data:/data
+      - tls-config:/config

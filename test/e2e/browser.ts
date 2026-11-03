@@ -66,9 +66,17 @@ async function waitFor(expression: string, limit = 30000) {
     if (await evaluate("Boolean(" + expression + ")")) return;
     await new Promise((r) => setTimeout(r, 150));
   }
-  throw Error("Browser wait failed: " + expression);
+  throw Error(
+    "Browser wait failed: " +
+      expression +
+      "; toast=" +
+      (await evaluate("document.querySelector('.toast')?.textContent ?? ''")),
+  );
 }
 async function clickText(text: string) {
+  await waitFor(
+    `Array.from(document.querySelectorAll('button')).some(b=>b.textContent.includes(${JSON.stringify(text)})&&!b.disabled)`,
+  );
   await evaluate(
     `Array.from(document.querySelectorAll('button')).find(b=>b.textContent.includes(${JSON.stringify(text)})).click()`,
   );
@@ -93,7 +101,7 @@ try {
     await waitFor("document.readyState==='complete'");
     await new Promise((r) => setTimeout(r, 500));
     await evaluate(
-      `document.querySelector('#password').value=${JSON.stringify(process.env.ORBIT_ADMIN_PASSWORD)};document.querySelector('form').requestSubmit()`,
+      `document.querySelector('#email').value=${JSON.stringify(process.env.ORBIT_TEST_LOGIN_EMAIL)};document.querySelector('#password').value=${JSON.stringify(process.env.ORBIT_TEST_LOGIN_PASSWORD)};document.querySelector('form').requestSubmit()`,
     );
     await waitFor("document.querySelector('.page-heading')");
   }

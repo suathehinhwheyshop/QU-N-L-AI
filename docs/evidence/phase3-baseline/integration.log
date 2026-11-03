@@ -1,0 +1,43 @@
+
+> orbit-platform@1.2.0-phase3 test:integration
+> node --import tsx --test --test-concurrency=1 test/integration/*.test.ts
+
+✔ database cleanup detects leaked clients instead of terminating or hiding them (3146.161457ms)
+✔ PostgreSQL workflow: idempotency, two providers, hash-bound approval and verified artifacts (753.741909ms)
+✔ paused and canceled runs never start downstream tasks; inflight result discarded (29.611654ms)
+✔ expired lease recovers checkpoint and fences late completion (57.354626ms)
+✔ parallel runnable tasks respect owner concurrency; competing claim cannot duplicate attempt (96.636957ms)
+✔ timeout aborts adapter and exhausts bounded retry with backoff (594.693417ms)
+✔ invalid structured output never reaches review or report (156.526802ms)
+✔ budget reservations are atomic across parallel tasks (82.885068ms)
+✔ rejected approval prevents delivery; tampered source blocks validation (416.592965ms)
+✔ each non-SEO workspace runs on the same durable engine without SEO fixtures (1265.10221ms)
+✔ owner-specific provider configuration changes actual routing and can block all unavailable adapters (454.14704ms)
+✔ two real protocol adapters hand structured data across durable worker tasks, always labeled HTTP_STUB/MOCK (600.408644ms)
+✔ unsafe AI planning falls back and cannot remove approval or enable writes (308.712247ms)
+✔ uncertain billable errors consume reservation and budget halts retries (882.251578ms)
+✔ LIVE admission rejects HTTP stub providers even after successful protocol tests (6.126971ms)
+✔ a changed operator price after claim cannot change an in-flight reservation snapshot (44.669006ms)
+✔ cancel discards in-flight output while preserving reported HTTP_STUB usage and cost (200.167033ms)
+✔ review with a wrong source checksum cannot create a task board or approval (171.133456ms)
+✔ HTTP 429 retries at engine boundary with backoff, without charging a rejected request (469.36056ms)
+✔ a synthetic HTTP_STUB probe receipt cannot activate a credential-present LIVE adapter (5.646119ms)
+✔ OAuth PKCE/state/browser nonce is one-use, tokens encrypted and DTO contains no credential (244.629735ms)
+✔ expired tokens refresh once under concurrency; API 401 retries once, 403 remains permission error (38.611067ms)
+✔ invalid_grant requires reconnect and revoke clears encrypted tokens; no reads after revocation (38.814493ms)
+✔ CSV/JSON import stores immutable source/checksum, idempotent keys, period metadata and owner isolation (30.032836ms)
+✔ GSC pagination is a durable engine tool job, duplicate jobs reuse run/dataset and preserve API request filters (100.88412ms)
+✔ 429 resumes a persisted page checkpoint, without refetching prior pages or duplicate dataset (106.534365ms)
+✔ expired lease fences late GSC page commits, a recovered attempt produces one dataset (62.668177ms)
+✔ two HTTP_STUB AI providers → code validation → synthesis → hash approval → MD/CSV/JSON artifacts (377.928766ms)
+✔ invented numeric output and checksum mismatch cannot reach approval or report (103.908618ms)
+✔ expired OAuth state is rejected and a failed revoke blocks reads until retry succeeds (24.758677ms)
+✔ GSC task timeout settles attempt, retries from durable state, and does not mint a dataset early (202.921804ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13883.288437

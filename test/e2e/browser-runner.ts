@@ -5,14 +5,20 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { testDatabase } from "../support";
 const database = await testDatabase();
 const { pool } = await import("@orbit/database/client");
-await (await import("../../scripts/seed")).seed();
+const fixtureOwner = await (await import("../../scripts/seed")).seed();
+const loginPassword = randomBytes(24).toString("hex");
+await pool.query("UPDATE users SET password_hash=$2 WHERE id=$1", [
+  fixtureOwner.id,
+  await (await import("@orbit/database/security")).hashPassword(loginPassword),
+]);
 const origin = "http://127.0.0.1:3202",
   cdp = "http://127.0.0.1:9231",
   profile = "/tmp/orbit-phase3-browser-" + randomUUID();
 const environment = {
   ...process.env,
   ORBIT_BASE_URL: origin,
-  ORBIT_ADMIN_PASSWORD: randomBytes(24).toString("hex"),
+  ORBIT_ADMIN_PASSWORD: "",
+  ORBIT_TEST_LOGIN_EMAIL: "owner@orbit.local",
   ORBIT_SESSION_SECRET: randomBytes(32).toString("hex"),
   ORBIT_COOKIE_SECURE: "false",
   ORBIT_GSC_CLIENT_ID: "",
@@ -28,7 +34,9 @@ let logs = "";
 const children: ChildProcess[] = [];
 function start(command: string, args: string[]) {
   const child = spawn(command, args, {
-    env: environment,
+    env: args.includes("test/e2e/browser.ts")
+      ? { ...environment, ORBIT_TEST_LOGIN_PASSWORD: loginPassword }
+      : environment,
     stdio: ["ignore", "pipe", "pipe"],
   });
   child.stdout?.on("data", (b) => (logs += b));

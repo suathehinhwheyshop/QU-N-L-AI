@@ -22,9 +22,9 @@ Trạng thái workflow: QUEUED, RUNNING, PAUSED, WAITING_APPROVAL, COMPLETED, FA
 
 Tác vụ và attempts checkpoint trong PostgreSQL. Claim/reserve/attempt/event cùng transaction; output/artifact/cost/event cùng transaction khi hoàn thành. Foreign key giữ quan hệ, unique chống duplicate create-run/task/attempt/artifact. Artifact bytes nằm ngoài database, checksum và metadata trong database. Ghi blob trước DB commit có thể để orphan khi crash; không để DB trỏ blob chưa có. Cleanup orphan và lifecycle policy thuộc hardening.
 
-Migrations có version và checksum bằng Drizzle; không dùng schema push phá dữ liệu. Test database riêng được tạo để integration tests không xóa dữ liệu development. Backup/restore thực nghiệm thuộc Phase 4, chưa coi volume local là backup.
+Migrations có version và checksum bằng Drizzle; không dùng schema push phá dữ liệu. Test database riêng được tạo để integration tests không xóa dữ liệu development. Phase 4 có encrypted pg_dump/artifact backup và restore drill thật; volume nguồn không được coi là backup.
 
-Có 18 bảng (14 bảng ở Phase 2 + 4 bảng Phase 3). Migration 0000 tạo nền tảng; 0001 bổ sung provider_configs mà không reset data cũ. Goal contract và acceptance criteria lưu trong runs.plan và input của tasks. Mock model config có allowlist; LIVE model/config cần probe trên server và được router sử dụng; không chỉ là giá trị hiển thị. Chạy lại migration/seed giữ nguyên run và cấu hình đã chỉnh.
+Có 23 bảng (14 bảng Phase 2 + 4 bảng Phase 3 + 5 bảng Phase 4). Migration 0000 tạo nền tảng; 0001 bổ sung provider_configs mà không reset data cũ. Goal contract và acceptance criteria lưu trong runs.plan và input của tasks. Mock model config có allowlist; LIVE model/config cần probe trên server và được router sử dụng; không chỉ là giá trị hiển thị. Chạy lại migration/seed giữ nguyên run và cấu hình đã chỉnh.
 
 ## Migrations Phase 2
 
@@ -49,3 +49,17 @@ OAuth states/tokens không trả qua bootstrap/API; chỉ status/property/expiry
 Nguồn GSC_API/HTTP_STUB/IMPORT độc lập với run.mode MOCK/LIVE (AI mode). GSC ingestion run là tool-only và không gọi AI. Imported raw bytes tối đa 5 MB; normalized dataset tối đa 20 MB, 50.000 dòng/kỳ. So sánh cùng filters, equal nonoverlapping windows.
 
 Core artifact renderer persist 3 extra report rows (report_md/report_csv/report_json) cùng transaction delivery. Unique(task,kind,version) và attempt fence giữ integrity; source_ids bind board/approval, report payload bind dataset/facts/source hashes. Download check owner/checksum và media extension.
+
+## Migration 0005 — security foundation
+
+users bổ sung password_hash nullable, role, is_active và auth_version. Account Phase 3 không tự được cấp password: phải adopt bằng CLI, giữ owner UUID. gsc_oauth_states thêm session_hash binding; state không binding bị từ chối staging/production.
+
+| Bảng              | Nội dung                                                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| auth_sessions     | SHA-256 opaque token PK, user/auth_version, created/last_seen/absolute expiry/revoked timestamps; không lưu cookie token plaintext |
+| workspace_members | Workspace/user composite PK, role ADMIN/EDITOR/VIEWER; migration backfill ADMIN cho owner hiện tại                                 |
+| rate_limits       | Hash của quota key PK, atomic fixed-window hits/expiry; không lưu email/IP plaintext                                               |
+| security_events   | Action/outcome/actor/time; web append-only, không update/delete; worker không có quyền                                             |
+| worker_heartbeats | Worker UUID/status/updated_at cho drain/readiness/operations                                                                       |
+
+Fresh migration và Phase 3→0005 upgrade/re-run được kiểm bằng PostgreSQL thật. Không destructive schema reset hoặc auto-password. RBAC service bảo vệ API/workspace; PostgreSQL role separation là defense-in-depth, chưa dùng row-level security cho từng owner. Web cần đọc users hash để login; worker chỉ đọc id/role/is_active/auth_version, không sessions/password hashes. Migrator/backup/provision dùng privileged credential riêng; không mount cho runtime app.

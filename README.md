@@ -8,6 +8,12 @@ Phase 2 bổ sung bốn adapter REST độc lập, cấu hình model/giá, probe
 
 Phase 3 đã có code và HTTP_STUB tests cho GSC OAuth/datasets/SEO workflow. [Báo cáo Phase 3](docs/PHASE3_VALIDATION.md) phân biệt CODE COMPLETE, HTTP_STUB TESTED và LIVE VERIFIED. **GSC LIVE và AI LIVE đều BLOCKED** trong môi trường hiện tại; không gọi API trả phí trong lượt phát triển này.
 
+## Phase 4 — secure local staging
+
+Authentication thật, DB sessions/RBAC, HTTPS Docker web/worker/PostgreSQL, migration/grants, encrypted scheduled backup + restore drill và operations tooling đã triển khai. **Local staging đã kiểm chứng; public staging chưa deploy, production readiness chưa nghiệm thu.** Xem [PHASE4_VALIDATION](docs/PHASE4_VALIDATION.md), [deployment/chi phí](docs/DEPLOYMENT.md), [security](docs/SECURITY.md), [backup/recovery](docs/BACKUP_RECOVERY.md), [operations](docs/OPERATIONS.md).
+
+`npm run verify:phase4` chạy regression, security/audit, build hai images, HTTPS local login → MOCK SEO → approval → reports → restart, browser desktop/390 px và encrypted PostgreSQL/artifact restore. Không gọi paid APIs hoặc deploy Internet. CI workflow đã chuẩn bị; chưa có bằng chứng GitHub Actions run.
+
 ## Chạy development
 
 Cần Node.js 24 và Docker local, hoặc PostgreSQL đã cấu hình.
@@ -20,7 +26,7 @@ npm run db:seed
 npm run dev -- --port 3200
 ```
 
-Chạy `npm run worker` trong terminal khác. Web/worker phải dùng cùng database và storage. `setup:local` giữ cấu hình có sẵn; lần đầu tạo credential ngẫu nhiên trong `.env.local` và `.orbit/postgres.env` (ignored, chmod 0600). PostgreSQL bind loopback `127.0.0.1:55432`, volume riêng. Đăng nhập bằng `ORBIT_ADMIN_PASSWORD` phía server; không gửi mật khẩu vào chat/log. `ORBIT_BASE_URL` phải khớp origin truy cập để kiểm tra CSRF. Chưa có URL production/public.
+Chạy `npm run worker` trong terminal khác. Web/worker phải dùng cùng database và storage. `setup:local` giữ cấu hình có sẵn; lần đầu tạo credential ngẫu nhiên trong `.env.local` và `.orbit/postgres.env` (ignored, chmod 0600). PostgreSQL bind loopback `127.0.0.1:55432`, volume riêng. Provision account bằng `npm run auth:provision -- --email=<email> --password-file=<private-file>`; nếu nhận lại dữ liệu dev owner cũ, thêm `--adopt-owner=<UUID>`. Mật khẩu tối thiểu 16 ký tự; không gửi vào chat/log. Không còn environment-password login. `ORBIT_BASE_URL` phải khớp origin truy cập để kiểm tra CSRF. Chưa có URL production/public.
 
 ## Bật API thật khi đã có quyền API
 
@@ -44,7 +50,7 @@ npm run verify:gsc
 npm run verify:live
 ```
 
-`verify:phase3`: 25 unit/protocol + 31 integration, typecheck/build, OAuth/GSC HTTP_STUB → worker restart → dataset → SEO validation/approval/10 artifacts và browser regression 11 nhóm/9 views ở 390 px. Browser runner tự tạo DB/profile riêng và chạy API/worker/Chromium local; không cần dùng profile cá nhân. Summary: docs/evidence/phase3-offline-verification.json.
+`verify:phase3` hiện chạy 29 unit/protocol + 38 integration (gồm Phase 4 regressions), typecheck/build, OAuth/GSC HTTP_STUB → worker restart → dataset → SEO validation/approval/10 artifacts và browser regression 11 nhóm/9 views ở 390 px. Browser runner tự tạo DB/profile riêng và chạy API/worker/Chromium local; không cần dùng profile cá nhân. Summary: docs/evidence/phase3-offline-verification.json.
 
 `verify:phase2` vẫn chạy regression: unit/protocol tests, integration PostgreSQL, typecheck, production build, E2E với web/worker thực. Giữ mọi regression Foundation, thêm schema planning → hai mock providers → approval → 7 artifacts. Không gọi API bên ngoài. Evidence: `docs/evidence/phase2-offline-verification.json` và command logs.
 
@@ -61,7 +67,7 @@ Browser: chạy app/worker cổng 3200, Chromium test profile với CDP 9230 r�
 - Packages: shared, core, database, storage, providers, integrations, workspaces; composition tại `src/server/runtime.ts`, worker tại `src/worker.ts`. Các re-export trong `src/core`… giữ compatibility.
 - `legacy/seo-demo` là tài liệu prototype, không phải app nghiệm thu.
 
-GSC connector đã triển khai code; chưa được xác minh với tài khoản Google thật. Chưa có CMS/Drive/Gmail/Grokbot/browser connectors, OIDC production, object storage cloud, backup/restore hoặc deployment Google Cloud đã xác minh. Không sửa website, xuất bản, gửi email, thanh toán, xóa dữ liệu. Auth local single-user chỉ cho development; production hardening thuộc Phase 4.
+GSC connector đã triển khai code; chưa được xác minh với tài khoản Google thật. Chưa có CMS/Drive/Gmail/Grokbot/browser connectors, SSO/MFA, object storage cloud hoặc deployment Google Cloud đã xác minh. Backup/restore local đã kiểm thử; offsite chưa cấu hình. Không sửa website, xuất bản, gửi email, thanh toán, xóa dữ liệu. Account/RBAC/session lifecycle dùng chung development và staging; public/prod gates còn riêng trong báo cáo Phase 4.
 
 ## SEO Workspace — Phase 3
 
@@ -80,4 +86,4 @@ GSC API thật:
 - Refresh token và revoke có nút thật. Failed revoke giữ REVOKE_PENDING và chặn đọc cho tới khi retry thành công; invalid_grant cần kết nối lại. Token encrypted không xuất qua DTO.
 - Sau snapshot official hoàn thành, `npm run verify:gsc -- --dataset=<id>` kiểm chứng dataset/source pages/ingestion history. Command không ngầm gọi AI hoặc mạng, tách bằng chứng GSC khỏi AI. Khi chưa cấu hình OAuth sẽ exit 2/BLOCKED. Live AI vẫn cần hai API credentials/model/quota/pricing, consent và quyền paid calls riêng.
 
-Không public development auth/OAuth endpoint trước Phase 4 security review. Các điều kiện chuyển Phase 4 và giới hạn đầy đủ ở docs/PHASE3_VALIDATION.md.
+Public deployment cần phê duyệt host/domain/budget và các gates trong docs/PHASE4_VALIDATION.md. Báo cáo Phase 3 giữ nguyên như lịch sử bàn giao; Phase 4 triển khai độc lập với LIVE credentials còn thiếu.

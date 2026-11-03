@@ -16,6 +16,10 @@ const id = () => uuid("id").defaultRandom().primaryKey();
 const time = (name: string) =>
   timestamp(name, { withTimezone: true, mode: "string" });
 export const users = pgTable("users", {
+  password_hash: text(),
+  role: text().default("OPERATOR").notNull(),
+  is_active: boolean().default(true).notNull(),
+  auth_version: integer().default(1).notNull(),
   id: id(),
   email: text().notNull().unique(),
   name: text().notNull(),
@@ -320,6 +324,7 @@ export const gscOAuthStates = pgTable("gsc_oauth_states", {
     .references(() => users.id, { onDelete: "cascade" }),
   browser_hash: text().notNull(),
   verifier_cipher: text().notNull(),
+  session_hash: text(),
   expires_at: time("expires_at").notNull(),
   consumed_at: time("consumed_at"),
 });
@@ -370,3 +375,52 @@ export const seoDatasets = pgTable(
     index().on(t.owner_id, t.created_at),
   ],
 );
+
+export const authSessions = pgTable(
+  "auth_sessions",
+  {
+    token_hash: text().primaryKey(),
+    user_id: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    auth_version: integer().notNull(),
+    created_at: time("created_at").defaultNow().notNull(),
+    last_seen: time("last_seen").defaultNow().notNull(),
+    expires_at: time("expires_at").notNull(),
+    revoked_at: time("revoked_at"),
+  },
+  (t) => [index().on(t.user_id, t.expires_at)],
+);
+export const workspaceMembers = pgTable(
+  "workspace_members",
+  {
+    workspace_id: uuid()
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    user_id: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.workspace_id, t.user_id] }),
+    check("workspace_role", sql`${t.role} in ('ADMIN','EDITOR','VIEWER')`),
+  ],
+);
+export const rateLimits = pgTable("rate_limits", {
+  key: text().primaryKey(),
+  hits: integer().notNull(),
+  expires_at: time("expires_at").notNull(),
+});
+export const securityEvents = pgTable("security_events", {
+  id: id(),
+  actor_id: uuid().references(() => users.id, { onDelete: "set null" }),
+  action: text().notNull(),
+  outcome: text().notNull(),
+  created_at: time("created_at").defaultNow().notNull(),
+});
+export const workerHeartbeats = pgTable("worker_heartbeats", {
+  id: uuid().primaryKey(),
+  updated_at: time("updated_at").defaultNow().notNull(),
+  status: text().notNull(),
+});

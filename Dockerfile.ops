@@ -1,0 +1,7 @@
+FROM node:24-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS node
+FROM postgres:17-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --chown=1000:1000 ops/backup.mjs /opt/orbit/backup.mjs
+RUN node --version && pg_dump --version
+USER 1000:1000
+ENTRYPOINT ["node","/opt/orbit/backup.mjs"]

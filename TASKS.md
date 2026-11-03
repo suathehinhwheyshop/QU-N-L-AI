@@ -40,6 +40,21 @@
 - [ ] Publish/apply egress + secure server config; GSC_API snapshot qua worker và official source evidence.
 - [ ] Ít nhất hai AI API keys/quota/model/pricing, probes và paid-call permission riêng.
 - [ ] SEO multi-AI LIVE → validation → human approval → artifacts, evidence GSC/AI riêng.
-- [ ] Sau nghiệm thu LIVE mới chuyển Phase 4 auth/security/storage/backup/deployment.
+- [x] Phase 4 continuation: làm các phần auth/staging/hardening độc lập với credentials; giữ LIVE gates riêng.
 
 CODE COMPLETE và HTTP_STUB TESTED không đồng nghĩa LIVE VERIFIED. Commit/push được xác nhận bằng Git khi bàn giao; không dự đoán SHA trong tài liệu.
+
+## Phase 4
+
+- [x] Baseline 1def13b, regression cũ và branch riêng, giữ 7 packages/engine/UI.
+- [x] Real provisioned accounts; hashed opaque sessions, expiry/logout/reset, server RBAC/workspace isolation.
+- [x] CSRF, bounded bodies, nonce CSP, protected credentials/settings/downloads/worker operations.
+- [x] Docker/Compose non-root web/worker, PostgreSQL, TLS local, migrations/grants, persistent storage, health/drain/restart.
+- [x] Local production-build HTTPS E2E và desktop/mobile 390 px; fresh + Phase 3 upgrade migrations.
+- [x] Dual-key token rotation; scheduled encrypted pg_dump/artifact backup + real restore/tamper test.
+- [x] Integrity/retention, request IDs, operations checks/alerts JSON, limits/quota/budgets, security/deploy/recovery docs.
+- [x] Local CI-equivalent gates thực thi; GitHub Actions workflow chuẩn bị (không auto deploy).
+- [ ] Public host/domain/DNS/ACME và quyền publish; không tạo paid resources tự động.
+- [ ] Offsite backup và fresh-host recovery; đo RPO/RTO trên dữ liệu thật.
+- [ ] External alert delivery, OS image CVE scan và independent security review.
+- [ ] Remote CI run, production acceptance; GSC LIVE và hai AI LIVE vẫn BLOCKED.

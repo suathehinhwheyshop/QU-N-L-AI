@@ -1,3 +1,6 @@
+import { observed } from "@/server/observability";
+import { authorizeGsc } from "@/server/request-security";
+import { tokenHash } from "@orbit/database/security";
 import { getGscClient } from "@orbit/integrations/gsc-runtime";
 import "@/server/runtime";
 import { NextRequest, NextResponse } from "next/server";
@@ -66,10 +69,14 @@ async function endpoint(
       return response;
     }
     const owner = await actor(req);
+    await authorizeGsc(owner, req, p);
     if (p === "status" && req.method === "GET")
       return json(await oauth.status(owner));
     if (p === "oauth/start" && req.method === "POST") {
-      const result = await oauth.begin(owner);
+      const result = await oauth.begin(
+        owner,
+        tokenHash(req.cookies.get("orbit_session")!.value),
+      );
       const response = json({ url: result.url });
       response.cookies.set("orbit_gsc_oauth", result.browser, {
         httpOnly: true,
@@ -175,15 +182,19 @@ async function endpoint(
           safeMessage[code] ??
           "Không hoàn tất thao tác GSC. Thông tin bí mật không được trả về.",
       },
-      code === "UNAUTHORIZED"
-        ? 401
-        : code === "NOT_FOUND"
-          ? 404
-          : code === "INTERNAL_ERROR"
-            ? 500
-            : 409,
+      code === "FORBIDDEN"
+        ? 403
+        : code === "RATE_LIMIT"
+          ? 429
+          : code === "UNAUTHORIZED"
+            ? 401
+            : code === "NOT_FOUND"
+              ? 404
+              : code === "INTERNAL_ERROR"
+                ? 500
+                : 409,
     );
   }
 }
-export const GET = endpoint,
-  POST = endpoint;
+export const GET = observed(endpoint),
+  POST = observed(endpoint);

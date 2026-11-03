@@ -18,7 +18,7 @@ if (!existsSync(".env.local")) {
   );
   writeFileSync(
     ".env.local",
-    `DATABASE_URL=postgresql://orbit:${password}@127.0.0.1:55432/orbit\nORBIT_SESSION_SECRET=${randomBytes(32).toString("hex")}\nORBIT_ADMIN_PASSWORD=${randomBytes(24).toString("base64url")}\nORBIT_BASE_URL=http://127.0.0.1:3200\nORBIT_COOKIE_SECURE=false\nORBIT_STORAGE_DIR=.orbit/artifacts\n`,
+    `DATABASE_URL=postgresql://orbit:${password}@127.0.0.1:55432/orbit\nORBIT_SESSION_SECRET=${randomBytes(32).toString("hex")}\nORBIT_BASE_URL=http://127.0.0.1:3200\nORBIT_COOKIE_SECURE=false\nORBIT_STORAGE_DIR=.orbit/artifacts\n`,
     { mode: 0o600 },
   );
   console.log(

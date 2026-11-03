@@ -14,15 +14,17 @@ export default function Login() {
           setBusy(true);
           setError("");
           try {
-            const password = new FormData(e.currentTarget).get("password");
+            const form = new FormData(e.currentTarget);
+            const password = form.get("password"),
+              email = form.get("email");
             const res = await fetch("/api/auth/login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ password }),
+              body: JSON.stringify({ email, password }),
             });
             if (!res.ok)
               throw Error(
-                "Không đăng nhập được. Kiểm tra mật khẩu development phía server.",
+                "Không đăng nhập được. Kiểm tra email và mật khẩu hoặc thử lại sau.",
               );
             location.href = "/";
           } catch (e) {
@@ -37,10 +39,17 @@ export default function Login() {
         </div>
         <div className="eyebrow">FOUNDATION · KHÔNG GIAN CÁ NHÂN</div>
         <h1>Chào anh, trở lại công việc.</h1>
-        <p>
-          Đăng nhập development. Chưa mở truy cập public hoặc kết nối AI thật.
-        </p>
-        <label htmlFor="password">Mật khẩu development</label>
+        <p>Đăng nhập để truy cập không gian làm việc của anh.</p>
+        <label htmlFor="email">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="username"
+          required
+          maxLength={254}
+        />
+        <label htmlFor="password">Mật khẩu</label>
         <input
           id="password"
           name="password"
@@ -58,8 +67,7 @@ export default function Login() {
           {busy ? "Đang đăng nhập…" : "Vào ORBIT →"}
         </button>
         <small>
-          Mật khẩu được cấu hình qua ORBIT_ADMIN_PASSWORD trên server; không gửi
-          API key vào đây.
+          Tài khoản do quản trị viên cấp. Không nhập API key tại đây.
         </small>
       </form>
     </main>

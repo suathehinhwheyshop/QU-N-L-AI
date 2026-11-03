@@ -8,12 +8,18 @@ import { testDatabase } from "../support";
 const environment = await testDatabase();
 const gsc = await gscStub();
 const { pool } = await import("../../src/db/client");
-await (await import("../../scripts/seed")).seed();
+const fixtureOwner = await (await import("../../scripts/seed")).seed();
+const loginEmail = "owner@orbit.local",
+  loginPassword = randomBytes(24).toString("hex");
+await pool.query("UPDATE users SET password_hash=$2 WHERE id=$1", [
+  fixtureOwner.id,
+  await (await import("@orbit/database/security")).hashPassword(loginPassword),
+]);
 const origin = "http://127.0.0.1:3201";
 const env = {
   ...process.env,
   ORBIT_BASE_URL: origin,
-  ORBIT_ADMIN_PASSWORD: randomBytes(24).toString("hex"),
+  ORBIT_ADMIN_PASSWORD: "",
   ORBIT_SESSION_SECRET: randomBytes(32).toString("hex"),
   ORBIT_COOKIE_SECURE: "false",
   ORBIT_TOKEN_ENCRYPTION_KEY: randomBytes(32).toString("base64"),
@@ -106,7 +112,7 @@ try {
       await request(
         "auth/login",
         "POST",
-        { password: env.ORBIT_ADMIN_PASSWORD },
+        { email: loginEmail, password: loginPassword },
         { Origin: "https://wrong.example" },
       )
     ).status,
@@ -114,7 +120,8 @@ try {
   );
   checks.push("unauthenticated API and cross-origin mutation blocked");
   const auth = await request("auth/login", "POST", {
-    password: env.ORBIT_ADMIN_PASSWORD,
+    email: loginEmail,
+    password: loginPassword,
   });
   assert.equal(auth.status, 200);
   cookie = auth.headers.get("set-cookie")!.split(";")[0];
@@ -372,7 +379,7 @@ try {
   const oldSecret = process.env.ORBIT_SESSION_SECRET;
   process.env.ORBIT_SESSION_SECRET = env.ORBIT_SESSION_SECRET;
   const { issueSession } = await import("../../src/server/auth");
-  const otherCookie = "orbit_session=" + issueSession(second.id);
+  const otherCookie = "orbit_session=" + (await issueSession(second.id));
   process.env.ORBIT_SESSION_SECRET = oldSecret;
   assert.equal(
     (await request("runs/" + run.id, "GET", undefined, { Cookie: otherCookie }))
@@ -682,7 +689,7 @@ try {
         Cookie: otherCookie,
       })
     ).status,
-    404,
+    403,
   );
   assert.equal((await request("gsc/revoke", "POST", {})).status, 200);
   assert.equal((await (await request("gsc/status")).json()).status, "REVOKED");

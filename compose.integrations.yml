@@ -1,0 +1,21 @@
+# Optional credentials, no API calls are made just by mounting files.
+# Directory files named ORBIT_OPENAI_API_KEY / ORBIT_ANTHROPIC_API_KEY /
+# ORBIT_GOOGLE_API_KEY / ORBIT_XAI_API_KEY / ORBIT_GSC_CLIENT_SECRET /
+# ORBIT_TOKEN_ENCRYPTION_PREVIOUS_KEY, only those explicitly provided.
+services:
+  web:
+    environment:
+      ORBIT_INTEGRATIONS_DIR: /run/orbit-integrations
+      ORBIT_GSC_CLIENT_ID: ${ORBIT_GSC_CLIENT_ID:-}
+    volumes: ["${ORBIT_CONFIG_DIR:?}/integrations:/run/orbit-integrations:ro"]
+  worker:
+    environment:
+      ORBIT_INTEGRATIONS_DIR: /run/orbit-integrations
+      ORBIT_GSC_CLIENT_ID: ${ORBIT_GSC_CLIENT_ID:-}
+    volumes: ["${ORBIT_CONFIG_DIR:?}/integrations:/run/orbit-integrations:ro"]
+  provision:
+    environment:
+      ORBIT_INTEGRATIONS_DIR: /run/orbit-integrations
+      ORBIT_TOKEN_ENCRYPTION_KEY_FILE: /run/secrets/token_key
+    secrets: [db_password,bootstrap_password,token_key]
+    volumes: ["${ORBIT_CONFIG_DIR:?}/integrations:/run/orbit-integrations:ro"]

@@ -1,0 +1,10 @@
+.git
+.orbit
+.next
+node_modules
+.env*
+attachments
+legacy
+test
+docs/evidence
+*.tsbuildinfo

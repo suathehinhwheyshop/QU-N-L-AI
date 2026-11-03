@@ -257,6 +257,8 @@ export const phase2Messages: Record<string, string> = {
   PRICING_REQUIRED: "Thiếu cấu hình giá/token limits hợp lệ.",
   UNVERIFIED_MODEL: "Model chưa có probe API thật còn hiệu lực.",
   AUTH_FAILED: "API từ chối credential.",
+  QUOTA_EXCEEDED:
+    "Đã đạt giới hạn 50 workflow chưa kết thúc. Hoàn tất hoặc hủy bớt trước khi tạo mới.",
   RATE_LIMIT: "Nhà cung cấp giới hạn tốc độ.",
   API_RESPONSE_INVALID: "Phản hồi API không hợp lệ.",
   CONTEXT_LIMIT: "Input vượt giới hạn token đã cấu hình.",
@@ -298,4 +300,11 @@ Object.assign(safeMessage, {
     "Google chưa cấp refresh token; cần consent offline mới.",
   GSC_UNAVAILABLE: "Dịch vụ Google tạm lỗi; worker sẽ thử lại có giới hạn.",
   GSC_REQUEST_REJECTED: "Google từ chối yêu cầu đọc dữ liệu.",
+});
+
+Object.assign(safeMessage, {
+  FORBIDDEN: "Tài khoản không có quyền thực hiện thao tác này.",
+  PASSWORD_POLICY: "Mật khẩu cần 16–512 ký tự.",
+  AUTH_EXPIRED: "Phiên đăng nhập đã hết hạn.",
+  SERVICE_NOT_READY: "Dịch vụ chưa sẵn sàng.",
 });

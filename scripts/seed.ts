@@ -10,11 +10,21 @@ import { providers, realProviders } from "../src/providers/registry";
 import { integrations } from "../src/integrations/registry";
 import { workspaceModules } from "@orbit/workspaces/registry";
 export async function seed() {
+  if (["staging", "production"].includes(process.env.ORBIT_ENV ?? ""))
+    throw Error("DEVELOPMENT_SEED_FORBIDDEN");
   const [owner] = await db
     .insert(users)
-    .values({ email: "owner@orbit.local", name: "Dũng Nguyễn" })
-    .onConflictDoUpdate({ target: users.email, set: { name: "Dũng Nguyễn" } })
+    .values({ email: "owner@orbit.local", name: "Dũng Nguyễn", role: "ADMIN" })
+    .onConflictDoUpdate({
+      target: users.email,
+      set: { name: "Dũng Nguyễn", role: "ADMIN" },
+    })
     .returning();
+  await initializeOwner(owner.id);
+  return owner;
+}
+export async function initializeOwner(ownerId: string) {
+  const owner = { id: ownerId };
   await db
     .insert(settings)
     .values({ owner_id: owner.id })
@@ -124,7 +134,10 @@ export async function seed() {
       },
     })
     .onConflictDoNothing();
-  return owner;
+  await pool.query(
+    "INSERT INTO workspace_members(workspace_id,user_id,role) SELECT id,owner_id,'ADMIN' FROM workspaces WHERE owner_id=$1 ON CONFLICT DO NOTHING",
+    [owner.id],
+  );
 }
 if (process.argv[1]?.endsWith("seed.ts"))
   try {

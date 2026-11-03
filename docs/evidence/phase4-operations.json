@@ -1,0 +1,10 @@
+{
+  "at": "2026-11-03T02:32:06.862Z",
+  "status": "PASS",
+  "checks": [
+    "real stopped worker detected as WORKER_STALE with nonzero exit",
+    "worker restart restores healthy monitor",
+    "no outbound alert sent"
+  ],
+  "external_alert_delivery_verified": false
+}

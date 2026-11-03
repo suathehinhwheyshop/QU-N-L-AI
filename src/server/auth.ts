@@ -1,77 +1,100 @@
-import { createHmac, createHash, timingSafeEqual } from "node:crypto";
-import { NextRequest } from "next/server";
+import { randomBytes } from "node:crypto";
+import type { NextRequest } from "next/server";
 import { pool } from "../db/client";
 import { OrbitError } from "../core/contracts";
-const sign = (body: string) =>
-  createHmac("sha256", secret()).update(body).digest("base64url");
-function secret() {
-  const value = process.env.ORBIT_SESSION_SECRET;
-  if (!value || value.length < 32) throw new OrbitError("UNAUTHORIZED");
-  return value;
-}
-function equal(a: string, b: string) {
-  const x = createHash("sha256").update(a).digest(),
-    y = createHash("sha256").update(b).digest();
-  return timingSafeEqual(x, y);
-}
-export function issueSession(owner: string) {
-  const body = Buffer.from(
-    JSON.stringify({ sub: owner, exp: Date.now() + 8 * 3600000 }),
-  ).toString("base64url");
-  return body + "." + sign(body);
-}
-export function verifySession(token: string | undefined) {
-  try {
-    if (!token) return null;
-    const [body, sig, ...rest] = token.split(".");
-    if (rest.length || !sig || !equal(sign(body), sig)) return null;
-    const data = JSON.parse(Buffer.from(body, "base64url").toString());
-    return typeof data.sub === "string" &&
-      /^[0-9a-f-]{36}$/.test(data.sub) &&
-      data.exp > Date.now()
-      ? data.sub
-      : null;
-  } catch {
-    return null;
-  }
-}
-export async function actor(req: NextRequest) {
-  const id = verifySession(req.cookies.get("orbit_session")?.value);
-  if (!id) throw new OrbitError("UNAUTHORIZED");
-  if (!(await pool.query("SELECT id FROM users WHERE id=$1", [id])).rowCount)
-    throw new OrbitError("UNAUTHORIZED");
-  return id;
+import {
+  tokenHash,
+  passwordMatches,
+  hashPassword,
+  rateLimit,
+  securityEvent,
+} from "@orbit/database/security";
+import { validateServerConfig } from "@orbit/shared/server-env";
+export const SESSION_MAX_AGE = 8 * 3600;
+let dummy: Promise<string> | undefined;
+export function cookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: "strict" as const,
+    secure: process.env.ORBIT_COOKIE_SECURE === "true",
+    path: "/",
+    maxAge: SESSION_MAX_AGE,
+  };
 }
 export function checkOrigin(req: NextRequest) {
+  validateServerConfig();
   if (["GET", "HEAD"].includes(req.method)) return;
-  const origin = req.headers.get("origin");
   const expected = process.env.ORBIT_BASE_URL;
-  if (!expected || origin !== new URL(expected).origin)
+  if (
+    !expected ||
+    req.headers.get("origin") !== new URL(expected).origin ||
+    req.headers.get("sec-fetch-site") === "cross-site"
+  )
     throw new OrbitError("UNAUTHORIZED");
 }
-const failures = new Map<string, { count: number; until: number }>();
-export async function login(password: string) {
-  const key = "local-development-account";
-  let f = failures.get(key);
-  if (f && f.until < Date.now()) {
-    failures.delete(key);
-    f = undefined;
-  }
-  if (f && f.count >= 10) throw new OrbitError("UNAUTHORIZED");
-  const expected = process.env.ORBIT_ADMIN_PASSWORD;
-  if (!expected || expected.length < 16 || !equal(password, expected)) {
-    failures.set(key, {
-      count: (f?.count || 0) + 1,
-      until: Date.now() + 60000,
-    });
-    throw new OrbitError("UNAUTHORIZED");
-  }
-  failures.delete(key);
-  const owner = (
-    await pool.query("SELECT id FROM users WHERE email=$1", [
-      "owner@orbit.local",
+export async function issueSession(user: string) {
+  const token = randomBytes(32).toString("base64url");
+  const row = (
+    await pool.query("SELECT auth_version,is_active FROM users WHERE id=$1", [
+      user,
     ])
   ).rows[0];
-  if (!owner) throw new OrbitError("UNAUTHORIZED");
-  return owner.id as string;
+  if (!row?.is_active) throw new OrbitError("UNAUTHORIZED");
+  await pool.query(
+    "INSERT INTO auth_sessions(token_hash,user_id,auth_version,expires_at) VALUES($1,$2,$3,now()+interval '8 hours')",
+    [tokenHash(token), user, row.auth_version],
+  );
+  return token;
+}
+export async function session(token: string | undefined) {
+  if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
+  return (
+    (
+      await pool.query(
+        "UPDATE auth_sessions s SET last_seen=now() FROM users u WHERE s.token_hash=$1 AND u.id=s.user_id AND u.is_active=true AND u.auth_version=s.auth_version AND s.revoked_at IS NULL AND s.expires_at>now() AND s.last_seen>now()-interval '30 minutes' RETURNING s.user_id,s.token_hash,u.role,u.email,u.name",
+        [tokenHash(token)],
+      )
+    ).rows[0] ?? null
+  );
+}
+export async function revokeSession(token: string | undefined) {
+  if (token)
+    await pool.query(
+      "UPDATE auth_sessions SET revoked_at=now() WHERE token_hash=$1 AND revoked_at IS NULL",
+      [tokenHash(token)],
+    );
+}
+export async function actor(req: NextRequest) {
+  validateServerConfig();
+  const user = await session(req.cookies.get("orbit_session")?.value);
+  if (!user) throw new OrbitError("UNAUTHORIZED");
+  await rateLimit("api:" + user.user_id, 900, 60);
+  return user.user_id as string;
+}
+export async function login(
+  email: string,
+  password: string,
+  client = "direct",
+) {
+  const normalized = email.trim().toLowerCase();
+  await rateLimit("login-client:" + client, 60, 60);
+  await rateLimit("login-account:" + normalized, 10, 600);
+  const row = (
+    await pool.query(
+      "SELECT id,password_hash,is_active FROM users WHERE lower(email)=$1",
+      [normalized],
+    )
+  ).rows[0];
+  dummy ??= hashPassword(randomBytes(32).toString("hex"));
+  const hash = row?.password_hash ?? (await dummy);
+  if (
+    !(await passwordMatches(password, hash)) ||
+    !row?.password_hash ||
+    !row.is_active
+  ) {
+    await securityEvent(null, "LOGIN", "DENIED");
+    throw new OrbitError("UNAUTHORIZED");
+  }
+  await securityEvent(row.id, "LOGIN", "SUCCESS");
+  return row.id as string;
 }

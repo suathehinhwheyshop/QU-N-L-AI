@@ -1,7 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { OrbitError } from "@orbit/shared/contracts";
-function key() {
-  const raw = process.env.ORBIT_TOKEN_ENCRYPTION_KEY;
+function key(raw = process.env.ORBIT_TOKEN_ENCRYPTION_KEY) {
   if (!raw || !/^[A-Za-z0-9+/]{43}=$/.test(raw))
     throw new OrbitError("GSC_ENCRYPTION_REQUIRED");
   const k = Buffer.from(raw, "base64");
@@ -32,17 +31,25 @@ export function unseal(value: string, aad: string) {
   try {
     const [v, iv, tag, body, ...extra] = value.split(".");
     if (v !== "v1" || extra.length || !body) throw Error();
-    const d = createDecipheriv(
-      "aes-256-gcm",
-      key(),
-      Buffer.from(iv, "base64url"),
-    );
-    d.setAAD(Buffer.from(aad));
-    d.setAuthTag(Buffer.from(tag, "base64url"));
-    return Buffer.concat([
-      d.update(Buffer.from(body, "base64url")),
-      d.final(),
-    ]).toString("utf8");
+    const keys = [key()];
+    if (process.env.ORBIT_TOKEN_ENCRYPTION_PREVIOUS_KEY)
+      keys.push(key(process.env.ORBIT_TOKEN_ENCRYPTION_PREVIOUS_KEY));
+    for (const candidate of keys) {
+      try {
+        const d = createDecipheriv(
+          "aes-256-gcm",
+          candidate,
+          Buffer.from(iv, "base64url"),
+        );
+        d.setAAD(Buffer.from(aad));
+        d.setAuthTag(Buffer.from(tag, "base64url"));
+        return Buffer.concat([
+          d.update(Buffer.from(body, "base64url")),
+          d.final(),
+        ]).toString("utf8");
+      } catch {}
+    }
+    throw new OrbitError("GSC_TOKEN_DECRYPT_FAILED");
   } catch (e) {
     if (e instanceof OrbitError) throw e;
     throw new OrbitError("GSC_TOKEN_DECRYPT_FAILED");

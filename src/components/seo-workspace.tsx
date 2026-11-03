@@ -532,6 +532,10 @@ export default function SeoWorkspace({
               . Filters: {insights.spec.search_type} / {insights.spec.country} /{" "}
               {insights.spec.device}.
             </p>
+            <p>
+              Chỉ số của các dòng đã thu thập trong dataset; phạm vi có thể
+              thiếu truy vấn ẩn hoặc dòng ngoài giới hạn API.
+            </p>
             <div className="seo-metrics">
               {Object.entries(insights.facts.totals).map(([k, v]) => (
                 <div key={k}>

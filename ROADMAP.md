@@ -21,8 +21,8 @@ Chưa nghiệm thu LIVE:
 3. Ít nhất hai AI API credentials/quota/model/pricing/probes thật, data policy + consent và quyền paid calls riêng. Chạy SEO qua hai API, kiểm tra usage/evidence, human approval và final reports.
 4. Lưu chứng cứ GSC và AI riêng, rồi mới ghi nhận nghiệm thu Phase 3 LIVE.
 
-## Phase 4 — Production hardening, chưa triển khai
+## Phase 4 — secure local staging verified; public/production gates còn thiếu
 
-Chỉ chuyển sau các gates LIVE ở trên. OIDC/multi-user authorization/session lifecycle, OAuth/security review, HTTPS/secure cookies, stable encryption key và secret manager, distributed rate limits, observability/alerting, object storage/lifecycle, backup + restore drills, deployment/quota Google Cloud thực tế. Không public local-development auth.
+Đã có real accounts/sessions/RBAC, CSRF/CSP/HTTPS, Docker web/worker/PostgreSQL, migration/grants/readiness/persistence, scheduled encrypted backups + fresh-target restore, key rotation, artifact retention, safe request/execution logs và operations/rollback runbooks. CI gates chuẩn bị, chưa chứng minh chạy remote. Không cần LIVE credentials để triển khai các phần độc lập này theo yêu cầu Phase 4 continuation.
 
-CMS write/publish là phần mở rộng riêng, không tự động thuộc hardening: cần quyền, human approval, before/after và rollback/reconciliation. Không triển khai ở Phase 3.
+Local HTTPS login → MOCK SEO → approval/reports → restart → desktop/mobile được kiểm thử. Public chưa deploy; cần lựa chọn hosting/domain/budget và quyền mở Internet. Production còn offsite/fresh-host recovery, external alert delivery, host/IAM/OS image review và nghiệm thu GSC/AI LIVE riêng. Không mở website write/publish.

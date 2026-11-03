@@ -1,0 +1,14 @@
+{
+  admin off
+  email {$ORBIT_ACME_EMAIL}
+}
+{$ORBIT_HOSTNAME} {
+  encode zstd gzip
+  request_body {
+    max_size 6MB
+  }
+  reverse_proxy web:3000 {
+    header_up X-Orbit-Client-IP {http.request.remote.host}
+    header_down Strict-Transport-Security "max-age=31536000"
+  }
+}

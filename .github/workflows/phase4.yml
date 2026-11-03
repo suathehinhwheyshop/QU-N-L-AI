@@ -1,0 +1,26 @@
+name: ORBIT secure staging gates
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: orbit-phase4-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ORBIT_CHROMIUM_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y libnss3-tools
+      - run: npm ci
+      - run: npm run setup:local
+      - run: npm run verify:phase4
+      # No deployment/publish job. Hosting/public ingress require explicit approval.

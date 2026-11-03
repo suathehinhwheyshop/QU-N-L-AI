@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 config({ path: ".env.local", quiet: true });
 export async function testDatabase() {
+  process.env.ORBIT_ENV = "test";
   const current = new URL(process.env.DATABASE_URL!);
   const admin = new Pool({ connectionString: current.href });
   const name = "orbit_test_" + randomBytes(6).toString("hex");

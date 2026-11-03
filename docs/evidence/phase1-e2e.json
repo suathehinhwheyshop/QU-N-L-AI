@@ -1,20 +1,20 @@
 {
   "result": "PASS",
   "mode": "MOCK",
-  "at": "2026-11-03T01:15:31.151Z",
-  "run_id": "dadbd314-1a62-40fc-a02e-ad0053c39382",
+  "at": "2026-11-03T02:28:01.926Z",
+  "run_id": "d974a8b7-dc2a-418d-9ac1-aa0c57ce5ee1",
   "task_count": 6,
   "artifact_count": 6,
   "evidence": {
-    "persisted_run_id": "dadbd314-1a62-40fc-a02e-ad0053c39382",
+    "persisted_run_id": "d974a8b7-dc2a-418d-9ac1-aa0c57ce5ee1",
     "dependency_count": 7,
     "task_ids": [
-      "25afdb69-3028-4324-971f-5e10ec1eb36c",
-      "c0e817d3-0d85-4dfc-8782-f1fdc8cca9a8",
-      "e739f561-a812-42ec-83f3-203ab31daf2f",
-      "f06233f2-fd7a-491d-b9f4-5b92ffad1578",
-      "93643b08-037e-4bb7-b2ee-8776b89607c9",
-      "5906cffc-e0fb-460d-b9a5-4a3ac91f10d0"
+      "dd2e0cbe-eb8c-403a-8a97-7b19335e2af1",
+      "fe0bbc78-63fa-4baa-813e-019c07bd90ee",
+      "a9b83b3d-7400-49fa-9188-92a7a28efde5",
+      "bac3d4f2-eef2-40f5-8ab6-ae4aa46c7ec6",
+      "3ccc44c6-9314-4d18-9b22-28e86880897d",
+      "762e78c4-5720-4079-a9a5-bb4d3fe2ef58"
     ],
     "attempt_count": 6,
     "provider_ids": [
@@ -22,40 +22,40 @@
       "mock-google"
     ],
     "approval": {
-      "id": "945f1df6-7a13-4af7-bd27-1512f49d7776",
+      "id": "87af7b70-421c-4c75-bf38-0b48621ce22e",
       "output_hash": "44cfaea40cec25ebccd546c54a0fc6ac8d5ac8a656815d779111b3fdb1c2b1e0",
       "status": "APPROVED"
     },
     "artifact_checksums": [
       {
-        "id": "7b68e994-95fc-4442-a2e2-ab43e1a926ed",
+        "id": "6f1d76c8-520e-4636-8918-f65f5b2bc433",
         "sha256": "8de168a691fd3ee404c793a4b3b6ab27531c1c7771f62eb47ea7effb076c129b"
       },
       {
-        "id": "5ec2f911-f62f-45b2-b8ee-35abdfd206c5",
+        "id": "94597a1b-6ea3-4dfc-b81d-629fa8473b96",
         "sha256": "c8667632779da74d050bc0d05ec0eda6b548527cb3b2d32b794a8ecfac61ef0a"
       },
       {
-        "id": "a9674962-7f32-49d2-ba69-6192b21c8fe2",
+        "id": "0ae72c17-4e2d-43da-b5f6-b6eb95076a84",
         "sha256": "ecf3bdfb9f040b77b675f98699266dfbc0b5c8a5706253915fcdf705d80eff64"
       },
       {
-        "id": "8e88255c-bfb8-4fb7-99c0-daf8bc2e51eb",
+        "id": "13979731-8440-44af-920d-c321b95b714f",
         "sha256": "44cfaea40cec25ebccd546c54a0fc6ac8d5ac8a656815d779111b3fdb1c2b1e0"
       },
       {
-        "id": "cd536874-a30b-4677-8c0f-aad10edfaf77",
-        "sha256": "d4ba8c103743652233a6604821b19b67d5a9d8ed32bdb05969afa1fd18b58810"
+        "id": "1c7a7b9b-9321-4e1e-984d-9743195aa005",
+        "sha256": "319e265ec7718b5ebb7321dec95d7292dbe923568d32c85a89cda434dcc9c8e4"
       },
       {
-        "id": "f945c54f-1ffe-4964-b6ab-2a822b00fe37",
-        "sha256": "6dcdf6559147ca63bc5cac555076478e6f818c0307f9af982275a1308bbdf86a"
+        "id": "4eb61ed4-d971-42b3-b19e-d83a60aa9bd9",
+        "sha256": "ecb349c1e5146d28e0273babb43cefc99c3f413655195c336d41a403cfe33170"
       }
     ],
     "application_restart": "PASS",
     "worker_restart": "PASS",
     "controls_retry_probe": {
-      "run_id": "a0c83b42-76f8-4859-8b79-682c15545635",
+      "run_id": "aeeaf85d-36b1-4856-b3d2-5e10d6df2db3",
       "status": "CANCELED",
       "attempts": 7
     }

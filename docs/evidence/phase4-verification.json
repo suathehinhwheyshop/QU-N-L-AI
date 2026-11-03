@@ -1,0 +1,67 @@
+{
+  "at": "2026-11-03T02:31:25.460Z",
+  "started": "2026-11-03T02:26:59.852Z",
+  "status": "PASS",
+  "scope": "LOCAL_HTTPS_MOCK_HTTP_STUB",
+  "public_deployed": false,
+  "production_ready": false,
+  "gsc_live": "BLOCKED_MISSING_CREDENTIALS",
+  "ai_live": "BLOCKED_MISSING_CREDENTIALS",
+  "results": [
+    {
+      "name": "regression",
+      "status": "PASS"
+    },
+    {
+      "name": "security",
+      "status": "PASS"
+    },
+    {
+      "name": "audit",
+      "status": "PASS"
+    },
+    {
+      "name": "image",
+      "status": "PASS"
+    },
+    {
+      "name": "ops-image",
+      "status": "PASS"
+    },
+    {
+      "name": "bootstrap",
+      "status": "PASS"
+    },
+    {
+      "name": "provision",
+      "status": "PASS"
+    },
+    {
+      "name": "start",
+      "status": "PASS"
+    },
+    {
+      "name": "tls-staging",
+      "status": "PASS"
+    },
+    {
+      "name": "backup-restore",
+      "status": "PASS"
+    },
+    {
+      "name": "monitor",
+      "status": "PASS"
+    },
+    {
+      "name": "retention",
+      "status": "PASS"
+    },
+    {
+      "name": "operations-recovery",
+      "status": "PASS",
+      "command": "node --import tsx test/staging/operations.ts",
+      "evidence": "phase4-operations.json"
+    }
+  ],
+  "followup_at": "2026-11-03T02:32:06.862Z"
+}

@@ -1,0 +1,50 @@
+{
+  "status": "PASS",
+  "mode": "MOCK_AND_HTTP_STUB",
+  "live_api_verified": false,
+  "at": "2026-11-03T01:26:00.715Z",
+  "results": [
+    {
+      "name": "unit",
+      "command": "npm run test",
+      "status": "PASS",
+      "tests": 25,
+      "log": "unit.log"
+    },
+    {
+      "name": "integration",
+      "command": "npm run test:integration",
+      "status": "PASS",
+      "tests": 31,
+      "log": "integration.log"
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "status": "PASS",
+      "log": "typecheck.log"
+    },
+    {
+      "name": "build",
+      "command": "npm run build",
+      "status": "PASS",
+      "log": "build.log"
+    },
+    {
+      "name": "e2e",
+      "command": "npm run test:e2e",
+      "status": "PASS",
+      "log": "e2e.log"
+    },
+    {
+      "name": "browser",
+      "command": "npm run test:browser:isolated",
+      "status": "PASS",
+      "log": "browser.log"
+    }
+  ],
+  "e2e_run_id": "487dc147-4d64-48e1-9843-406aba2a0794",
+  "phase2_e2e_run_id": "79ed50eb-d37c-414d-a6cb-b748b279bdc7",
+  "phase3_e2e_run_id": "47de0c77-f808-4233-b9f0-c541b50e6215",
+  "notice": "Phase 3 CODE/HTTP_STUB verification with Phase 1–2 regressions; GSC and AI LIVE proofs are separate and may remain BLOCKED. No website writes."
+}

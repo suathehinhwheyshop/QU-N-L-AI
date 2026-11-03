@@ -1,0 +1,22 @@
+{
+  "at": "2026-11-03T02:31:03.532Z",
+  "status": "PASS",
+  "mode": "REAL_LOCAL_POSTGRESQL_DUMP_ENCRYPTED_RESTORE",
+  "backup_id": "20261103T023050951Z-3f083182",
+  "encrypted_bytes": 337920,
+  "archive_sha256": "85f816b55ad8b991e705481290e4c6ae4d88b234c6e4abdfa2f422b975a5d1d1",
+  "runs_restored": 13,
+  "artifacts_checksum_verified": 81,
+  "sessions_after_restore": 0,
+  "checks": [
+    "scheduled service running",
+    "actual pg_dump and pg_restore",
+    "AES-256-GCM encrypted archive",
+    "fresh target only",
+    "tampered checksum rejected before database creation",
+    "session invalidation",
+    "all restored artifact hashes verified",
+    "source database preserved"
+  ],
+  "offsite_copy_verified": false
+}

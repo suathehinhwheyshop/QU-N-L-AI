@@ -1,8 +1,12 @@
+import { observed } from "@/server/observability";
+import { authorizeRequest, clientIdentity } from "@/server/request-security";
+import { assertWorkspace } from "@orbit/database/security";
+import { limitedBody } from "@/server/http";
 import { connectionCatalog, probeLive } from "@/server/live";
 import "@/server/runtime";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, sql } from "drizzle-orm";
 import { db, pool } from "@/db/client";
 import {
   workspaces,
@@ -25,7 +29,15 @@ import {
   decideApproval,
   blobs,
 } from "@/core/engine";
-import { actor, checkOrigin, login, issueSession } from "@/server/auth";
+import {
+  actor,
+  checkOrigin,
+  login,
+  issueSession,
+  revokeSession,
+  cookieOptions,
+  session,
+} from "@/server/auth";
 import { providers } from "@/providers/registry";
 import { integrations } from "@/integrations/registry";
 import { basename } from "node:path";
@@ -37,9 +49,7 @@ const json = (value: unknown, status = 200) =>
     headers: { "Cache-Control": "no-store" },
   });
 async function body(req: NextRequest) {
-  if (Number(req.headers.get("content-length") || 0) > 100000)
-    throw new OrbitError("BAD_REQUEST");
-  return JSON.parse((await req.text()).slice(0, 100001));
+  return JSON.parse((await limitedBody(req, 100000)).toString());
 }
 const uuid = (s: string) => z.uuid().parse(s);
 async function endpoint(
@@ -57,37 +67,63 @@ async function endpoint(
       const input = nativeForm
         ? Object.fromEntries(await req.formData())
         : await body(req);
-      const data = z.object({ password: z.string().max(512) }).parse(input);
-      const owner = await login(data.password);
+      const data = z
+        .object({
+          email: z.email().max(254),
+          password: z.string().min(1).max(512),
+        })
+        .strict()
+        .parse(input);
+      const owner = await login(data.email, data.password, clientIdentity(req));
+      await revokeSession(req.cookies.get("orbit_session")?.value);
       const response = nativeForm
         ? NextResponse.redirect(new URL("/", req.url), 303)
         : json({ ok: true });
-      response.cookies.set("orbit_session", issueSession(owner), {
-        httpOnly: true,
-        sameSite: "strict",
-        secure: process.env.ORBIT_COOKIE_SECURE === "true",
-        path: "/",
-        maxAge: 8 * 3600,
-      });
+      response.cookies.set(
+        "orbit_session",
+        await issueSession(owner),
+        cookieOptions(),
+      );
       return response;
     }
-    const owner = await actor(req);
     if (p === "auth/logout" && req.method === "POST") {
+      await revokeSession(req.cookies.get("orbit_session")?.value);
       const res = json({ ok: true });
       res.cookies.delete("orbit_session");
       return res;
     }
+    const owner = await actor(req);
+    await authorizeRequest(owner, req, path);
+    if (p === "admin/metrics" && req.method === "GET") {
+      await (
+        await import("@orbit/database/security")
+      ).assertRole(owner, "manage");
+      const runs = (
+        await pool.query(
+          "SELECT status,count(*)::int AS count FROM runs WHERE owner_id=$1 GROUP BY status",
+          [owner],
+        )
+      ).rows;
+      const heartbeats = (
+        await pool.query(
+          "SELECT count(*)::int AS healthy FROM worker_heartbeats WHERE updated_at>now()-interval '180 seconds' AND status IN ('RUNNING','BUSY')",
+        )
+      ).rows[0];
+      return json({ runs, workers: heartbeats, at: new Date().toISOString() });
+    }
     if (p === "bootstrap" && req.method === "GET") {
-      const ws = await db
-        .select()
-        .from(workspaces)
-        .where(eq(workspaces.owner_id, owner));
-      const recent = await db
-        .select()
-        .from(runs)
-        .where(eq(runs.owner_id, owner))
-        .orderBy(desc(runs.created_at))
-        .limit(50);
+      const ws = (
+        await pool.query(
+          "SELECT w.* FROM workspaces w JOIN workspace_members m ON m.workspace_id=w.id AND m.user_id=$1 WHERE w.owner_id=$1",
+          [owner],
+        )
+      ).rows;
+      const recent = (
+        await pool.query(
+          "SELECT r.* FROM runs r JOIN workspace_members m ON m.workspace_id=r.workspace_id AND m.user_id=$1 WHERE r.owner_id=$1 ORDER BY r.created_at DESC LIMIT 50",
+          [owner],
+        )
+      ).rows;
       const con = await connectionCatalog(owner);
       const [setting] = await db
         .select()
@@ -95,13 +131,13 @@ async function endpoint(
         .where(eq(settings.owner_id, owner));
       const stats = (
         await pool.query(
-          "SELECT count(*) FILTER (WHERE t.status='COMPLETED')::int AS completed_tasks, count(*) FILTER (WHERE t.status='WAITING_APPROVAL')::int AS waiting_approvals FROM tasks t JOIN runs r ON r.id=t.run_id WHERE r.owner_id=$1",
+          "SELECT count(*) FILTER (WHERE t.status='COMPLETED')::int AS completed_tasks, count(*) FILTER (WHERE t.status='WAITING_APPROVAL')::int AS waiting_approvals FROM tasks t JOIN runs r ON r.id=t.run_id WHERE r.owner_id=$1 AND EXISTS(SELECT 1 FROM workspace_members m WHERE m.workspace_id=r.workspace_id AND m.user_id=$1)",
           [owner],
         )
       ).rows[0];
       const activity = (
         await pool.query(
-          "SELECT e.* FROM events e JOIN runs r ON r.id=e.run_id WHERE r.owner_id=$1 ORDER BY e.created_at DESC LIMIT 8",
+          "SELECT e.* FROM events e JOIN runs r ON r.id=e.run_id WHERE r.owner_id=$1 AND EXISTS(SELECT 1 FROM workspace_members m WHERE m.workspace_id=r.workspace_id AND m.user_id=$1) ORDER BY e.created_at DESC LIMIT 8",
           [owner],
         )
       ).rows;
@@ -112,18 +148,27 @@ async function endpoint(
         settings: setting,
         stats,
         activity,
-        mode: "FOUNDATION",
+        mode: process.env.ORBIT_ENV ?? "development",
+        identity: await session(req.cookies.get("orbit_session")?.value).then(
+          (u) =>
+            u
+              ? { id: u.user_id, role: u.role, email: u.email, name: u.name }
+              : null,
+        ),
         permissions: { read: true, report: true, website_write: false },
         storage: "PostgreSQL + local artifacts",
       });
     }
-    if (p === "plans" && req.method === "POST")
-      return json(await previewGoal(owner, GoalInput.parse(await body(req))));
-    if (p === "runs" && req.method === "POST")
-      return json(
-        await createWorkflow(owner, GoalInput.parse(await body(req))),
-        201,
-      );
+    if (p === "plans" && req.method === "POST") {
+      const goal = GoalInput.parse(await body(req));
+      await assertWorkspace(owner, goal.workspace_id, "execute");
+      return json(await previewGoal(owner, goal));
+    }
+    if (p === "runs" && req.method === "POST") {
+      const goal = GoalInput.parse(await body(req));
+      await assertWorkspace(owner, goal.workspace_id, "execute");
+      return json(await createWorkflow(owner, goal), 201);
+    }
     if (path[0] === "runs" && path.length >= 2) {
       const id = uuid(path[1]);
       const [run] = await db
@@ -131,6 +176,11 @@ async function endpoint(
         .from(runs)
         .where(and(eq(runs.id, id), eq(runs.owner_id, owner)));
       if (!run) throw new OrbitError("NOT_FOUND");
+      await assertWorkspace(
+        owner,
+        run.workspace_id,
+        req.method === "GET" ? "read" : "execute",
+      );
       if (path.length === 2 && req.method === "GET") {
         const tasks = (
           await pool.query(
@@ -308,14 +358,22 @@ async function endpoint(
             created_at: artifacts.created_at,
           })
           .from(artifacts)
-          .where(eq(artifacts.owner_id, owner))
+          .where(
+            and(
+              eq(artifacts.owner_id, owner),
+              sql`(${artifacts.run_id} IS NULL OR EXISTS(SELECT 1 FROM runs r JOIN workspace_members m ON m.workspace_id=r.workspace_id AND m.user_id=${owner} WHERE r.id=${artifacts.run_id}))`,
+            ),
+          )
           .orderBy(desc(artifacts.created_at))
           .limit(100),
       );
     if (p === "uploads" && req.method === "POST") {
       if (Number(req.headers.get("content-length") || 0) > 2100000)
         throw new OrbitError("BAD_REQUEST");
-      const form = await req.formData();
+      const raw = await limitedBody(req, 2100000);
+      const form = await new Response(raw, {
+        headers: { "content-type": req.headers.get("content-type") ?? "" },
+      }).formData();
       const file = form.get("file");
       if (!(file instanceof File) || file.size > 2000000 || !file.size)
         throw new OrbitError("BAD_REQUEST");
@@ -348,6 +406,15 @@ async function endpoint(
           and(eq(artifacts.id, uuid(path[1])), eq(artifacts.owner_id, owner)),
         );
       if (!a) throw new OrbitError("NOT_FOUND");
+      if (a.run_id) {
+        const r = (
+          await pool.query("SELECT workspace_id FROM runs WHERE id=$1", [
+            a.run_id,
+          ])
+        ).rows[0];
+        if (!r) throw new OrbitError("NOT_FOUND");
+        await assertWorkspace(owner, r.workspace_id, "read");
+      }
       const bytes = await blobs.read(a.blob_key, a.sha256);
       return new NextResponse(new Uint8Array(bytes), {
         headers: {
@@ -372,16 +439,20 @@ async function endpoint(
           safeMessage[code] ||
           "Không xử lý được yêu cầu. Không có thông tin bí mật trong phản hồi.",
       },
-      code === "UNAUTHORIZED"
-        ? 401
-        : code === "NOT_FOUND"
-          ? 404
-          : code === "INTERNAL_ERROR"
-            ? 500
-            : 409,
+      code === "FORBIDDEN"
+        ? 403
+        : code === "RATE_LIMIT"
+          ? 429
+          : code === "UNAUTHORIZED"
+            ? 401
+            : code === "NOT_FOUND"
+              ? 404
+              : code === "INTERNAL_ERROR"
+                ? 500
+                : 409,
     );
   }
 }
-export const GET = endpoint,
-  POST = endpoint,
-  PATCH = endpoint;
+export const GET = observed(endpoint),
+  POST = observed(endpoint),
+  PATCH = observed(endpoint);

@@ -1,0 +1,32 @@
+{
+  "at": "2026-11-03T02:30:50.638Z",
+  "status": "LOCAL_HTTPS_STAGING_VERIFIED",
+  "public_staging": "BLOCKED_NOT_DEPLOYED",
+  "production_ready": false,
+  "ai_live_verified": false,
+  "gsc_live_verified": false,
+  "origin": "HTTPS loopback only",
+  "run_id": "3c1113b7-7739-4b84-9bcf-afb407491d19",
+  "dataset_id": "15377d6e-9ee2-4532-a83f-e45e37058475",
+  "checks": [
+    "HTTPS verified against local CA; Secure/HttpOnly/Strict cookies, no token/hash exposure, CSRF/SSRF override blocked, no worker-control endpoint",
+    "TLS goal → planning → two MOCK providers → code validation → approval → MD/CSV/JSON; idempotency, checksum and persistent state survive web/worker restart",
+    "VIEWER cannot mutate, manage credentials, inspect admin metrics or read another owner’s run/artifact; web DB role cannot create databases; worker cannot read password hashes, sessions or OAuth states",
+    "logout revokes server session, re-login rotates opaque token, legacy signed cookies rejected",
+    "Chromium trusts the local CA explicitly; desktop/mobile 390px browser regression passed without TLS bypass"
+  ],
+  "report_checksums": [
+    {
+      "kind": "report_md",
+      "sha256": "e20236a0c025126236d67c72fa457d26438f99bde1dbaf941b23b88ed2b22b3a"
+    },
+    {
+      "kind": "report_csv",
+      "sha256": "fc908b8d942b862b1c2e96da0faa11908b040a2dec7deb5f17edf621a47e7ca9"
+    },
+    {
+      "kind": "report_json",
+      "sha256": "1e477e007463413e8efd6f6eb3733a9cec7a2f3c931dbbc8249f6cf48e6a462f"
+    }
+  ]
+}

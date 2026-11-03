@@ -128,6 +128,13 @@ export async function createFromPlan(owner: string, goal: Goal, plan: Plan) {
     ).rows[0];
     if (!setting || goal.budget_cents > setting.max_budget_cents)
       throw new OrbitError("BUDGET_EXCEEDED");
+    const queued = (
+      await c.query(
+        "SELECT count(*)::int n FROM runs WHERE owner_id=$1 AND status IN ('QUEUED','RUNNING','PAUSED','WAITING_APPROVAL')",
+        [owner],
+      )
+    ).rows[0].n;
+    if (queued >= 50) throw new OrbitError("QUOTA_EXCEEDED");
     if (goal.attachment_ids.length) {
       const n = await c.query(
         "SELECT id FROM artifacts WHERE id=ANY($1::uuid[]) AND owner_id=$2 AND kind=$3",
@@ -225,6 +232,7 @@ export async function claimTask(): Promise<Claim | null> {
       await c.query<Task>(`SELECT t.* FROM tasks t JOIN runs r ON r.id=t.run_id JOIN settings s ON s.owner_id=r.owner_id
  WHERE t.status='PENDING' AND t.next_attempt_at<=now() AND r.status IN ('QUEUED','RUNNING')
  AND (SELECT count(*) FROM tasks busy JOIN runs br ON br.id=busy.run_id WHERE br.owner_id=r.owner_id AND busy.status='RUNNING')<s.concurrency
+ AND EXISTS(SELECT 1 FROM users u JOIN workspace_members m ON m.user_id=u.id WHERE u.id=r.owner_id AND u.is_active=true AND u.role IN ('ADMIN','OPERATOR') AND m.workspace_id=r.workspace_id AND m.role IN ('ADMIN','EDITOR'))
  AND NOT EXISTS(SELECT 1 FROM task_dependencies d JOIN tasks p ON p.id=d.depends_on_id WHERE d.task_id=t.id AND p.status<>'COMPLETED')
  ORDER BY t.priority,t.created_at,t.key FOR UPDATE OF t SKIP LOCKED LIMIT 1`);
     if (!task) return null;

@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-03T02:33:18.037Z",
+  "status": "PASS",
+  "focused_code_scan": {
+    "status": "PASS",
+    "files": 229,
+    "checks": [
+      "secret patterns",
+      "no env password backdoor",
+      "no client secret readers"
+    ],
+    "notice": "Focused automated check, not an independent security audit"
+  },
+  "production_dependencies_vulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "public_caddy_config": "OFFLINE_VALIDATED_NO_NETWORK",
+  "worker_privilege_denials": "TLS_STAGING_TESTED",
+  "independent_security_audit": false,
+  "os_image_cve_scan": false
+}

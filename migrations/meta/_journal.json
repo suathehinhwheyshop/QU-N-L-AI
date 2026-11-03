@@ -36,6 +36,13 @@
       "when": 1793666003583,
       "tag": "0004_gsc_seo_datasets",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793669793048,
+      "tag": "0005_secure_sessions_rbac",
+      "breakpoints": true
     }
   ]
 }

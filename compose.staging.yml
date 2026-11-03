@@ -1,0 +1,195 @@
+name: orbit-staging
+x-app: &app
+  image: ${ORBIT_IMAGE:-orbit:phase4-candidate}
+  restart: unless-stopped
+  init: true
+  read_only: true
+  tmpfs: ["/tmp:rw,noexec,nosuid,size=128m,uid=1000,gid=1000"]
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: ["ALL"]
+  stop_grace_period: 150s
+  volumes: ["artifacts:/data/artifacts"]
+  environment: &environment
+    ORBIT_ENV: staging
+    ORBIT_BASE_URL: ${ORBIT_BASE_URL:?HTTPS origin is required}
+    ORBIT_COOKIE_SECURE: "true"
+    ORBIT_TRUST_PROXY: "true"
+    ORBIT_DATABASE_HOST: db
+    ORBIT_DATABASE_NAME: ${ORBIT_DATABASE_NAME:-orbit}
+    ORBIT_STORAGE_DIR: /data/artifacts
+    NO_PROXY: "${NO_PROXY:-},db,web,worker,localhost,127.0.0.1"
+    no_proxy: "${NO_PROXY:-},db,web,worker,localhost,127.0.0.1"
+services:
+  db:
+    image: postgres:17-bookworm@sha256:839fbb5a4942a7758dd93e18b42ea5649807491a0545b5eeeb8f0b8bb11857a5
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: orbit_migrator
+      POSTGRES_DB: ${ORBIT_DATABASE_NAME:-orbit}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    volumes: ["database:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orbit_migrator -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks: [private]
+  migrate:
+    <<: *app
+    restart: "no"
+    user: "1000:1000"
+    command: [migrate]
+    environment:
+      <<: *environment
+      ORBIT_DATABASE_USER: orbit_migrator
+      ORBIT_DATABASE_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password]
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [private]
+  grants:
+    <<: *app
+    restart: "no"
+    command: [grants]
+    environment:
+      <<: *environment
+      ORBIT_DATABASE_USER: orbit_migrator
+      ORBIT_DATABASE_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password,api_db_password,worker_db_password]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    networks: [private]
+  storage-init:
+    <<: *app
+    restart: "no"
+    user: "0:0"
+    entrypoint: ["sh","-c","chown 1000:1000 /data/artifacts /backups /restore-artifacts && chmod 700 /data/artifacts /backups /restore-artifacts"]
+    volumes: ["artifacts:/data/artifacts", "backups:/backups", "restore-artifacts:/restore-artifacts"]
+    cap_add: [CHOWN,FOWNER]
+    networks: [private]
+  provision:
+    <<: *app
+    profiles: [tools]
+    restart: "no"
+    command: [provision]
+    stdin_open: true
+    environment:
+      <<: *environment
+      ORBIT_DATABASE_USER: orbit_migrator
+      ORBIT_DATABASE_PASSWORD_FILE: /run/secrets/db_password
+    secrets: [db_password,bootstrap_password]
+    depends_on:
+      grants: {condition: service_completed_successfully}
+    networks: [private]
+  web:
+    <<: *app
+    command: [web]
+    environment:
+      <<: *environment
+      ORBIT_SESSION_SECRET_FILE: /run/secrets/session_secret
+      ORBIT_TOKEN_ENCRYPTION_KEY_FILE: /run/secrets/token_key
+      ORBIT_DATABASE_USER: orbit_app
+      ORBIT_DATABASE_PASSWORD_FILE: /run/secrets/api_db_password
+    secrets: [api_db_password,session_secret,token_key]
+    depends_on:
+      grants: {condition: service_completed_successfully}
+      storage-init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD","node","-e","fetch('http://127.0.0.1:3000/api/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 24
+      start_period: 20s
+    networks: [private,egress]
+  worker:
+    <<: *app
+    command: [worker]
+    environment:
+      <<: *environment
+      ORBIT_SESSION_SECRET_FILE: /run/secrets/session_secret
+      ORBIT_TOKEN_ENCRYPTION_KEY_FILE: /run/secrets/token_key
+      ORBIT_DATABASE_USER: orbit_worker
+      ORBIT_DATABASE_PASSWORD_FILE: /run/secrets/worker_db_password
+    secrets: [worker_db_password,session_secret,token_key]
+    depends_on:
+      grants: {condition: service_completed_successfully}
+      storage-init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD","node","--import","tsx","scripts/worker-health.ts"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks: [private,egress]
+  backup:
+    <<: *app
+    image: ${ORBIT_OPS_IMAGE:-orbit-ops:phase4-candidate}
+    command: [daemon]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=1g,uid=1000,gid=1000"]
+    environment:
+      <<: *environment
+      ORBIT_DATABASE_USER: orbit_migrator
+      ORBIT_DATABASE_PASSWORD_FILE: /run/secrets/db_password
+      ORBIT_BACKUP_KEY_FILE: /run/secrets/backup_key
+      ORBIT_BACKUP_KEEP: "7"
+    secrets: [db_password,backup_key]
+    volumes: ["artifacts:/data/artifacts:ro", "backups:/backups"]
+    depends_on:
+      grants: {condition: service_completed_successfully}
+      storage-init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD","node","/opt/orbit/backup.mjs","health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks: [private]
+  restore:
+    <<: *app
+    profiles: [tools]
+    restart: "no"
+    image: ${ORBIT_OPS_IMAGE:-orbit-ops:phase4-candidate}
+    command: [health]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=1g,uid=1000,gid=1000"]
+    environment:
+      <<: *environment
+      ORBIT_DATABASE_USER: orbit_migrator
+      ORBIT_DATABASE_PASSWORD_FILE: /run/secrets/db_password
+      ORBIT_BACKUP_KEY_FILE: /run/secrets/backup_key
+    secrets: [db_password,backup_key]
+    volumes: ["backups:/backups:ro", "restore-artifacts:/restore-artifacts"]
+    networks: [private]
+  tls:
+    image: caddy:2-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5
+    restart: unless-stopped
+    environment:
+      ORBIT_HOSTNAME: ${ORBIT_HOSTNAME:-localhost}
+      NO_PROXY: "${NO_PROXY:-},web,localhost,127.0.0.1"
+      no_proxy: "${NO_PROXY:-},web,localhost,127.0.0.1"
+    ports: ["127.0.0.1:${ORBIT_HTTPS_PORT:-8443}:443"]
+    volumes:
+      - ./deploy/Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - tls-data:/data
+      - tls-config:/config
+    depends_on:
+      web: {condition: service_healthy}
+    networks: [private,frontend]
+secrets:
+  db_password: {file: "${ORBIT_CONFIG_DIR:?}/secrets/db_password"}
+  api_db_password: {file: "${ORBIT_CONFIG_DIR:?}/secrets/api_db_password"}
+  worker_db_password: {file: "${ORBIT_CONFIG_DIR:?}/secrets/worker_db_password"}
+  session_secret: {file: "${ORBIT_CONFIG_DIR:?}/secrets/session_secret"}
+  token_key: {file: "${ORBIT_CONFIG_DIR:?}/secrets/token_key"}
+  backup_key: {file: "${ORBIT_CONFIG_DIR:?}/secrets/backup_key"}
+  bootstrap_password: {file: "${ORBIT_CONFIG_DIR:?}/secrets/bootstrap_password"}
+volumes:
+  database:
+  artifacts:
+  backups:
+  restore-artifacts:
+  tls-data:
+  tls-config:
+networks:
+  private: {internal: true}
+  egress: {}
+  frontend: {}

@@ -1,37 +1,41 @@
 
-> orbit-platform@1.2.0-phase3 test
+> orbit-platform@1.3.0-phase4 test
 > node --import tsx --test test/unit/*.test.ts
 
-✔ planner produces a bounded read-only DAG with independent review and approval (7.282377ms)
-✔ graph rejects cycles, missing/duplicate dependencies and external writes (0.849686ms)
-✔ live planning is blocked without real adapters; workspace core is reusable (0.913032ms)
-✔ router filters capability, data policy, availability and budget; review avoids analyst (0.44866ms)
-✔ mock output validates structured handoff, reports zero cost and never Connected (84.658249ms)
-✔ canonical checksums survive jsonb object key order; artifact bytes verified (15.935188ms)
-✔ integration contract exposes only fixture read scope and validates connector input/output (2.712445ms)
-✔ concurrent artifact publication never exposes partial bytes (14.403379ms)
-✔ approval requires exactly one canonical manifest dependency (1.06192ms)
-✔ Goal Interpreter preserves objective, user acceptance and read-only constraints (6.079034ms)
-✔ four workspace modules produce distinct plans and domain-specific mock fixtures (4.761043ms)
-✔ four independent vendor mock adapters have explicit capabilities/models and never Connected (0.750326ms)
-✔ core package has no imports of concrete providers, integrations or workspace business logic (10.873187ms)
-✔ frontend does not import database or credential code at runtime (1.030413ms)
-✔ four vendor protocols execute through HTTP_STUB without LIVE evidence or hidden retries (54.440658ms)
-✔ transport sanitizes errors, charges uncertainty and redacts response echoes (35.225936ms)
-✔ input cap is enforced before any network call and pricing quote is conservative (0.529692ms)
-✔ AI plan schema preserves goal, read-only steps, dependencies and human approval (3.202139ms)
-✔ router weighs price and measured latency after filtering unavailable capabilities (2.445384ms)
-✔ AES-GCM tokens have random IVs, authenticate owner/context and fail closed on tamper/key mismatch (2.195106ms)
-✔ period and row validation reject overlap, unequal periods, impossible counts, duplicate and out-of-property rows (6.164331ms)
-✔ CSV parses BOM/quoted commas/newlines and JSON-compatible finite numeric rows, rejects malformed headers/quotes/empty numbers (0.73295ms)
-✔ SEO numbers are deterministic: CTR uses sums, position is impression weighted, baseline deltas are explicit (2.263027ms)
-✔ AI cannot invent numeric fields, evidence IDs, reasons or source hashes (8.583691ms)
-✔ GSC HTTP protocol normalizes 401/403/429, Retry-After and timeout without hidden retry or LIVE claim (52.407381ms)
-ℹ tests 25
+✔ planner produces a bounded read-only DAG with independent review and approval (7.988358ms)
+✔ graph rejects cycles, missing/duplicate dependencies and external writes (1.015328ms)
+✔ live planning is blocked without real adapters; workspace core is reusable (0.961547ms)
+✔ router filters capability, data policy, availability and budget; review avoids analyst (0.34601ms)
+✔ mock output validates structured handoff, reports zero cost and never Connected (96.659051ms)
+✔ canonical checksums survive jsonb object key order; artifact bytes verified (14.459604ms)
+✔ integration contract exposes only fixture read scope and validates connector input/output (2.498729ms)
+✔ concurrent artifact publication never exposes partial bytes (16.747455ms)
+✔ approval requires exactly one canonical manifest dependency (0.99687ms)
+✔ Goal Interpreter preserves objective, user acceptance and read-only constraints (5.149287ms)
+✔ four workspace modules produce distinct plans and domain-specific mock fixtures (6.362712ms)
+✔ four independent vendor mock adapters have explicit capabilities/models and never Connected (0.946153ms)
+✔ core package has no imports of concrete providers, integrations or workspace business logic (14.259582ms)
+✔ frontend does not import database or credential code at runtime (2.045517ms)
+✔ four vendor protocols execute through HTTP_STUB without LIVE evidence or hidden retries (67.402021ms)
+✔ transport sanitizes errors, charges uncertainty and redacts response echoes (37.594198ms)
+✔ input cap is enforced before any network call and pricing quote is conservative (0.529867ms)
+✔ AI plan schema preserves goal, read-only steps, dependencies and human approval (2.544628ms)
+✔ router weighs price and measured latency after filtering unavailable capabilities (3.284271ms)
+✔ AES-GCM tokens have random IVs, authenticate owner/context and fail closed on tamper/key mismatch (3.345183ms)
+✔ period and row validation reject overlap, unequal periods, impossible counts, duplicate and out-of-property rows (8.019255ms)
+✔ CSV parses BOM/quoted commas/newlines and JSON-compatible finite numeric rows, rejects malformed headers/quotes/empty numbers (1.941181ms)
+✔ SEO numbers are deterministic: CTR uses sums, position is impression weighted, baseline deltas are explicit (4.348972ms)
+✔ AI cannot invent numeric fields, evidence IDs, reasons or source hashes (9.896939ms)
+✔ GSC HTTP protocol normalizes 401/403/429, Retry-After and timeout without hidden retry or LIVE claim (52.709878ms)
+✔ retention preserves referenced and recent blobs; deletion requires explicit apply (10.811776ms)
+✔ password hashing uses salted scrypt and rejects malformed/short credentials (404.690915ms)
+✔ staging fails closed without HTTPS, Secure cookies and encryption secrets (1.284913ms)
+✔ frontend has no environment-password fallback or credential reader, CSP is nonce based (2.969497ms)
+ℹ tests 29
 ℹ suites 0
-ℹ pass 25
+ℹ pass 29
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 1074.248967
+ℹ duration_ms 1379.499665

@@ -1,11 +1,11 @@
-# ORBIT — kiến trúc nền tảng V1 / mở rộng Phase 2–3
+# ORBIT — kiến trúc nền tảng V1 / mở rộng Phase 2–4
 
 ## Quyết định trước khi triển khai
 
 - Next.js 16 App Router + TypeScript, React 19, Tailwind 4: cùng kiểu dữ liệu cho UI/API, server runtime Node; giữ visual của prototype trong legacy/seo-demo. Không lấy localStorage làm database.
 - PostgreSQL 17 + Drizzle: giao dịch, ràng buộc và `FOR UPDATE SKIP LOCKED` cho durable queue. Không thêm Redis/Temporal ở Phase 1: quy mô cá nhân chưa cần thêm dịch vụ, dễ kiểm tra checkpoint và khôi phục. Worker độc lập với vòng đời request/browser.
 - ArtifactStore interface: content-addressed filesystem cho development, checksum + version + lineage trong PostgreSQL. Object storage GCS/S3 là adapter Phase 4, chưa tuyên bố đã triển khai.
-- Auth Phase 1: một tài khoản development, password phía server, cookie HttpOnly ký HMAC, hạn dùng, kiểm tra Origin cho request thay đổi. Server mặc định loopback. OIDC, multi-user provisioning, rate-limit phân tán và review bảo mật thuộc Phase 4; chưa cho phép public production.
+- Auth Phase 4: admin-provisioned scrypt accounts, opaque hashed PostgreSQL sessions, idle/absolute expiry/revocation/auth_version, global roles + owner-private workspace membership, CSRF và nonce CSP. Không còn cookie HMAC/environment password cũ. Rate limits lưu PostgreSQL, không phụ thuộc memory của instance.
 - Không cần API key để kiểm thử core. MOCK vẫn dùng cho automated tests. Adapter LIVE đã có code nhưng chỉ được dùng sau server credential, model/pricing, probe và data policy hợp lệ; môi trường hiện chưa xác minh API thật.
 
 ## Các lớp
@@ -42,7 +42,7 @@ Cần Node 24, PostgreSQL; có riêng tiến trình Next và worker. Development
 
 Giao dịch điều phối có advisory transaction lock chung để thứ tự cập nhật nhất quán ở quy mô cá nhân; task claim vẫn dùng SKIP LOCKED, công việc ngoài transaction chạy song song theo concurrency của owner. Đây chưa phải cấu hình tối ưu cho hàng nghìn worker. Khi mở rộng cần thay coordinator lock bằng lock ordering/phân vùng theo owner, giữ nguyên các kiểm thử fencing và budget.
 
-Mọi kết nối database dùng parameterized queries; Drizzle dùng cho schema/migrations và CRUD, SQL trực tiếp chỉ cho transaction/queue cần locking rõ ràng. API trả DTO đã chọn trường, không trả blob path hay secret. Session development ký HMAC và không đặt password vào URL; cần session revocation, OIDC và distributed rate limit trước khi public.
+Mọi kết nối database dùng parameterized queries; Drizzle dùng cho schema/migrations và CRUD, SQL trực tiếp chỉ cho transaction/queue cần locking rõ ràng. API trả DTO đã chọn trường, không trả blob path hay secret. Session opaque có revocation/expiry; OIDC/MFA chưa triển khai. Public deployment phải qua host/domain/TLS/operations gates riêng.
 
 Tool layer dùng IntegrationAdapter độc lập với ProviderAdapter, có input/output schema, scopes và healthcheck. GSC fixture là connector MOCK thực sự được gọi trong workflow; GSC OAuth read-only đã có implementation Phase 3; credential/grant thật vẫn chưa được cấp trong môi trường này. Drive/Sheets, CMS, GitHub và công cụ khác sẽ lắp vào cùng contract khi triển khai adapter.
 
@@ -92,6 +92,12 @@ OAuth start là POST authenticated/Origin-checked, state hash/browser nonce và 
 
 Nguồn có spec/date/filter/timezone/capture/source hashes và warning. API không bảo đảm mọi query; normalized sums không phải property totals. Imported CSV/JSON chỉ USER_SUPPLIED. Facts giữ top 20 evidence IDs + deterministic measurements; AI chọn action/reason/priority theo enum và fact ID, không numeric/free prose output. Review khác provider; validation recompute facts/checksum từ dataset immutable trước synthesis. Bước board bind facts/dataset/source hashes cùng metrics/criteria; approval hash bảo vệ toàn board.
 
-Delivery renderer tạo MD/CSV/JSON và JSON checkpoint của task; blobs put trước transaction, metadata commit cùng completed attempt, source lineage và cost. Cancel/fencing discard metadata, không phát hành report. Orphan blob cleanup vẫn thuộc Phase 4. Trusted server composition port cho GscClient cho phép E2E preload cài HTTP_STUB; không có client/env endpoint override và stub không mang kind GSC_API.
+Delivery renderer tạo MD/CSV/JSON và JSON checkpoint của task; blobs put trước transaction, metadata commit cùng completed attempt, source lineage và cost. Cancel/fencing discard metadata, không phát hành report. Orphan cleanup Phase 4 dry-run mặc định, chỉ xóa orphan quá 7 ngày trong maintenance; references gồm raw datasets và GSC checkpoint pages. Trusted server composition port cho GscClient cho phép E2E preload cài HTTP_STUB; không có client/env endpoint override và stub không mang kind GSC_API.
 
-OAuth/GSC/AI LIVE phải kiểm chứng riêng. Code + HTTP_STUB passes chưa xác nhận tài khoản Google, property entitlement hoặc AI billing. Phase 4 giữ OIDC/session lifecycle, production OAuth/security review, KMS/object storage, backup/restore, monitoring và deployment.
+OAuth/GSC/AI LIVE phải kiểm chứng riêng. Code + HTTP_STUB passes chưa xác nhận tài khoản Google, property entitlement hoặc AI billing. Phase 4 bổ sung sessions/RBAC, local TLS staging, backup/restore/rotation và monitoring commands. OIDC/MFA, KMS/object storage, offsite recovery, external alerts và public deployment chưa nghiệm thu.
+
+## Phase 4 deployment boundary
+
+`Caddy HTTPS → Next API → PostgreSQL durable DAG ← worker`; migrator/grants/provision là one-off privileged roles, web/worker credentials tách biệt. Compose private network cho DB, loopback ingress mặc định, immutable non-root/read-only images, persistent DB/artifact volumes. Worker heartbeat/readiness và graceful drain bổ sung mà không thay queue hay state machine. 50 workflows chưa kết thúc/owner được enforce cùng transaction tạo run; idempotent replay đi trước quota.
+
+GSC token rotation đọc active+previous, ghi active, transaction rewrap + invalidate OAuth states; backup key độc lập. Backup service pg_dump trước artifacts, AES-GCM archive trong persistent backup volume, scheduler 24h/keep7, OS flock chống trùng và crash lock. Restore authenticate/checksum trước tạo DB, chỉ target mới, verify blobs, revoke sessions và pause in-flight runs. Chưa offsite/cloud storage. Chi tiết triển khai và threat model trong docs/SECURITY.md, DEPLOYMENT.md, BACKUP_RECOVERY.md và OPERATIONS.md.

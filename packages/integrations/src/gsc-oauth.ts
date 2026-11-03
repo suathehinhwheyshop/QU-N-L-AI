@@ -44,7 +44,7 @@ function checkScope(scope: string | undefined) {
 }
 export class GscOAuth {
   constructor(readonly transport: GscTransport = officialGsc) {}
-  async begin(owner: string) {
+  async begin(owner: string, sessionHash?: string) {
     const cfg = settings(),
       state = randomBytes(32).toString("base64url"),
       browser = randomBytes(32).toString("base64url"),
@@ -52,12 +52,13 @@ export class GscOAuth {
     const pool = await db();
     await pool.query("DELETE FROM gsc_oauth_states WHERE expires_at<now()");
     await pool.query(
-      "INSERT INTO gsc_oauth_states(state_hash,owner_id,browser_hash,verifier_cipher,expires_at) VALUES($1,$2,$3,$4,now()+interval '10 minutes')",
+      "INSERT INTO gsc_oauth_states(state_hash,owner_id,browser_hash,verifier_cipher,expires_at,session_hash) VALUES($1,$2,$3,$4,now()+interval '10 minutes',$5)",
       [
         hash(state),
         owner,
         hash(browser),
         seal(verifier, owner + ":oauth:" + hash(state)),
+        sessionHash ?? null,
       ],
     );
     const url = new URL(this.transport.authorize);
@@ -99,6 +100,17 @@ export class GscOAuth {
       )
     ).rows[0];
     if (!row) throw new OrbitError("GSC_OAUTH_STATE");
+    if (row.session_hash) {
+      const valid = (
+        await pool.query(
+          "SELECT s.user_id FROM auth_sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.user_id=$2 AND s.revoked_at IS NULL AND s.expires_at>now() AND s.last_seen>now()-interval '30 minutes' AND s.auth_version=u.auth_version AND u.is_active=true AND u.role='ADMIN' AND EXISTS(SELECT 1 FROM workspaces w JOIN workspace_members m ON m.workspace_id=w.id WHERE w.owner_id=u.id AND w.kind='seo' AND m.user_id=u.id AND m.role='ADMIN')",
+          [row.session_hash, row.owner_id],
+        )
+      ).rows[0];
+      if (!valid) throw new OrbitError("GSC_OAUTH_STATE");
+    } else if (["staging", "production"].includes(process.env.ORBIT_ENV ?? ""))
+      throw new OrbitError("GSC_OAUTH_STATE");
+
     const cfg = settings();
     const token = tokenSchema.parse(
       await gscHttp(

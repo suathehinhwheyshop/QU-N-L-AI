@@ -1,5 +1,5 @@
 
-> orbit-platform@1.2.0-phase3 test:browser:isolated
+> orbit-platform@1.3.0-phase4 test:browser:isolated
 > node --import tsx test/e2e/browser-runner.ts
 
 Browser regression PASS (isolated database, API + worker + Chromium).

@@ -1633,9 +1633,9 @@ function SettingsPanel({
           </div>
         </div>
         <div className="inline-note">
-          Local development auth: cookie HttpOnly và kiểm tra Origin. OIDC, quản
-          trị nhiều người dùng, backup/restore và production security review
-          chưa triển khai.
+          Tài khoản do quản trị viên cấp; phiên đăng nhập có thời hạn, phân
+          quyền phía server và kiểm tra Origin. Backup mã hóa có lịch; nghiệm
+          thu production và kết nối LIVE được kiểm chứng riêng.
         </div>
         <button className="button primary" disabled={busy} type="submit">
           Lưu cấu hình
