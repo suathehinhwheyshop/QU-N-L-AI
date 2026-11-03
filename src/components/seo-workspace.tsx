@@ -645,8 +645,8 @@ export default function SeoWorkspace({
               </div>
               <label className="checkbox-label">
                 <input name="consent" type="checkbox" />
-                Cho phép gửi facts/query/URL tới AI APIs cho lượt này; LIVE có
-                thể tính phí.
+                Cho phép gửi facts/query/URL tới AI đã kiểm chứng cho lượt này;
+                áp dụng quyền và hạn mức của phương thức kết nối.
               </label>
               <button
                 className="button secondary"

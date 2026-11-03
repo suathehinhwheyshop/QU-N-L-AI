@@ -44,7 +44,7 @@ Không tuyên bố mọi điều kiện Windows/LIVE hoàn tất. Đăng nhập 
 | Security / dependency audit                  | Focused checks PASS, npm audit production dependencies 0 vulnerabilities                                   | local-subscription-verification.json, security-scan.json                                                                     |
 | Windows host + subscription inference        | BLOCKED, chưa thực thi                                                                                     | Không gộp CLI_STUB/Linux thành LIVE/Windows proof                                                                            |
 
-Update fast-forward đã có code và bảo vệ dirty tree/backup trước update. Acceptance thực tế được ghi riêng ở local-update.json khi chạy trên branch đã push và tree sạch; không suy ra từ start/restart test.
+Update đã thực thi trên branch đã push và tree sạch (remote đang ở latest): backup → git pull --ff-only → npm ci → migrations/grants → app/ops build. Đã kiểm config/database/owner/artifact bytes giữ nguyên và không tự start; sau start thủ công readiness/login đạt, không có run tự Resume. Evidence local-update.json. Chưa giả lập upgrade có migration mới hoặc Windows host.
 
 Các lỗi phát hiện/sửa: JSONB array encoding, import khởi tạo DB quá sớm trong tests, readiness race khi tạo goal ngay sau worker restart, restore move từ tmpfs sang persistent filesystem (đổi copy + verify), restore lặp lại dùng destination mới và config atomic. Môi trường từng ENOSPC khiến PostgreSQL không tạo test DB; dọn build cache tái tạo được, giữ nguyên DB/artifacts/backups, chạy lại toàn bộ gates và PASS. Không lấy lượt lỗi làm bằng chứng thành công.
 

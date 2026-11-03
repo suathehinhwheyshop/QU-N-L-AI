@@ -382,9 +382,10 @@ export default function OrbitApp() {
           <div className="mode-banner">
             <ShieldCheck size={18} />
             <p>
-              <strong>Phân biệt bằng chứng thực thi.</strong> MOCK và HTTP_STUB
-              không phải LIVE. Chỉ probe inference API thật mới xác nhận kết
-              nối. GSC API cần OAuth được xác minh riêng; không sửa website.
+              <strong>Phân biệt bằng chứng thực thi.</strong> MOCK, HTTP_STUB và
+              CLI_STUB không phải LIVE. Kết nối chỉ được xác nhận sau khi thực
+              thi qua provider đúng quyền. GSC OAuth được xác minh riêng; không
+              sửa website.
             </p>
             <a href="#connections">
               Trạng thái kết nối <ArrowUpRight size={12} />
@@ -1220,13 +1221,13 @@ function NewGoal({
           </div>
           <label className="checkbox-label">
             <input type="checkbox" name="live_data_consent" />
-            Cho phép gửi mục tiêu và output của lượt này tới các AI API đã xác
-            minh (bắt buộc với LIVE).
+            Cho phép gửi mục tiêu và output của lượt này tới các AI đã kiểm
+            chứng (bắt buộc với LIVE).
           </label>
           <small>
             AI planning chạy thành task có budget/checkpoint sau khi khởi chạy,
-            preview không gọi API tính phí. Phase 2 LIVE dùng
-            Research/Video/Development; GSC thật thuộc Phase 3.
+            preview không gọi AI. LIVE cần provider đã kiểm chứng và quyền sử
+            dụng hợp lệ; SEO dùng dataset đã lưu.
           </small>
           <label htmlFor="goal">Mục tiêu của anh</label>
           <textarea
@@ -1624,7 +1625,7 @@ function SettingsPanel({
             >
               <option value="local-only">Local-only · chỉ MOCK</option>
               <option value="external">
-                External · cho phép API sau consent
+                External · gửi dữ liệu tới AI sau consent
               </option>
             </select>
           </div>

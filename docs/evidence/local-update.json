@@ -1,0 +1,18 @@
+{
+  "at": "2026-11-03T05:57:36.943Z",
+  "status": "PASS",
+  "runtime": "LINUX_EQUIVALENT_NOT_WINDOWS",
+  "checks": [
+    "clean branch git pull --ff-only (already at latest)",
+    "encrypted backup before update",
+    "migrations and role grants rerun",
+    "npm ci and production app/ops build",
+    "same database, owner and artifact paths",
+    "all artifact bytes preserved",
+    "no automatic application start or workflow resume",
+    "post-update manual start: readiness/login pass and no active run auto-resumed"
+  ],
+  "artifact_files_verified": 6,
+  "artifact_digest": "5e76de256aa513bbec82b8c5d02a7bfbfeabead05f09193649ef39da84e6c799",
+  "windows10_verified": false
+}

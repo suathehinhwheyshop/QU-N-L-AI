@@ -1,7 +1,7 @@
 {
   "result": "PASS",
   "mode": "MOCK",
-  "at": "2026-11-03T05:53:08.894Z",
+  "at": "2026-11-03T06:00:46.413Z",
   "checks": [
     "file attachment stored from UI",
     "natural goal → backend template plan and zero mock cost",

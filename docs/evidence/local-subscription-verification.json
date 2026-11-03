@@ -50,6 +50,12 @@
     {
       "name": "format",
       "status": "PASS"
+    },
+    {
+      "name": "actual-clean-branch-local-update",
+      "status": "PASS",
+      "evidence": "local-update.json"
     }
-  ]
+  ],
+  "followup_at": "2026-11-03T05:58:29.429Z"
 }

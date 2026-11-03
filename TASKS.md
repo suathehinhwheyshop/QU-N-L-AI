@@ -72,7 +72,7 @@ Các mục mới là công việc tiếp theo, chưa được triển khai bởi
 
 - [x] Baseline 531ef61 và giữ 7 packages/engine; branch orbit/local-subscription-ai.
 - [x] WSL2/Windows entry scripts, verified Node bootstrap, native loopback web/worker và Docker PostgreSQL/backup.
-- [x] Single owner, durable data/checkpoints, startup pause, manual Resume; local start/stop/restart/backup/restore đã chạy Linux equivalent.
+- [x] Single owner, durable data/checkpoints, startup pause, manual Resume; local start/stop/restart/update/backup/restore đã chạy Linux equivalent.
 - [x] Official Codex/Gemini CLI adapters, pinned versions, strict schema, environment isolation, timeout/process cancellation, provider lease, no paid API fallback.
 - [x] CLI_STUB multi-provider workflow/validation/approval/artifacts, quota/auth pause và bounded attempts, UI connection methods/status/probe.
 - [x] Claude eligibility BLOCKED, Grok UNSUPPORTED, không động tới Claude Code config/source hoặc billing.
