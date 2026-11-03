@@ -42,6 +42,8 @@ Lệnh `npm run verify:subscriptions`: real local install + frozen dependencies/
 
 Nguồn Grok Build/Anthropic/Codex và checksum snapshots được ghi trong provider-correction-research.json. Không cài hoặc chạy Claude/Grok CLI. Không coi synthetic provider_probes trong tests là LIVE receipt. Tests có thể dùng optional Gemini adapter như fixture cũ; không cài Gemini mặc định hoặc gửi prompt Google.
 
+Update bổ sung đã chạy trên branch sạch đã push: backup-first, pull --ff-only (remote ở latest), migrations/grants/build `.next-codex` và image Codex riêng; giữ database/owner/artifact bytes, `.next/BUILD_ID` và metadata profile legacy 3210 không đổi; không auto-start/Resume. Evidence provider-correction-update.json. Đây là Linux verification, không phải app Claude/Windows thật.
+
 ## Research findings và giới hạn
 
 SDK Anthropic nêu Commercial Terms; README/technical CLI không tự xác nhận Max consumer quota dùng qua ORBIT. Claude giữ BLOCKED, không khẳng định mọi direct CLI automation bị cấm. xAI có official **Grok Build** browser OAuth/headless; đây là phát hiện sửa kết luận cũ. Chưa có bằng chứng gói Grokbot tương thích với Grok Build; community `superagent-ai/grok-cli` tự ghi không affiliated và cần API key, không được dùng.

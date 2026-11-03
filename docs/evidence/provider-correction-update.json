@@ -1,0 +1,16 @@
+{
+  "at": "2026-11-03T08:04:28.405Z",
+  "status": "PASS",
+  "runtime": "LINUX_NOT_WINDOWS",
+  "checks": [
+    "backup-first clean-branch update (remote already latest)",
+    "Codex .next-codex app and own ops image built",
+    "database/owner/config/artifact bytes preserved",
+    "legacy 3210 profile metadata and .next BUILD_ID preserved",
+    "Codex remains stopped with no automatic Resume"
+  ],
+  "artifact_files_verified": 6,
+  "windows_verified": false,
+  "real_claude_instance_verified": false,
+  "live_calls": 0
+}
