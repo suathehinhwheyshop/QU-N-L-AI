@@ -242,11 +242,12 @@ export function classifyCli(result: CliResult) {
 export async function installedVersion(
   id: CliId,
   runner: CliRunner = officialCliRunner,
+  signal: AbortSignal = AbortSignal.timeout(15000),
 ) {
   const result = await runner.run(id, ["--version"], {
     cwd: tmpdir(),
     env: childEnvironment(id),
-    signal: AbortSignal.timeout(15000),
+    signal,
   });
   const expected = cliDefinitions.find((d) => d.id === id)!.version;
   if (

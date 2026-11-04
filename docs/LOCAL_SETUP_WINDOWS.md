@@ -24,7 +24,7 @@ Nguồn chính thức: [Docker Windows install](https://docs.docker.com/desktop/
 Clone trong Linux filesystem `/home/<user>/ORBIT`, tránh `/mnt/c` để giữ quyền files 0600/0700 và hiệu năng. Thay TEN bằng username Ubuntu thực tế:
 
 ```sh
-git clone --branch orbit/subscription-provider-correction https://github.com/suathehinhwheyshop/QU-N-L-AI.git /home/TEN/ORBIT-Codex
+git clone --branch orbit/local-readiness-followup https://github.com/suathehinhwheyshop/QU-N-L-AI.git /home/TEN/ORBIT-Codex
 ```
 
 Trong PowerShell Windows:
@@ -43,6 +43,7 @@ Profile `.orbit/codex` (ignored): `config.json` chứa owner UUID/project/databa
 
 ```powershell
 $Orbit = '\\wsl$\Ubuntu\home\TEN\ORBIT-Codex\ops\windows\Orbit.ps1'
+& $Orbit -Action doctor -Repository '/home/TEN/ORBIT-Codex'
 & $Orbit -Action start -Repository '/home/TEN/ORBIT-Codex'
 & $Orbit -Action status -Repository '/home/TEN/ORBIT-Codex'
 & $Orbit -Action stop -Repository '/home/TEN/ORBIT-Codex'
@@ -51,6 +52,8 @@ $Orbit = '\\wsl$\Ubuntu\home\TEN\ORBIT-Codex\ops\windows\Orbit.ps1'
 & $Orbit -Action backup -Repository '/home/TEN/ORBIT-Codex'
 & $Orbit -Action restore -Repository '/home/TEN/ORBIT-Codex' -BackupId 'ID_TRONG_BACKUPS'
 ```
+
+`doctor` dùng được trước install nếu Node 24 đã có trong WSL. Nếu chưa có Node, bridge báo prerequisite và hướng dẫn dùng installer/bootstrap như trên; không tự cài từ lệnh chẩn đoán. Báo cáo JSON chỉ đọc: kernel WSL2, Node, Docker Linux/Compose v2, profile Codex, metadata quyền file secrets, port 3211/55435. File secrets không được mở nội dung; profile legacy/invalid bị giữ nguyên. Port bận chỉ được công nhận là của ORBIT khi PID/start-time/argv riêng hoặc Docker project/service/loopback mapping khớp; trường hợp khác báo BLOCKED, không kill process. Không mở/đổi port 3210, không cài/migrate/restore hoặc gọi AI. `LOCAL_PREREQUISITES_PASS` không phải nghiệm thu Windows hoặc AI LIVE; cần làm checklist máy thật bên dưới.
 
 Distro khác Ubuntu: thêm `-Distribution <tên chính xác>`. Start mở dịch vụ, người dùng truy cập IPv4 loopback `127.0.0.1:3211` trên Windows. Không bind `0.0.0.0`; truy cập điện thoại/LAN không thuộc chế độ này. Nếu WSL localhost forwarding trên máy bị tắt, sửa cấu hình WSL chính thức và nghiệm thu loopback; không mở port LAN để né lỗi.
 
@@ -67,9 +70,12 @@ Mặc định chỉ **Claude Max 5x, ChatGPT và Grokbot**. Chỉ Codex CLI đư
 ```powershell
 & $Orbit -Action install-cli -Repository '/home/TEN/ORBIT-Codex'
 & $Orbit -Action login-codex -Repository '/home/TEN/ORBIT-Codex'
+& $Orbit -Action check-codex -Repository '/home/TEN/ORBIT-Codex'
 ```
 
 Đăng nhập chính thức ChatGPT qua CLI; không copy OAuth token/cookie và không nhập API key. CLI profile riêng `.orbit/codex/cli`, không đọc/sửa profile Claude. Login không gửi prompt và không tự tạo CONNECTED.
+
+`check-codex` chỉ đọc account/quota qua app-server chính thức, không gửi prompt. Chưa đăng nhập trả `NOT_SIGNED_IN`, usage `null`. Khi có ChatGPT login, chỉ hiện các windows/usedPercent/reset do CLI cung cấp; không tự suy đoán quota còn lại. Email/account ID/credit balance/raw CLI output không được in hoặc lưu DB. Lệnh không thay billing, không tiêu reset credit và không mở gate LIVE. Cần cài ORBIT + `install-cli` trước lệnh này.
 
 **Hiện LIVE vẫn BLOCKED:** Codex adapter/headless/schema đã có code và CLI_STUB tests, nhưng cơ chế chỉ dùng quota bao gồm thay vì credits/extra usage chưa được kiểm chứng/thi hành chính thức. App chặn real probe/invoke bằng CLI_INCLUDED_ALLOWANCE_UNVERIFIED trước prompt; không có env flag để tự xác nhận. Không bật overage/top-up/billing. Claude Max5x qua ORBIT/Agent SDK còn BLOCKED eligibility. Grokbot→official Grok Build entitlement còn BLOCKED; community Grok CLI/xAI API trả phí không được dùng thay.
 

@@ -93,3 +93,12 @@ Public hosting và API-key requirements lịch sử không áp dụng cho mục 
 - [ ] Grokbot subscription→official Grok Build entitlement/quota: BLOCKED.
 - [ ] ChatGPT LIVE account + official included-only enforcement: BLOCKED; binary/help/CLI_STUB không phải LIVE.
 - [ ] Windows10/DockerDesktop/WSL2 thật: BLOCKED_NO_WINDOWS_HOST.
+
+## Local readiness follow-up — 04/11/2026
+
+- [x] Baseline branch correction HEAD0db4535, working tree/remote và 37 unit baseline xác minh.
+- [x] `doctor` chỉ đọc trước/sau install, báo prerequisite/port conflict/profile/quyền secret metadata; không đọc secret bytes hoặc thay dữ liệu.
+- [x] `check-codex` account/quota qua official app-server 0.166.0, method allowlist cố định, capped output/timeout/cancel, identity stripping và giữ LIVE gate.
+- [x] Official signed-out account read chạy thật; không login/prompt/billing changes. Quota signed-in chỉ CLI_STUB.
+- [ ] Signed-in quota và included-only inference/account entitlement: chưa kiểm chứng.
+- [ ] Windows 10/WSL2/Docker Desktop thật: không có host, không suy ra từ Linux.

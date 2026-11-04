@@ -3,6 +3,7 @@ import {
   localDirectory,
   validateCodexConfig,
 } from "./local-instance.mjs";
+import { localDoctor } from "./local-doctor.mjs";
 import { createServer } from "node:net";
 import { spawn, execFileSync } from "node:child_process";
 import {
@@ -182,7 +183,11 @@ async function start(c) {
   throw Error("STARTUP_NOT_READY: inspect private server.log");
 }
 try {
-  if (action === "install") {
+  if (action === "doctor") {
+    const report = await localDoctor({ root, directory: dir });
+    console.log(JSON.stringify(report, null, 2));
+    if (report.status === "BLOCKED") process.exitCode = 1;
+  } else if (action === "install") {
     if (process.platform !== "linux") throw Error("WSL_LINUX_REQUIRED");
     execFileSync("docker", ["info", "--format", "{{.OSType}}"], {
       stdio: "pipe",
@@ -406,7 +411,13 @@ try {
       console.log(
         "Updated; run start explicitly. Workflows will remain paused.",
       );
-    } else if (["login-codex", "login-gemini", "install-cli"].includes(action))
+    } else if (action === "check-codex")
+      await run(
+        process.execPath,
+        ["--import", "tsx", "ops/subscription-inspect.ts"],
+        await env(c),
+      );
+    else if (["login-codex", "login-gemini", "install-cli"].includes(action))
       await run(
         process.execPath,
         ["--import", "tsx", "ops/subscription-login.ts", action],

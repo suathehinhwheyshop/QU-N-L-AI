@@ -2,13 +2,13 @@
   "status": "PASS",
   "mode": "MOCK_AND_HTTP_STUB",
   "live_api_verified": false,
-  "at": "2026-11-03T07:46:44.107Z",
+  "at": "2026-11-04T12:38:15.890Z",
   "results": [
     {
       "name": "unit",
       "command": "npm run test",
       "status": "PASS",
-      "tests": 37,
+      "tests": 44,
       "log": "unit.log"
     },
     {
@@ -43,8 +43,8 @@
       "log": "browser.log"
     }
   ],
-  "e2e_run_id": "a61b420a-af4e-4cc3-9ae9-ddd07b5529c0",
-  "phase2_e2e_run_id": "bafaf38b-fff9-4f71-8294-9f7fd0cc13d3",
-  "phase3_e2e_run_id": "f9998a5e-5957-4d7b-af7e-c27a95e27997",
+  "e2e_run_id": "b3b3e22b-dc0b-4cc2-9586-433cd50714dd",
+  "phase2_e2e_run_id": "91c1e21d-f340-4dfc-9dd3-81e435eb83ca",
+  "phase3_e2e_run_id": "d207a5d0-17fa-47f7-ab0f-f042fc25733f",
   "notice": "Phase 3 CODE/HTTP_STUB verification with Phase 1–2 regressions; GSC and AI LIVE proofs are separate and may remain BLOCKED. No website writes."
 }

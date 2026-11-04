@@ -1,5 +1,9 @@
 # Quyết định sản phẩm ORBIT
 
+## Bổ sung triển khai — 04/11/2026
+
+Giữ nguyên ba provider và namespace Codex 3211. Thêm `doctor` chỉ đọc metadata/điều kiện local và `check-codex` đọc account/quota qua app-server chính thức của Codex 0.166.0. Không tạo thread/turn, không tiêu reset credits, không suy diễn quota còn lại hoặc quyền billing. Đọc được account/quota không mở gate included-only và không tạo CONNECTED/LIVE receipt. Account reader loại identity/email/account ID/credits balance khỏi output và không lưu vào DB. Xem LOCAL_READINESS_VALIDATION.md; Windows thật và subscription inference tiếp tục BLOCKED.
+
 ## Quyết định hiện hành — provider correction, 03/11/2026
 
 Chủ dự án chỉ dùng **Claude Max 5x, ChatGPT và Grokbot**. Gemini giữ optional/disabled, ngoài UI/install/login/probe/router mặc định; không dùng Gemini hoặc xAI API để thay provider thiếu. Không API key tính phí, không tự bật overage/top-up/usage billing, không scraping/token/session extraction.

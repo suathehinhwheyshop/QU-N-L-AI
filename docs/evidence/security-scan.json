@@ -1,7 +1,7 @@
 {
   "status": "PASS",
-  "at": "2026-11-03T08:04:31.364Z",
-  "staged_files_checked": 2,
+  "at": "2026-11-04T12:41:23.224Z",
+  "staged_files_checked": 34,
   "client_assets_checked": 46,
   "notice": "Known local credential values and private paths absent from staged files and public client assets; not a full production security audit."
 }

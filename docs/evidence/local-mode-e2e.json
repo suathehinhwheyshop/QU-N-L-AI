@@ -1,10 +1,11 @@
 {
-  "at": "2026-11-03T07:52:49.957Z",
+  "at": "2026-11-04T12:39:02.478Z",
   "status": "PASS",
   "runtime": "LINUX_EQUIVALENT_NOT_WINDOWS",
   "ai_mode": "MOCK",
-  "run_id": "94b9560b-94e6-457b-9af4-62a0b7e3b2d1",
+  "run_id": "57f49cf5-a21c-4f4f-a5af-8a810660e7a8",
   "checks": [
+    "read-only doctor detects a real occupied 3211 port without stopping its listener and recognizes own running web/database",
     "actual local install/start/restart, single-owner login and API-key route denied",
     "checkpoint and pause survive restart; no extra attempts without Resume",
     "MOCK DAG completes through approval and checksum-verified artifacts",

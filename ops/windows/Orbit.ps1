@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
- [Parameter(Mandatory=$true)][ValidateSet('install','start','stop','restart','update','backup','restore','status','login-codex','login-gemini','install-cli')][string]$Action,
+ [Parameter(Mandatory=$true)][ValidateSet('doctor','install','start','stop','restart','update','backup','restore','status','login-codex','login-gemini','check-codex','install-cli')][string]$Action,
  [Parameter(Mandatory=$true)][ValidatePattern('^/home/[^\r\n]+$')][string]$Repository,
  [ValidatePattern('^[a-zA-Z0-9._-]+$')][string]$Distribution='Ubuntu',
  [string]$OwnerEmail='',

@@ -1,0 +1,90 @@
+{
+  "at": "2026-11-04T12:40:39.748Z",
+  "baseline": "0db4535b37b106e522ccdb49789932fd62e83a94",
+  "branch": "orbit/local-readiness-followup",
+  "status": "CODE_AND_LINUX_TESTS_PASS",
+  "tests": [
+    {
+      "name": "unit",
+      "command": "npm run test",
+      "status": "PASS",
+      "tests": 44,
+      "log": "unit.log"
+    },
+    {
+      "name": "integration",
+      "command": "npm run test:integration",
+      "status": "PASS",
+      "tests": 47,
+      "log": "integration.log"
+    },
+    {
+      "name": "typecheck",
+      "command": "npm run typecheck",
+      "status": "PASS",
+      "log": "typecheck.log"
+    },
+    {
+      "name": "build",
+      "command": "npm run build",
+      "status": "PASS",
+      "log": "build.log"
+    },
+    {
+      "name": "e2e",
+      "command": "npm run test:e2e",
+      "status": "PASS",
+      "log": "e2e.log"
+    },
+    {
+      "name": "browser",
+      "command": "npm run test:browser:isolated",
+      "status": "PASS",
+      "log": "browser.log"
+    }
+  ],
+  "local_checks": [
+    "read-only doctor detects a real occupied 3211 port without stopping its listener and recognizes own running web/database",
+    "actual local install/start/restart, single-owner login and API-key route denied",
+    "checkpoint and pause survive restart; no extra attempts without Resume",
+    "MOCK DAG completes through approval and checksum-verified artifacts",
+    "3210 companion stays alive through Codex install/start/restart/restore/stop; cookie names and storage/project namespaces differ",
+    "real encrypted PostgreSQL/artifact backup and fresh-target restore selected by local manager",
+    "restored owner/history/download hashes valid; source database and artifacts preserved"
+  ],
+  "browser": {
+    "status": "PASS",
+    "evidence": "browser-checks.json"
+  },
+  "official_account_read": {
+    "evidence_kind": "OFFICIAL_CLI_ACCOUNT_READ",
+    "auth": "NOT_SIGNED_IN",
+    "observed_at": "2026-11-04T12:39:30.398Z",
+    "usage_available": false,
+    "live_execution_verified": false
+  },
+  "signed_in_quota": "CLI_STUB_TESTED_NOT_LIVE_VERIFIED",
+  "windows10": "BLOCKED_NO_WINDOWS_HOST",
+  "ai_live": "BLOCKED_LOGIN_ENTITLEMENT_AND_INCLUDED_ONLY_ENFORCEMENT",
+  "model_calls": 0,
+  "paid_api_calls": 0,
+  "billing_changes": 0,
+  "claude_code_changes": 0,
+  "snapshots": [
+    {
+      "url": "https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/app-server-protocol/schema/typescript/v2/GetAccountParams.ts",
+      "bytes": 510,
+      "sha256": "73feed16e294673d984618e2264a32be4b20bfe45973fdba064bddd2e6c6c18a"
+    },
+    {
+      "url": "https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/app-server-protocol/schema/typescript/v2/GetAccountRateLimitsResponse.ts",
+      "bytes": 1291,
+      "sha256": "a046fcd60782ace2b87517d43bdeaf9ceaec4ad06f67b84ca3d1a83c251bc9d1"
+    },
+    {
+      "url": "https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/app-server/README.md",
+      "bytes": 46426,
+      "sha256": "7d5da6fb29d05debe830ef9fe3ce1ddc18bc5bd8987a411d7971562a49f3ea57"
+    }
+  ]
+}

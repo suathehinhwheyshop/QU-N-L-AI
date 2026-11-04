@@ -15,6 +15,12 @@ VERIFIED interface/documentation hoặc CLI_STUB không phải VERIFIED account 
 
 ## ChatGPT / Codex CLI
 
+**Bổ sung 04/11/2026 — account/quota chỉ đọc:** `Orbit.ps1 -Action check-codex` gọi app-server `stdio://` chính thức, handshake `initialize`/`initialized`, `account/read` với `refreshToken:false`; chỉ sau khi xác nhận auth type `chatgpt` mới gọi `account/rateLimits/read`. Không đọc auth.json hoặc lấy token; official CLI vẫn sở hữu auth/refresh thông thường. Không dùng external token provider. Client từ chối mọi server request, gồm yêu cầu refresh token qua bên thứ ba.
+
+Quota request đặt `supportsLunaReserve:false` và `excludeResetCreditDetails:true`; không gọi consume reset-credit, gửi credit email, login/logout, config write, thread/turn hoặc command methods. Output chỉ có auth type, thời điểm và windows/usedPercent/reset do provider trả; không email/account ID/raw stderr/credit balance, không tự tính số token hoặc phần trăm còn lại. Không polling, không DB/probe receipt. Toàn bộ subprocess bị giới hạn thời gian/output và được dừng khi đọc xong hoặc hủy.
+
+Contract đã đối chiếu bằng `codex app-server generate-ts` của đúng binary 0.166.0 và [GetAccountRateLimitsResponse](https://github.com/openai/codex/blob/rust-v0.166.0/codex-rs/app-server-protocol/schema/typescript/v2/GetAccountRateLimitsResponse.ts). `ordinaryUsageAllowed` là permission snapshot do backend trả, không bảo đảm billing của một inference tương lai. `null` giữ nguyên là chưa biết; không suy ra recovery từ phần trăm/reset time. Official signed-out account read đã chạy, không gọi model; signed-in quota còn CLI_STUB TESTED, chưa LIVE VERIFIED.
+
 Giữ official `@openai/codex@0.166.0`, official `codex login` + forced_login_method=chatgpt; ORBIT không mở auth.json, copy token hoặc lấy cookie web. Non-interactive `codex exec` có JSONL, output schema, output file, ephemeral/read-only, ignore user config/rules; shell, unified_exec, multi-agent, apps/web search tắt. Bounded input/output, argv array/shell=false, scratch directory, AbortSignal/process-group cancellation, validated schema và checksum handoff giữ nguyên.
 
 Child environment loại API keys/cloud credentials/database URL/Node options; profile ở `.orbit/codex/cli`. Official CLI tự quản lý auth. ORBIT không đồng bộ projects/agents/chat history và không đọc credential cache. CLI installed/login không đủ CONNECTED; quota còn lại trả null khi không có dữ liệu chính thức.

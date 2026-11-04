@@ -65,6 +65,12 @@ await run(
   ["--import", "tsx", "scripts/subscription-status.ts"],
   { ORBIT_CLI_DIR: local + "/cli" },
 );
+await run(
+  "official-account-read",
+  process.execPath,
+  ["--import", "tsx", "ops/subscription-inspect.ts"],
+  { ORBIT_CLI_DIR: local + "/cli" },
+);
 await run("security", "npm", ["run", "security:check"]);
 await run("audit", "npm", ["audit", "--omit=dev", "--audit-level=high"]);
 await run("shell-syntax", "bash", [
@@ -88,7 +94,8 @@ await writeFile(
       status: "CODE_AND_LINUX_TESTS_PASS",
       mode: "MOCK_CLI_STUB",
       windows10_status: "BLOCKED_NO_WINDOWS_HOST",
-      subscription_live_status: "BLOCKED_USER_LOGIN_AND_EXECUTION_CONSENT",
+      subscription_live_status:
+        "BLOCKED_LOGIN_ENTITLEMENT_AND_INCLUDED_ONLY_ENFORCEMENT",
       paid_api_calls: 0,
       default_providers: ["claude-code", "codex-cli", "grokbot"],
       optional_gemini: "DISABLED",

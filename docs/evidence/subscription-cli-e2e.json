@@ -1,9 +1,9 @@
 {
-  "at": "2026-11-03T07:46:56.528Z",
+  "at": "2026-11-04T12:38:28.139Z",
   "status": "PASS",
   "execution": "CLI_STUB_SUBPROCESSES",
   "live_verified": false,
-  "run_id": "c1df776d-2dd0-478e-80f5-cc15085174c0",
+  "run_id": "e3cbbcda-9299-4f6e-96cc-71afa54028d7",
   "checks": [
     "real backend/worker/PostgreSQL via two CLI stub subprocesses",
     "structured handoff across providers and approval-bound artifacts",

@@ -72,7 +72,35 @@ assert.equal(before.dbPort, 55435);
 assert.equal(before.instance, "codex");
 assert.match(before.project, /^orbit-codex-/);
 try {
+  const occupied = createServer((_req, res) => res.end("CODEX_PORT_SENTINEL"));
+  await new Promise<void>((resolve, reject) => {
+    occupied.once("error", reject);
+    occupied.listen(3211, "127.0.0.1", resolve);
+  });
+  try {
+    await assert.rejects(
+      () => command("doctor"),
+      (e: Error & { stdout: string }) => {
+        const report = JSON.parse(e.stdout);
+        return (
+          report.status === "BLOCKED" &&
+          report.checks.some(
+            (c: { id: string; code: string }) =>
+              c.id === "web_port" &&
+              c.code === "PORT_IN_USE_NO_PROCESS_STOPPED",
+          )
+        );
+      },
+    );
+    assert.equal(await (await fetch(origin)).text(), "CODEX_PORT_SENTINEL");
+  } finally {
+    await new Promise<void>((resolve) => occupied.close(() => resolve()));
+  }
   await command("start");
+  const readiness = JSON.parse((await command("doctor")).stdout);
+  assert.equal(readiness.status, "LOCAL_PREREQUISITES_PASS");
+  assert.equal(readiness.ai_live_verified, false);
+  assert.equal(readiness.mutations, 0);
   await otherInstanceAlive();
   assert.equal((await api("bootstrap")).status, 401);
   await login();
@@ -167,6 +195,7 @@ try {
     assert.equal(createHash("sha256").update(bytes).digest("hex"), a.sha256);
   }
   checks.push(
+    "read-only doctor detects a real occupied 3211 port without stopping its listener and recognizes own running web/database",
     "actual local install/start/restart, single-owner login and API-key route denied",
     "checkpoint and pause survive restart; no extra attempts without Resume",
     "MOCK DAG completes through approval and checksum-verified artifacts",
